@@ -2,6 +2,7 @@
 Repository for my Job Application Tracking Website
 
 Live Link: {REDACTED}
+
 Standalone Offline Application: 
 
 
