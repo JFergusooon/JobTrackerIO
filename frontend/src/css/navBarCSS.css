@@ -1,0 +1,30 @@
+.navBarContainer {
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: #005157ff;
+    padding: 10px 20px;
+    height: 45px;           
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-sizing: border-box;
+}
+
+.navBarButton {
+  margin-bottom: 3px;
+  padding: 5px 10px;
+  height: 20px;
+  background-color: #a59595ff;
+  text-decoration: none;
+  border-radius: 15px;
+  width: 50px;
+  color: rgb(0, 0, 0);
+  font-size: 14px;
+}
+
+.navBarButton:hover {
+  background-color: #e24a03;
+  cursor: pointer;
+}

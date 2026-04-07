@@ -46,19 +46,4 @@
   color: #000;
 }
 
-.navBarButton {
-  margin-bottom: 3px;
-  padding: 5px 10px;
-  height: 20px;
-  background-color: #a59595ff;
-  text-decoration: none;
-  border-radius: 15px;
-  width: 50px;
-  color: rgb(0, 0, 0);
-  font-size: 14px;
-}
 
-.navBarButton:hover {
-  background-color: #e24a03;
-  cursor: pointer;
-}

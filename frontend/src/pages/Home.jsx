@@ -1,11 +1,13 @@
 // pages/Home.jsx
 import React from 'react';
 import NavBar from '../components/navBar';
+import { Link } from 'react-router-dom';
 
 function HomePage() {
   return <>
     <NavBar/>
-
+  
+    {/* Background Gradient */}
     <div
       style={{
         height: '100vh',
@@ -15,13 +17,9 @@ function HomePage() {
         alignItems: 'center'
       }}
 >
-
-  <div
-    style={{ display: 'flex', flexDirection: 'row', width: '50%',
-      justifyContent: 'center', alignItems: 'center', gap: '30px',       
-      padding: '20px', borderRadius: '10px'
-    }}
-  >
+  {/* Box that holds update boxes */}
+  <div style={{ display: 'flex', flexDirection: 'row', width: '50%', justifyContent: 'center', 
+      alignItems: 'center', gap: '30px', padding: '20px', borderRadius: '10px', background: 'red' }}>
 
     {/* Left Side Grey Box */}
     <div style={{ backgroundColor: '#a59595ff', width: '50%', height: '450px', borderRadius: '40px'}}>
@@ -59,12 +57,6 @@ function HomePage() {
         <li style={{width: '300px', textAlign: 'Left', marginLeft: '15%'}}>Create Login/SignUp Popup Component</li>
       </ul>
     </div>
-
-
-
-
-
-
 
   </div>
 </div>

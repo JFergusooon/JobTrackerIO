@@ -1,6 +1,10 @@
 import React, { useEffect } from "react";
+import '../css/ModernLoginCSS.css';
 
 export default function ModernLoginComponent({ open, onClose }) {
+
+  
+
   // Hooks must be called on every render — so call useEffect unconditionally.
   useEffect(() => {
     if (!open) return; // do nothing when popup is closed
@@ -15,83 +19,35 @@ export default function ModernLoginComponent({ open, onClose }) {
 
   if (!open) return null; // safe early return after hooks
 
+  const handleRegisterClick = () => {
+    console.log("Register clicked");
+    // you can use props or state here
+
+  };
+
+
   return (
     <div
       onClick={onClose}
-      style={{
-        position: "fixed",
-        inset: 0,
-        backgroundColor: "rgba(0,0,0,0.4)",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        zIndex: 9999,
-      }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          width: "350px",
-          background: "white",
-          padding: "25px",
-          borderRadius: "15px",
-          position: "relative",
-          boxShadow: "0 0 15px rgba(0,0,0,0.3)",
-        }}
-      >
-        <button
-          onClick={onClose}
-          style={{
-            position: "absolute",
-            top: "10px",
-            right: "10px",
-            border: "none",
-            background: "none",
-            fontSize: "20px",
-            cursor: "pointer",
-          }}
-        >
-          ×
-        </button>
+      style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.4)", display: "flex", 
+                justifyContent: "center", alignItems: "center", zIndex: 9999 }}>
+
+
+      <div onClick={(e) => e.stopPropagation()} className='loginFormContainer'>
+        <button onClick={onClose} className='loginCloseButton'> × </button>
 
         <h2 style={{ marginTop: 0 }}>Login</h2>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-          <input
-            type="text"
-            placeholder="Username"
-            style={{
-              padding: "10px",
-              borderRadius: "8px",
-              border: "1px solid #ccc",
-            }}
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            style={{
-              padding: "10px",
-              borderRadius: "8px",
-              border: "1px solid #ccc",
-            }}
-          />
+          <input type="text" placeholder="Username" className="loginFormTextBox"/>
+          <input type="password" placeholder="Password" className="loginFormTextBox"/>
 
-          <button
-            style={{
-              marginTop: "10px",
-              padding: "10px",
-              borderRadius: "8px",
-              border: "none",
-              background: "#3F5EFB",
-              color: "white",
-              cursor: "pointer",
-              fontWeight: "bold",
-            }}
-          >
-            Log In
-          </button>
+          <button className="loginSubmitButton"> Log In </button>
 
-          <p style={{padding: '0px', margin: '0px'}}> Dont have an account? <button style={{padding: '0px', margin: '0px', color: '#3F5EFB'}}>Register</button></p>
+          <p style={{padding: '0px', margin: '0px'}}> Dont have an account? 
+            <button style={{padding: '0px', margin: '0px', color: '#3F5EFB'}}
+                    onClick={{}}>Register</button>
+          </p>
           
         </div>
       </div>

@@ -1,46 +1,64 @@
 import { Link } from 'react-router-dom';
 import { useState } from "react";
-import ModernLoginComponent from '../Modern Components/ModernLoginComponent';
+import LoginPopup from '../components/LoginPopup';
+import "../css/navBarCSS.css"
+{/*import ModernLoginComponent from '../Modern Components/ModernLoginComponent';*/}
+
+const port = 3000;
+const full = "http://localhost:" + port + "/"
 
 function NavBar() { 
-  const [loginOpen, setLoginOpen] = useState(false);
+  {/* const [loginOpen, setLoginOpen] = useState(false); */}
+  const [showPopup, setShowPopup] = useState(false);
+  const togglePopup = () => {
+    // If Button is 'Logout':
+    if(loginState === "Logout" && localStorage.getItem('username') !== "" && localStorage.getItem('password') !== "") {
+            localStorage.setItem('username', '')
+            localStorage.setItem('password', '')
+            window.location.reload()
+    }
+    else {
+      setShowPopup(!showPopup);
+    }
+  }
+
+  let loginState = ""
+  loginState = localStorage.getItem('username') !== "" ? "Logout" : "Login";
+
+  //let publicUrl = "http://localhost:3001/public/" + localStorage.getItem('username')
+  //let privateUrl = "http://localhost:3001/private/" + localStorage.getItem('username')
 
   return (
     <>
-    <nav 
-      style={{
-        width: '100%',
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        backgroundColor: '#005157ff',
-        padding: '10px 20px',
-        height: '45px',           // Increased height for safe spacing
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        boxSizing: 'border-box'
-      }}
-    >
+      <nav className="navBarContainer">
 
-      {/* Left Title */}
-      <Link to="/" style={{ color: 'white', fontSize: '25px', margin: 0 }}>
-        job-tracker.io
-      </Link>
+        {/* Left Title */}
+        <Link to="/" style={{ color: 'white', fontSize: '25px', margin: 0 }}> job-tracker.io </Link>
 
-      {/* Right Buttons */}
-      <div style={{ display: 'flex', gap: '10px' }}>
-        <div
-            className='navBarButton'
-            onClick={() => setLoginOpen(true)}
-          > Login </div>
-      </div>
+        {/* Right Buttons */}
+        {/*<div style={{ display: 'flex', gap: '10px' }}>
+          <div className='navBarButton' onClick={() => setLoginOpen(true)}
+            > Login </div>
+        </div>*/}
 
-    </nav>
+        <div className="menu-item is-active menu-item--play">
+          <a href="#" className="menu-link" onClick={togglePopup}> {loginState} </a>
+        </div>
+      </nav>
+      {localStorage.getItem("username") !== "" ? 
+        <div style={{width: '100%', height: '50px', backgroundColor: 'orange', marginTop: '42px'}}>
+          <p>Home</p>
+        </div> 
+      : ""}
 
-      
 
-      <ModernLoginComponent open={loginOpen} onClose={() => setLoginOpen(false)} />
+    {/* Show Login/Register Popup if button is clicked */}
+    {showPopup ? <LoginPopup text='Login' closePopup={togglePopup} /> : null }
+
+
+
+
+      {/*<ModernLoginComponent open={loginOpen} onClose={() => setLoginOpen(false)} />*/}
     </>
   );
 }

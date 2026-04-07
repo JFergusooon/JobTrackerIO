@@ -47,7 +47,7 @@ class JobAppGUI:
 
         self.data = load_data()
         self.lists = self.data["lists"]
-        self.current_list = "MASTER"
+        self.current_list = "Mar 2026"
         self.selected_company = None
         save_data({"lists": self.lists, "current_list": self.current_list})
 
@@ -56,6 +56,38 @@ class JobAppGUI:
         self.left_frame.pack(side="left", fill="y", padx=15, pady=15)
         self.right_frame = tk.Frame(master, relief="sunken", bd=2)
         self.right_frame.pack(side="right", fill="both", expand=True, padx=15, pady=15)
+
+        self.total_frame = tk.Frame(self.left_frame, bg="#333333")
+
+        # --- LEFT COLUMN (Waiting) ---
+        left_col = tk.Frame(self.total_frame, bg="#333333")
+        tk.Label(left_col, text="Waiting:", font=("Arial", 12), fg="white", bg="#333333").pack()
+
+        self.waiting_total_label = tk.Label(
+            left_col,
+            text=self.getTotalWaitingApplications(),
+            font=("Arial", 12),
+            fg="green",
+            bg="#333333"
+        )
+        self.waiting_total_label.pack()
+        left_col.pack(side="left", padx=20)
+
+        # --- RIGHT COLUMN (Rejected) ---
+        right_col = tk.Frame(self.total_frame, bg="#333333")
+        tk.Label(right_col, text="Rejected:", font=("Arial", 12), fg="white", bg="#333333").pack()
+
+        self.rejected_total_label = tk.Label(
+            right_col,
+            text=self.getTotalRejectedApplications(),
+            font=("Arial", 12),
+            fg="red",
+            bg="#333333"
+        )
+        self.rejected_total_label.pack()
+        right_col.pack(side="left", padx=20)
+
+        self.total_frame.pack(pady=5)
 
         tk.Label(self.left_frame, text="Search for Company:", font=("Arial", 12)).pack(pady=10)
 
@@ -339,7 +371,6 @@ class JobAppGUI:
             company = company_entry.get().strip()
             position = position_entry.get().strip()
             joblink = joblink_entry.get().strip()
-
             location = "Remote" if remote_var.get() else location_entry.get().strip()
 
             if not company:
@@ -347,10 +378,25 @@ class JobAppGUI:
                 return
 
             if is_edit:
-                entry["company"] = company
-                entry["position"] = position
-                entry["joblink"] = joblink
-                entry["location"] = location
+                # Remove the app from its current list
+                old_list_name = self.selected_company.get("list", self.current_list)
+                if old_list_name in self.lists:
+                    self.lists[old_list_name] = [
+                        app for app in self.lists[old_list_name]
+                        if app is not self.selected_company
+                    ]
+
+                # Update its data
+                self.selected_company.update({
+                    "company": company,
+                    "position": position,
+                    "joblink": joblink,
+                    "location": location,
+                    "list": "Mar 2026"  # Move to Mar 2026
+                })
+
+                # Add it to Mar 2026 list
+                self.lists.setdefault("Mar 2026", []).append(self.selected_company)
 
             else:
                 new_entry = {
@@ -361,8 +407,7 @@ class JobAppGUI:
                     "rejected": False,
                     "list": "Mar 2026"
                 }
-
-                self.lists["Mar 2026"].append(new_entry)
+                self.lists.setdefault("Mar 2026", []).append(new_entry)
 
             save_data({
                 "lists": self.lists,
@@ -370,6 +415,10 @@ class JobAppGUI:
             })
 
             self.refresh_display()
+            self.refresh_totals()
+
+            # Clear search entry
+            self.search_entry.delete(0, tk.END)
             self.result_label.config(
                 text="✅ Application updated." if is_edit else "✅ Application added.",
                 fg="green"
@@ -400,6 +449,7 @@ class JobAppGUI:
         color = "red" if self.selected_company["rejected"] else "green"
         self.result_label.config(text=f"{self.selected_company['company']} is now {status}.", fg=color)
         self.refresh_display()
+        self.refresh_totals()
 
     def delete_company(self):
         if not self.selected_company:
@@ -432,6 +482,7 @@ class JobAppGUI:
 
         save_data({"lists": self.lists, "current_list": self.current_list})
         self.refresh_display()
+        self.refresh_totals()
 
     # ---------- List Management ----------
     def create_new_list(self):
@@ -529,6 +580,7 @@ class JobAppGUI:
             save_data({"lists": self.lists, "current_list": self.current_list})
             self.refresh_list_buttons()
             self.refresh_display()
+            self.refresh_totals()
             messagebox.showinfo("Import Complete", f"Imported {imported_count} applications successfully!")
 
         except Exception as e:
@@ -657,6 +709,7 @@ class JobAppGUI:
         self.sort_lists()
         self.refresh_list_buttons()
         self.refresh_display()
+        self.refresh_totals()
 
         # Hide delete button if MASTER is selected
         if self.current_list == "MASTER":
@@ -665,6 +718,25 @@ class JobAppGUI:
             if not self.delete_btn.winfo_ismapped():
                 self.delete_btn.pack(pady=5)
 
+    def getTotalWaitingApplications(self):
+        return sum(
+            1
+            for applications in self.lists.values()
+            for app in applications
+            if not app.get("rejected", False)
+        )
+
+    def getTotalRejectedApplications(self):
+        return sum(
+            1
+            for applications in self.lists.values()
+            for app in applications
+            if app.get("rejected", False)
+        )
+
+    def refresh_totals(self):
+        self.waiting_total_label.config(text=self.getTotalWaitingApplications())
+        self.rejected_total_label.config(text=self.getTotalRejectedApplications())
 
 #   My Code:
     def get_list_size(self, list_name, rejected):
