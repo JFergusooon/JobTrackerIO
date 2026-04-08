@@ -1,7 +1,6 @@
 // pages/Home.jsx
 import React from 'react';
 import NavBar from '../components/navBar';
-import { Link } from 'react-router-dom';
 import LegacyUI from '../components/LegacyUI';
 
 function HomePage() {
