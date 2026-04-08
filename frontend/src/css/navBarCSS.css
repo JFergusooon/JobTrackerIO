@@ -28,3 +28,12 @@
   background-color: #e24a03;
   cursor: pointer;
 }
+
+.loggedInNavBarButton {
+  width: 100px;
+  padding: 10px;
+  background-color: lightgray;
+  color: black;
+  border: 1px solid black;
+  margin: 5px;
+}

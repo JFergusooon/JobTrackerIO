@@ -1,7 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
 import '../css/ModernLoginCSS.css';
-{/*import '../css/popupStyle.css'*/}
 
 const Popup = ({text, closePopup}) => {
     const [curFunc, setCurFunc] = useState("login");
