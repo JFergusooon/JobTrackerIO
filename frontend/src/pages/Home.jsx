@@ -17,7 +17,31 @@ function HomePage() {
         alignItems: 'center'
       }}>
 
-      {localStorage.getItem("legacyMode") === "true" ? <LegacyUI /> : 
+      {localStorage.getItem("username") !== "" ? <>
+        <div style={{height: '100vh', width: '50%', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: '5%'}}>
+          <div style={{height: '25%', width: '30%', background: 'gray'}}>
+              <p>Quick Settings</p>
+              <button>Add New List</button>
+            </div>
+          
+          <div style={{height: '40%', width: '30%', background: 'gray'}}>
+            <p>Recent Lists</p>
+          </div>
+
+
+            
+            <div style={{height: '40%', width: '100%', background: 'gray'}}>
+              
+              <p>Stats</p>
+
+            <p>Total Jobs Applied This Month: </p>
+            <p>Jobs goings to stage 2: </p>
+            </div>
+
+
+          
+        </div>
+      </> : 
         <>
           {/* Box that holds update boxes */}
           <div style={{ display: 'flex', flexDirection: 'row', width: '50%', justifyContent: 'center', 
