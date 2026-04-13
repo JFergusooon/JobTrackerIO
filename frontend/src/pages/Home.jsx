@@ -1,7 +1,15 @@
 // pages/Home.jsx
 import React from 'react';
 import NavBar from '../components/navBar';
-import LegacyUI from '../components/LegacyUI';
+import ProfileBox from '../components/Home/ProfileBox';
+import QuickSettings from '../components/Home/QuickSettings';
+import QuickNotes from '../components/Home/QuickNotes';
+import ImportantJobs from '../components/Home/ImportantJobs';
+import RecentLists from '../components/Home/RecentLists';
+import StatsChart from '../components/Home/StatsChart';
+import StatsInfo from '../components/Home/StatsInfo'
+import ModernFooterComponent from '../Modern Components/ModernFooterComponent'
+
 
 function HomePage() {
   return <>
@@ -10,33 +18,48 @@ function HomePage() {
     {/* Background Gradient */}
     <div
       style={{
-        height: '100vh',
-        background: 'linear-gradient(180deg,#9DBF9E 85%, #005157ff 100%)',
+        height: '100%',
+        background: 'linear-gradient(180deg, #9DBF9E 85%, #005157ff 100%)',
         display: 'flex',
         justifyContent: 'center',
-        alignItems: 'center'
+        alignItems: 'center', 
       }}>
 
       {localStorage.getItem("username") !== "" ? <>
-        <div style={{height: '100vh', width: '50%', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: '5%'}}>
-          <div style={{height: '25%', width: '30%', background: 'gray'}}>
-              <p>Quick Settings</p>
-              <button>Add New List</button>
+        <div className='homeContainer'>
+
+          {/* Left Column */}
+          <div style={{display: 'flex', flexDirection: 'column', 
+                    gap: '10px',
+                    background: 'green', padding: '5px'
+          }}>
+            <ProfileBox />
+            
+            <div style={{display: 'flex', flexDirection: 'row'}}>
+              <div style={{width: '55%'}}>
+              </div>
+              <div style={{width: '45%', height: '100%'}}>
+                  <QuickSettings />
+                  <QuickNotes />
+              </div>
             </div>
+            
+          </div>
           
-          <div style={{height: '40%', width: '30%', background: 'gray'}}>
-            <p>Recent Lists</p>
+          {/* Middle Column */}
+          <div style={{display: 'flex', flexDirection: 'column', gap: '30px', width: '100%',
+            background: '#b80e0e'
+          }}>
+            <ImportantJobs />
+            <RecentLists />
           </div>
 
 
-            
-            <div style={{height: '40%', width: '100%', background: 'gray'}}>
-              
-              <p>Stats</p>
-
-            <p>Total Jobs Applied This Month: </p>
-            <p>Jobs goings to stage 2: </p>
-            </div>
+          {/* Right Column */} 
+          <div style={{display: 'flex', flexDirection: 'column', width: '100%', background: 'gray'}}>
+            <StatsChart />
+            <StatsInfo />
+          </div>
 
 
           
@@ -90,7 +113,8 @@ function HomePage() {
 
 
   
-</div>
+    </div>
+    <ModernFooterComponent />
   </>
 }
 

@@ -1,0 +1,142 @@
+.homeContainer {
+    display: grid;
+    grid-template-columns: 500fr 850fr 530fr; /* left, middle, right */
+    gap: 2px;
+    width: 100%;
+    /*height: 100vh;*/
+    height: 750px;
+    margin: 20px;
+}
+
+
+
+
+
+
+.quickSettingsContainer {
+    border: solid 2px black;
+    width: 100%;
+    height: 80%;
+}
+
+.quickSettingsTitle {
+    font-size: 20px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+
+.quickSettingsButtonContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.quickSettingsButton {
+    border: solid 1px orange;
+    width: 70%;
+    margin: 2%;
+    height: 30px;
+    background-color: white;
+}
+
+.quickNotesContainer {
+    border: solid 2px black;
+    width: 100%;
+    height: 70%;
+}
+
+.quickNotesTitle {
+    font-size: 20px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+
+.quickNotesInput {
+    border: solid 1px orange;
+    height: 70%;
+    margin: 3px;
+    width: 80%;
+}
+
+
+.profileBoxContainer {
+    width: 100%;
+    border: 2px solid black;
+    height: 20%;
+    display: flex;
+    flex-direction: row;
+}
+
+.profileBoxTitle {
+    font-size: 24px;
+    margin: 0;
+}
+
+.recentListsContainer {
+    width: 98.5%;
+    background: orange;
+    border: solid 2px black;
+    margin: 5px;
+    justify-content: center;
+    text-align: center;
+    align-items: center;
+}
+
+.recentListsButton {
+    border: solid 1px orange;
+    width: 190px;
+    margin: 2%;
+    height: 30px;
+    background-color: white;
+}
+
+.recentListsButtonContainer {
+    display: flex;
+    flex-direction: row;
+    gap: 1%;
+    width: 100%;
+    background: green;
+    justify-content: center;
+}
+
+.recentListsTitle {
+    font-size: 20px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    text-align: left;
+    margin-left: 30px;
+}
+
+.importantJobsContainer {
+    width: 100%;
+    height: 69%;
+    background: blueviolet;
+}
+
+.importantJobsTitle {
+    font-size: 20px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    text-align: left;
+    margin-left: 30px;
+}
+
+.statsChartContainer {
+    background: white;
+    height: 45%
+}
+
+.statsChartTitle {
+    font-size: 20px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    text-align: left;
+    margin-left: 30px;
+}
+
+.statsChart {
+    background-color: grey;
+    height: 250px;
+    margin: 15px;
+}
+

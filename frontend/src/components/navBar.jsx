@@ -4,13 +4,8 @@ import LoginPopup from '../components/LoginPopup';
 import UpdatesPopup from '../components/UpdatesPopup';
 import "../css/navBarCSS.css"
 import LegacyToggle from './LegacyToggle';
-{/*import ModernLoginComponent from '../Modern Components/ModernLoginComponent';*/}
-
-const port = 3000;
-const full = "http://localhost:" + port + "/"
 
 function NavBar() { 
-  {/* const [loginOpen, setLoginOpen] = useState(false); */}
   const [showPopup, setShowPopup] = useState(false);
   const [showUpdatesPopup, setShowUpdatesPopup] = useState(false);
   const togglePopup = () => {
@@ -52,10 +47,11 @@ function NavBar() {
           <div>
             <button className='loggedInNavBarButton'><Link to="/">Home</Link></button>
             <button className='loggedInNavBarButton'><Link to="/tracker" >Tracker</Link></button>
-            <button onclick={toggleUpdatePopup} className='loggedInNavBarButton'>Updates</button>
+            <button onClick={toggleUpdatePopup} className='loggedInNavBarButton'>Updates</button>
             <button className='loggedInNavBarButton'>Settings</button>
           </div>
           {window.location.pathname.endsWith('/tracker') ? <LegacyToggle /> : ""}
+          {window.location.pathname.endsWith('/tracker') ? <button>Import from CSV</button> : ""}
         </div> 
       : ""}
 

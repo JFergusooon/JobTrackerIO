@@ -1,5 +1,3 @@
-import React, {useEffect, useState} from 'react';
-import PropTypes from 'prop-types';
 import '../css/ModernLoginCSS.css';
 
 const UpdatesPopup = ({text, closePopup}) => {
@@ -14,7 +12,9 @@ const UpdatesPopup = ({text, closePopup}) => {
                     <div onClick={(e) => e.stopPropagation()} className='loginFormContainer'>
                         <button onClick={closePopup} className='loginCloseButton'> × </button>
 
-                        <h2 style={{ marginTop: 0 }}>Login</h2>
+                        <h2 style={{ marginTop: 0 }}>Updates</h2>
+
+                        <p>New Legacy UI</p>
 
                     </div>    
                 </div>;
