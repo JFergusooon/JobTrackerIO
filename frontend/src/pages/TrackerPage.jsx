@@ -19,8 +19,7 @@ function TrackerPage() {
 
       {localStorage.getItem("legacyMode") === "true" ? <LegacyUI /> : 
         <>
-          
-      
+          <p>Non-Legacy UI still in progress...</p>
         </>
       }
 

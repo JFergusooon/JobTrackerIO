@@ -8,15 +8,15 @@ const EditJobButtons = ({text, closePopup}) => {
 
     return (
         <div className='editJobButtonsContainer'>
-            <div style={{background: 'grey',
+            <button style={{
                             height: '30px',
                             width: '200px',
                             padding: '3px',
-                            borderRadius: '10px'
-            }}>Set Rejected / Not Rejected</div>
+                            borderRadius: '20px'
+            }}>Set Rejected / Not Rejected</button>
             <div style={{display: 'flex', flexDirection: 'row'}}>
-                <div className='editJobButton'>Edit Application</div>
-                <div className='editJobButton'>Delete Company</div>
+                <button className='editJobButton'>Edit Application</button>
+                <button className='editJobButton'>Delete Company</button>
             </div>
             
         </div>
