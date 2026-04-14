@@ -1,11 +1,11 @@
 # JobTrackerIO
 Repository for my Job Application Tracking Website
 
-Live Link: {REDACTED}
+Live Link: https://jobtrackerio.pages.dev/
 
 Standalone Offline Application: 
 
-
+https://jobtrackerio.pages.dev/
 
 This applications allows users to track their job applications.
 
