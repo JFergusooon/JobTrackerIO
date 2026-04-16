@@ -75,3 +75,13 @@
     align-items: center;
 }
 
+.unknown {
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #ad9a42;
+    border-radius: 8px;
+    height: 10px;
+    display: flex;
+    flex-direction: row;
+}
+

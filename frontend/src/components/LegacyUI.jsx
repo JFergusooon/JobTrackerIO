@@ -9,6 +9,8 @@ function LegacyUI() {
 
     const [curSearchResults, setCurSearchResult] = useState("");
     const [selectedCompany, setSelectedCompany] = useState("");
+    
+    const [selectedId, setSelectedId] = useState(null);
 
     const [showEditJobButtons, setShowEditJobButtons] = useState(false);
     const [showNewListPopup, setShowNewListPopup] = useState(false);
@@ -84,12 +86,20 @@ function LegacyUI() {
         setShowNewApplicationPopup(!showNewApplicationPopup);
     }
 
+    const selectJob = (jobInfo) => {
+        selectedCompany = jobInfo
+    }
+
     const navigate = useNavigate();
     const GRID_SIZE = 9; // 3 columns x 3 rows
 
     const filledLists = Array.from({ length: GRID_SIZE }, (_, i) => {
         return curUserListNames[i] || null;
     });
+
+    useEffect(() => {
+    setSelectedId(null);
+    }, [curJobsByListName]);
 
     return (
         <>
@@ -117,7 +127,7 @@ function LegacyUI() {
                             <textarea style={{height: '60%', width: '65%'}} disabled={true} value={curSearchResults}></textarea>
 
                             <button style={{height: '40px', width: '150px', borderRadius: '20px'}} onClick={toggleNewApplicationPopup}>New Application</button>
-                            <p style={{margin: '0px', marginBottom: '10px'}}>Selected: {selectedCompany}</p>
+                            <p style={{margin: '0px', marginBottom: '10px'}}>{selectedCompany !== "" ? `Selected: ${selectedCompany}` : ""}</p>
                         </div>
 
                         <div>
@@ -153,7 +163,7 @@ function LegacyUI() {
                         <button onClick={toggleNewListPopup}>+ New List</button>
                         <button>Delete Current List</button>
             
-                        {showEditJobButtons ? <EditJobButtons /> : <></>}
+                        {showEditJobButtons ? <EditJobButtons text={selectedCompany}/> : <></>}
                     </div>
 
 
@@ -182,18 +192,39 @@ function LegacyUI() {
                                     </div>
                                     {/* Print Out All Jobs From This Month */}
                                     {curJobsByListName.map((job, index) => (
-                                    <div key={index} className="job-card">
-                                        <p style={{padding: '0px', margin: '0px', width: '20%'}}>{job.companyName}</p>
-                                        <p style={{padding: '0px', margin: '0px', width: '20%'}}>{job.position}</p>
-                                        
+                                    <div
+                                        key={index}
+                                        onClick={() => {
+                                            setSelectedId(index === selectedId ? null : index)
+                                            {selectedId === index ? setSelectedCompany("") : setSelectedCompany(job.companyName)};
+                                            
+                                            {selectedId === index ? setShowEditJobButtons(false) : setShowEditJobButtons(true)};
+                                        }}
+                                        className={selectedId === index ? "unknown" : "job-card"}
+                                    >
+                                        <p style={{padding: '0px', margin: '0px', width: '20%', color: job.rejected ? 'red' : 'black'}}>
+                                        {job.companyName}
+                                        </p>
 
-                                        <p style={{padding: '0px', margin: '0px', width: '20%'}}>{job.location}</p>
+                                        <p style={{padding: '0px', margin: '0px', width: '20%', color: job.rejected ? 'red' : 'black'}}>
+                                        {job.position}
+                                        </p>
+
+                                        <p style={{padding: '0px', margin: '0px', width: '20%', color: job.rejected ? 'red' : 'black'}}>
+                                        {job.location}
+                                        </p>
+
                                         <a href={job.jobLink}>
-    {job.jobLink.length > 25
-        ? job.jobLink.slice(0, 25) + "..."
-        : job.jobLink}
-</a>
-                                        <input type='checkbox' placeholder='rejected' style={{height: '15px', width: '20%'}}></input>
+                                        {job.jobLink.length > 25
+                                            ? job.jobLink.slice(0, 25) + "..."
+                                            : job.jobLink}
+                                        </a>
+
+                                        <input
+                                        type='checkbox'
+                                        style={{height: '15px', width: '20%'}}
+                                        checked={job.rejected}
+                                        />
                                     </div>
                                     ))}
                                 </div>
