@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import "../css/LegacyToggleCSS.css";
+import "../../../css/LegacyToggleCSS.css";
 
 export default function LegacyToggle() {
   const [legacyMode, setLegacyMode] = useState(() => {

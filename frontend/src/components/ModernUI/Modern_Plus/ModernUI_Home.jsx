@@ -1,0 +1,53 @@
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from "react-router-dom";
+import '../../../css/Modern_HomePageCSS.css'
+import LegacyToggle from '../../LegacyUI/Legacy_Plus/LegacyToggle.jsx';
+import Modern_ProfileBox from '../Modern_Home/Modern_ProfileBox.jsx';
+import Modern_QuickSettings from '../Modern_Home/Modern_QuickSettings.jsx';
+import Modern_QuickNotes from '../Modern_Home/Modern_QuickNotes.jsx';
+import Modern_ImportantJobs from '../Modern_Home/Modern_ImportantJobs.jsx';
+import Modern_RecentLists from '../Modern_Home/Modern_RecentLists.jsx';
+import Modern_StatsChart from '../Modern_Home/Modern_StatsChart.jsx';
+import Modern_StatsInfo from '../Modern_Home/Modern_StatsInfo.jsx';
+import ModernFooterComponent from '../../ModernFooter.jsx';
+
+function ModernUI_Home() { 
+
+
+    return (
+        <div className='modernHomeContainer'>
+            
+          {/* Left Column */}
+          <div style={{display: 'flex', flexDirection: 'column', 
+                    gap: '10px'
+                    , padding: '5px'
+          }}>
+            <Modern_ProfileBox />
+            
+            <div style={{display: 'flex', flexDirection: 'row'}}>
+              <div style={{width: '55%'}}>
+              </div>
+              <div style={{width: '45%', height: '100%'}}>
+                  <Modern_QuickSettings />
+                  <Modern_QuickNotes />
+              </div>
+            </div>
+            
+          </div>
+          
+          {/* Middle Column */}
+          <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
+            <Modern_ImportantJobs />
+            <Modern_RecentLists />
+          </div>
+
+          {/* Right Column */} 
+          <div style={{display: 'flex', flexDirection: 'column', width: '100%'}}>
+            <Modern_StatsChart />
+            <Modern_StatsInfo />
+          </div>
+        </div>
+    );
+};
+
+export default ModernUI_Home;

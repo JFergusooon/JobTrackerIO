@@ -1,13 +1,11 @@
-import '../../css/ModernLoginCSS.css';
+import '../../../css/ModernLoginCSS.css';
 import { useState } from 'react';
 
-const DeletePopup = ({func, companyOrListName, closePopup}) => {
+const Modern_DeletePopup = ({func, companyOrListName, closePopup}) => {
 
     const [enteredPassword, setEnteredPassword] = useState("");
 
     async function deleteCompany() {
-        console.log('Delete Company..')
-
         console.log('Deleting Company: ' + companyOrListName);
 
         const stage = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev";
@@ -29,8 +27,51 @@ const DeletePopup = ({func, companyOrListName, closePopup}) => {
         window.location.reload();
     }
 
+    async function removeListFromUser() {
+        console.log('Deleting List "' + companyOrListName + '" from User Item'
+        );
+        const stage = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev";
+        const url = stage + "/Users/removeList"
+                    + "?username=" + localStorage.getItem('username')
+                    + "&existingListName=" + companyOrListName;
+        try {
+            const res = await fetch(url, {
+                method: "PATCH"
+            });
+
+            const data = await res.json();
+            console.log("SUCCESS:", data);
+            window.location.href = "/tracker"
+        } catch (err) {
+            console.error("ERROR:", err);
+        }
+    }
+
+    async function removeJobsWithList() {
+        console.log('Deleting All Jobs w/ ListName "' + companyOrListName + '"'
+        );
+        const stage = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev";
+        const url = stage + "/Jobs/deleteJobByListName"
+                    + "?username=" + localStorage.getItem('username')
+                    + "&listName=" + companyOrListName;
+        try {
+            const res = await fetch(url, {
+                method: "DELETE"
+            });
+
+            const data = await res.json();
+            console.log("SUCCESS:", data);
+
+            window.location.href = "/tracker"
+            window.location.reload();
+        } catch (err) {
+            console.error("ERROR:", err);
+        }
+    }
+
     async function deleteList() {
-        console.log('Delete List..')
+        removeListFromUser();
+        removeJobsWithList();
     }
 
     return (
@@ -54,4 +95,4 @@ const DeletePopup = ({func, companyOrListName, closePopup}) => {
         </div>
     );
 };
-export default DeletePopup;
+export default Modern_DeletePopup;

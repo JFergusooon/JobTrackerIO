@@ -1,8 +1,9 @@
 import './App.css';
 
 import { Routes, Route } from 'react-router-dom';
-import HomePage from './pages/Home';
+import HomePage from './pages/HomePage';
 import TrackerPage from './pages/TrackerPage';
+import TermsPage from './pages/TermsPage';
 
 function App() {
   return (
@@ -10,6 +11,7 @@ function App() {
       <Routes>
         <Route path='/' element={<HomePage />} />
         <Route path='/tracker' element={<TrackerPage />} />
+        <Route path='/terms' element={<TermsPage />} />
       </Routes>
     </div>
   );

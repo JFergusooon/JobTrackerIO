@@ -1,8 +1,8 @@
 import React, {useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
-import '../../css/HomePageCSS.css';
+import '../../../css/Legacy_HomePageCSS.css';
 
-const StatsInfo = ({}) => {
+const Legacy_StatsInfo = ({}) => {
     const [totalAppliedThisMonth, setTotalAppliedThisMonth] = useState("XXX");
     const [totalRejectedThisMonth, setTotalRejectedThisMonth] = useState("XXX");
     const [totalJobsStageTwo, setTotalJobsStageTwo] = useState("XXX");
@@ -47,4 +47,4 @@ const StatsInfo = ({}) => {
         </div>
     );
 };
-export default StatsInfo;
+export default Legacy_StatsInfo;

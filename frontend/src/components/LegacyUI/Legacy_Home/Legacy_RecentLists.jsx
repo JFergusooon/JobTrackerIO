@@ -1,8 +1,8 @@
 import React, {useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
-import '../../css/HomePageCSS.css';
+import '../../../css/Legacy_HomePageCSS.css';
 
-const RecentLists = ({text, closePopup}) => {
+const Legacy_RecentLists = ({text, closePopup}) => {
 
 
     return (
@@ -36,4 +36,4 @@ const RecentLists = ({text, closePopup}) => {
         </div>
     );
 };
-export default RecentLists;
+export default Legacy_RecentLists;

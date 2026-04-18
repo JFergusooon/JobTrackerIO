@@ -1,8 +1,9 @@
 import React, {useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
-import '../../css/HomePageCSS.css';
+import '../../../css/Legacy_HomePageCSS.css';
+import LegacyToggle from '../Legacy_Plus/LegacyToggle';
 
-const QuickSettings = ({text, closePopup}) => {
+const Legacy_QuickSettings = ({text, closePopup}) => {
 
 
     return (
@@ -13,9 +14,9 @@ const QuickSettings = ({text, closePopup}) => {
                 <div className='quickSettingsButton'>---</div>
                 <div className='quickSettingsButton'>---</div>
                 <div className='quickSettingsButton'>---</div>
-                <div className='quickSettingsButton'>---</div>
+                <div className='quickSettingsButton'><LegacyToggle /></div>
             </div>
         </div>
     );
 };
-export default QuickSettings;
+export default Legacy_QuickSettings;

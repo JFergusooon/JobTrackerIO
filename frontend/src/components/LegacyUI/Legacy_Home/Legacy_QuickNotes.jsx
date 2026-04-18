@@ -1,8 +1,8 @@
 import React, {useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
-import '../../css/HomePageCSS.css';
+import '../../../css/Legacy_HomePageCSS.css';
 
-const QuickNotes = ({text, closePopup}) => {
+const Legacy_QuickNotes = ({text, closePopup}) => {
 
 
     return (
@@ -12,4 +12,4 @@ const QuickNotes = ({text, closePopup}) => {
         </div>
     );
 };
-export default QuickNotes;
+export default Legacy_QuickNotes;

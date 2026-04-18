@@ -1,0 +1,145 @@
+.modernLeftColumn {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 5px;
+    align-items: center;
+    border: 0.1px solid black;
+    border-radius: 10px;
+}
+
+.modernTrackerContainer {
+    display: grid;
+    grid-template-columns: 335fr 1545fr; /* left, middle, right */
+    gap: 5px;
+    width: 100%;
+    /*height: 100vh;*/
+    height: 750px;
+    margin: 20px;
+}
+
+.modernRightColumn {
+    display: flex; 
+    flex-direction: column,;
+    gap: 30px;
+    width: 95%;
+    border-radius: 20px;
+    border: 1px solid black;
+}
+
+.modernUnknown {
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #ad9a42;
+    border-radius: 8px;
+    height: 10px;
+    display: flex;
+    flex-direction: row;
+}
+
+.modernJobContainer {
+  height: 70vh;        /* or whatever fits your UI */
+  overflow-y: auto;     /* enables vertical scrolling */
+  border: 1px solid #ccc;
+  padding: 10px;
+  width: 100%;
+}
+
+.modernJobCard {
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  height: 10px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+    align-items: center;
+}
+
+.modernTrackerPageBackground {
+    background: linear-gradient(180deg,#9DBF9E 85%, #005157ff 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 30px;
+}
+
+.modernRightColumnHeaders {
+    padding: 2px; 
+    margin: 0px;
+    width: 19.5%;
+    text-align: left;
+    font-weight: bold;
+    background: rgba(255, 255, 255, 0.4);
+    border: 1px solid black;
+
+}
+
+.modernSearchResultsDiv {
+    width: 100%;
+    text-align: "left"; 
+    padding: "8px"; 
+    border-bottom: "solid 0.5px black"; 
+    cursor: "pointer";
+    height: "30px"
+}
+
+.modernEditJobButtonsContainer {
+    gap: 5px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100px;
+    min-height: 100px;
+    max-height: 100px;
+    width: 100%;
+}
+
+.modernNewListCloseButton {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    border: none;
+    background: none;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.modernLoginFormContainer {
+    width: 350px;
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    position: relative;
+    box-shadow: 0 0 15px rgba(0,0,0,0.3)
+}
+.modernLoginSubmitButton {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 30px;
+    border: none;
+    background-color: #3F5EFB;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+    width: 50pxW;
+}
+
+.modernLoginFormTextBox {
+    padding: 10px; 
+    border-radius: 8px; 
+    border: 1px solid #ccc;
+}
+
+.modernNewListFormContainer {
+    width: 300px;
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    position: relative;
+    box-shadow: 0 0 15px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+}

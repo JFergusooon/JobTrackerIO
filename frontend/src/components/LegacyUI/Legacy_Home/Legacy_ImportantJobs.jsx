@@ -1,8 +1,8 @@
 import React, {useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
-import '../../css/HomePageCSS.css';
+import '../../../css/Legacy_HomePageCSS.css';
 
-const ImportantJobs = ({importantJobsList, closePopup}) => {
+const Legacy_ImportantJobs = ({importantJobsList, closePopup}) => {
 
 
     return (
@@ -16,4 +16,4 @@ const ImportantJobs = ({importantJobsList, closePopup}) => {
         </div>
     );
 };
-export default ImportantJobs;
+export default Legacy_ImportantJobs;

@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
-import '../../css/HomePageCSS.css';
+import '../../../css/Legacy_HomePageCSS.css';
 import {
   LineChart,
   Line,
@@ -11,7 +11,7 @@ import {
   ResponsiveContainer
 } from "recharts";
 
-const StatsChart = ({text, closePopup}) => {
+const Legacy_StatsChart = ({text, closePopup}) => {
 
     const data = [
   { month: "Jan", jobs: 50 },
@@ -74,4 +74,4 @@ const filteredData = last6Months.map(month => {
         </div>
     );
 };
-export default StatsChart;
+export default Legacy_StatsChart;

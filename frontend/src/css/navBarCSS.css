@@ -31,9 +31,39 @@
 
 .loggedInNavBarButton {
   width: 100px;
-  padding: 10px;
-  background-color: lightgray;
+  padding: 3px;
   color: black;
+  background: rgba(84, 199, 49, 0.3);
   border: 1px solid black;
   margin: 5px;
+  border-radius: 5px;
+}
+
+.loggedInNavBarButton:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  color: white;
+}
+
+.loggedInNavBarButton:active {
+  background-color: rgba(185, 24, 24, 0.3);
+  cursor: pointer;
+  color: white;
+}
+
+.loggedInNavBarButton:visited {
+  background-color: rgba(84, 199, 49, 0.3);
+  cursor: pointer;
+  color: black;
+}
+
+
+.navBarContainer a,
+.loggedInNavBarButton a,
+.navBarContainer a:hover,
+.navBarContainer a:visited, 
+.loggedInNavBarButton a:hover,
+.loggedInNavBarButton a:visited {
+  color: black;
+  text-decoration: none;
 }

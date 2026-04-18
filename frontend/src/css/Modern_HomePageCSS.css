@@ -1,0 +1,173 @@
+.modernHomeContainer {
+    display: grid;
+    grid-template-columns: 500fr 850fr 530fr; /* left, middle, right */
+    gap: 5px;
+    width: 100%;
+    /*height: 100vh;*/
+    height: 750px;
+    margin: 20px;
+    margin-top: 45px;
+}
+
+
+
+
+
+
+.modernQuickSettingsContainer {
+    border: solid 1px black;
+    border-radius: 20px;
+    width: 100%;
+    height: 80%;
+    background: rgba(255, 255, 255, 0.4);
+    margin-bottom: 10px;
+}
+
+.modernQuickSettingsTitle {
+    font-size: 20px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+
+.modernQuickSettingsButtonContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.modernQuickSettingsButton {
+    border: solid 1px orange;
+    width: 70%;
+    margin: 2%;
+    height: 30px;
+    background-color: white;
+    text-align: center;
+        justify-content: center;
+        align-items: center;
+}
+
+.modernQuickNotesContainer {
+    border: solid 1px black;
+    width: 100%;
+    height: 77%;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 20px;
+
+}
+
+.modernQuickNotesTitle {
+    font-size: 20px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+
+.modernQuickNotesInput {
+    border: solid 1px orange;
+    height: 70%;
+    margin: 3px;
+    width: 80%;
+}
+
+
+.modernProfileBoxContainer {
+    width: 100%;
+    border: 1px solid black;
+    border-radius: 20px;
+    height: 20%;
+    display: flex;
+    flex-direction: row;
+    background: rgba(255, 255, 255, 0.4);
+}
+
+.modernProfileBoxTitle {
+    font-size: 24px;
+    margin: 0;
+}
+
+.modernRecentListsContainer {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.4);
+    border: solid 1px black;
+    border-radius: 20px;
+    margin-top: 0px;
+    justify-content: center;
+    text-align: center;
+    align-items: center;
+}
+
+.modernRecentListsButton {
+    border: solid 1px orange;
+    width: 190px;
+    margin: 2%;
+    height: 30px;
+    background-color: white;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+}
+
+.modernRecentListsButtonContainer {
+    display: flex;
+    flex-direction: row;
+    gap: 1%;
+    width: 100%;
+    justify-content: center;
+}
+
+.modernRecentListsTitle {
+    font-size: 20px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    text-align: left;
+    margin-left: 30px;
+}
+
+.modernImportantJobsContainer {
+    width: 100%;
+    height: 69.5%;
+    background: rgba(255, 255, 255, 0.4);
+    border: solid 1px black;
+    border-radius: 20px;
+    margin-bottom: 0px;
+}
+
+.modernImportantJobsTitle {
+    font-size: 20px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    text-align: left;
+    margin-left: 30px;
+}
+
+.modernStatsChartContainer {
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 20px;
+        border: solid 1px black;
+        margin-bottom: 10px;
+        margin-left: 5px;
+    height: 45%
+}
+
+.modernStatsChartTitle {
+    font-size: 20px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    text-align: left;
+    margin-left: 30px;
+}
+
+.modernStatsChart {
+    background-color: grey;
+    height: 250px;
+    margin: 15px;
+    border-radius: 20px;
+}
+
+.modernStatsInfoContainer {
+    background: rgba(255, 255, 255, 0.4);
+    height: 45%;
+    border: solid 1px black;
+    border-radius: 20px;
+    margin-top: 0px;
+    margin-left: 5px;
+}

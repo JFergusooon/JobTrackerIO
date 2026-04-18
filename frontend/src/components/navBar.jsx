@@ -1,18 +1,20 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useState } from "react";
 import LoginPopup from '../components/LoginPopup';
 import UpdatesPopup from '../components/UpdatesPopup';
 import "../css/navBarCSS.css"
-import LegacyToggle from './LegacyToggle';
+import LegacyToggle from './LegacyUI/Legacy_Plus/LegacyToggle.jsx';
 
 function NavBar() { 
   const [showPopup, setShowPopup] = useState(false);
   const [showUpdatesPopup, setShowUpdatesPopup] = useState(false);
+  const navigate = useNavigate();
   const togglePopup = () => {
     // If Button is 'Logout':
     if(loginState === "Logout" && localStorage.getItem('username') !== "" && localStorage.getItem('password') !== "") {
             localStorage.setItem('username', '')
             localStorage.setItem('password', '')
+            navigate(`/`)
             window.location.reload()
     }
     else {
@@ -31,29 +33,60 @@ function NavBar() {
     <>
       <nav className="navBarContainer">
 
-        {/* Left Title */}
-        <Link to="/" style={{ color: 'white', fontSize: '25px', margin: 0 }}> job-tracker.io </Link>
+  {/* LEFT */}
+  <div style={{ flex: 1 }}>
+    <Link to="/" style={{ color: 'white', fontSize: '25px' }}>
+      job-tracker.io
+    </Link>
+  </div>
 
-        <div className="menu-item is-active menu-item--play">
-          <a href="#" className="menu-link" onClick={togglePopup}> {loginState} </a>
+  {/* CENTER (always centered) */}
+  <div style={{
+    flex: 1,
+    display: 'flex',
+    justifyContent: 'center',
+    gap: '20px'
+  }}>
+    {localStorage.getItem("username") !== "" && (
+      <>
+        <div className='loggedInNavBarButton' onClick={() => navigate('/')}>
+          <Link to="/">Home</Link>
         </div>
-      </nav>
-      
-      
-      {/* If User is Logged In: Show Additional Nav Bar */}
-      {localStorage.getItem("username") !== "" ? 
-        <div style={{width: '100%', height: '50px', backgroundColor: 'orange', marginTop: '42px', display: "flex", alignItems: 'center', justifyContent: 'center', gap: '100px'}}>
-          <p style={{color: 'white'}}> Hi, {localStorage.getItem("username")}!</p>
-          <div>
-            <button className='loggedInNavBarButton'><Link to="/">Home</Link></button>
-            <button className='loggedInNavBarButton'><Link to="/tracker" >Tracker</Link></button>
-            <button onClick={toggleUpdatePopup} className='loggedInNavBarButton'>Updates</button>
-            <button className='loggedInNavBarButton'>Settings</button>
-          </div>
-          {window.location.pathname.endsWith('/tracker') ? <LegacyToggle /> : ""}
-          {window.location.pathname.endsWith('/tracker') ? <button>Import from CSV</button> : ""}
-        </div> 
-      : ""}
+        <div className='loggedInNavBarButton' onClick={() => navigate('/tracker')}>
+          <Link to="/tracker">Tracker</Link>
+        </div>
+        <div onClick={toggleUpdatePopup} className='loggedInNavBarButton'>
+          Updates
+        </div>
+        <div className='loggedInNavBarButton'>
+          Settings
+        </div>
+      </>
+    )}
+  </div>
+
+  {/* RIGHT */}
+  <div style={{
+    flex: 1,
+    display: 'flex',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    gap: '20px'
+  }}>
+    {localStorage.getItem("username") !== "" && (
+      <p style={{ color: 'white', margin: 0 }}>
+        Hi, {localStorage.getItem("username")}!
+      </p>
+    )}
+
+    <div className="menu-item is-active menu-item--play" style={{backgroundColor: 'white', color: 'black', padding: '3px', borderRadius: '5px', border: '1px solid black'}}>
+      <a href="#" className="menu-link" onClick={togglePopup} style={{ color: 'black' }}>
+        {loginState}
+      </a>
+    </div>
+  </div>
+
+</nav>
 
 
     {/* Show Login/Register Popup if button is clicked */}

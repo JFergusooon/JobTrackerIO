@@ -1,14 +1,9 @@
 // pages/Home.jsx
 import React from 'react';
-import NavBar from '../components/navBar';
-import ProfileBox from '../components/Home/ProfileBox';
-import QuickSettings from '../components/Home/QuickSettings';
-import QuickNotes from '../components/Home/QuickNotes';
-import ImportantJobs from '../components/Home/ImportantJobs';
-import RecentLists from '../components/Home/RecentLists';
-import StatsChart from '../components/Home/StatsChart';
-import StatsInfo from '../components/Home/StatsInfo'
-import ModernFooterComponent from '../Modern Components/ModernFooterComponent'
+import NavBar from '../components/navBar.jsx';
+import LegacyUI_Home from '../components/LegacyUI/Legacy_Plus/LegacyUI_Home.jsx';
+import ModernUI_Home from '../components/ModernUI/Modern_Plus/ModernUI_Home.jsx';
+import ModernFooterComponent from '../components/ModernFooter.jsx'
 
 
 function HomePage() {
@@ -23,48 +18,14 @@ function HomePage() {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center', 
+        marginTop: '30px'
       }}>
 
-      {localStorage.getItem("username") !== "" ? <>
-        <div className='homeContainer'>
-
-          {/* Left Column */}
-          <div style={{display: 'flex', flexDirection: 'column', 
-                    gap: '10px',
-                    background: 'green', padding: '5px'
-          }}>
-            <ProfileBox />
-            
-            <div style={{display: 'flex', flexDirection: 'row'}}>
-              <div style={{width: '55%'}}>
-              </div>
-              <div style={{width: '45%', height: '100%'}}>
-                  <QuickSettings />
-                  <QuickNotes />
-              </div>
-            </div>
-            
-          </div>
-          
-          {/* Middle Column */}
-          <div style={{display: 'flex', flexDirection: 'column', gap: '30px', width: '100%',
-            background: '#b80e0e'
-          }}>
-            <ImportantJobs />
-            <RecentLists />
-          </div>
-
-
-          {/* Right Column */} 
-          <div style={{display: 'flex', flexDirection: 'column', width: '100%', background: 'gray'}}>
-            <StatsChart />
-            <StatsInfo />
-          </div>
-
-
-          
-        </div>
-      </> : 
+      {localStorage.getItem("username") !== "" ? 
+        <>
+          {localStorage.getItem('legacyMode') === "true" ? <LegacyUI_Home /> : <ModernUI_Home />}
+        </>
+            : 
         <>
           {/* Box that holds update boxes */}
           <div style={{ display: 'flex', flexDirection: 'row', width: '50%', justifyContent: 'center', 

@@ -1,8 +1,8 @@
 import React, {useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
-import '../../css/HomePageCSS.css';
+import '../../../css/Legacy_HomePageCSS.css';
 
-const ProfileBox = ({text, closePopup}) => {
+const Legacy_ProfileBox = ({text, closePopup}) => {
     let username = "JFergusooon"
     let role = "SDET | Software Engineer"
 
@@ -66,4 +66,4 @@ const ProfileBox = ({text, closePopup}) => {
         </div>
     );
 };
-export default ProfileBox;
+export default Legacy_ProfileBox;
