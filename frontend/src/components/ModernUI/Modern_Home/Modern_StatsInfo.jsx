@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
 import '../../../css/Modern_HomePageCSS.css';
 
-const Modern_StatsInfo = ({}) => {
+const Modern_StatsInfo = ({allJobs}) => {
     const [totalAppliedThisMonth, setTotalAppliedThisMonth] = useState("XXX");
     const [totalRejectedThisMonth, setTotalRejectedThisMonth] = useState("XXX");
     const [totalJobsStageTwo, setTotalJobsStageTwo] = useState("XXX");
@@ -34,8 +34,6 @@ const Modern_StatsInfo = ({}) => {
                     }
                 )
         }, [])
-
-
 
     return (
         <div className='modernStatsInfoContainer'>

@@ -11,39 +11,72 @@ import {
   ResponsiveContainer
 } from "recharts";
 
-const Modern_StatsChart = ({text, closePopup}) => {
+const Modern_StatsChart = ({allJobs, text, closePopup}) => {
 
-    const data = [
-  { month: "Jan", jobs: 50 },
-  { month: "Feb", jobs: 120 },
-  { month: "Mar", jobs: 80 },
-  { month: "Apr", jobs: 24 },
-  { month: "May", jobs: 63 },
-  { month: "Jun", jobs: 130 },
-  { month: "Jul", jobs: 230 },
-  { month: "Aug", jobs: 60 },
-  { month: "Sep", jobs: 73 },
-  { month: "Oct", jobs: 92 },
-  { month: "Nov", jobs: 10 },
-  { month: "Dec", jobs: 54 },
-];
+    function countJobsByMonth(jobs) {
+    const result = {};
 
-const monthOrder = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    jobs.forEach(job => {
+        if (!job.dateApplied) return;
+
+        const date = new Date(job.dateApplied);
+
+        const year = date.getFullYear();
+        const month = date.getMonth(); // 0–11
+
+        const key = `${year}-${month}`; // e.g. "2025-11"
+
+        result[key] = (result[key] || 0) + 1;
+    });
+
+    return result;
+}
+
+    const monthOrder = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const jobsByMonth = countJobsByMonth(allJobs);
+
+
+    const data = monthOrder.map(month => ({
+        month,
+        jobs: jobsByMonth[month] || 0
+    }));
+
+
+
+
+
 
 const now = new Date();
 const currentMonthIndex = now.getMonth();
 
-// get last 6 months safely (handles year wrap)
 const last6Months = Array.from({ length: 6 }, (_, i) => {
-  const index = (currentMonthIndex - (5 - i) + 12) % 12;
-  return monthOrder[index];
+    const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+
+    return {
+        key: `${d.getFullYear()}-${d.getMonth()}`,
+        label: d.toLocaleString('default', { month: 'short' }) // "Jan", etc.
+    };
 });
 
-// keep order aligned
-const filteredData = last6Months.map(month => {
-  const found = data.find(d => d.month === month);
-  return found || { month, jobs: 0 };
-});
+
+const filteredData = last6Months.map(({ key, label }) => ({
+    month: label,
+    jobs: jobsByMonth[key] || 0
+}));
+
+//Split All Rejected Jobs By Month, ['Jan' of Current Year, 'Feb' of Current Year, ...]
+    function countOfRejectedJobsByMonth(jobs) {
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const currentYear = new Date().getFullYear();
+        const rejectedJobsByMonth = {};
+        monthNames.forEach(month => {
+            rejectedJobsByMonth[month] = jobs.filter(job => {
+                const jobDate = new Date(job.dateApplied);
+                return job.status === "Rejected" && jobDate.getFullYear() === currentYear && jobDate.getMonth() === monthNames.indexOf(month);
+            }).length;
+        });
+        return rejectedJobsByMonth;
+    }
 
     return (
         <div className='modernStatsChartContainer'>

@@ -83,12 +83,21 @@ const Modern_DeletePopup = ({func, companyOrListName, closePopup}) => {
                     <div onClick={(e) => e.stopPropagation()} className='loginFormContainer'>
                         <button onClick={closePopup} className='loginCloseButton'> × </button>
 
-                        <h2 style={{ marginTop: 0, marginBottom: 0 }}>Password Required</h2>
+                        <h2 style={{width: '80%', margin: '0px', textAlign: 'center'}}>Password Required</h2>
 
-                        <p style={{ margin: 0 }}>Enter password to delete: </p>
-                        <p style={{ marginTop: 0 }}>{companyOrListName}</p>
-                        <input onChange={({ target }) => setEnteredPassword(target.value)}></input>
-                        <button onClick={func === "company" ? deleteCompany : deleteList} disabled={enteredPassword === "1234" ? false : true}>Delete</button>
+                        <p style={{ width: '80%', margin: '0px', textAlign: 'center' }}>Enter password to delete: </p>
+                        <p style={{ width: '80%', margin: '0px', textAlign: 'center' }}>{companyOrListName}</p>
+                        <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', width: '80%', gap: '10px'}}>
+                            <input style={{width: '80%', height: '30px', borderRadius: '10px'}} onChange={({ target }) => setEnteredPassword(target.value)}></input>
+                            <button style={{
+                                        height: '30px',
+                                        width: '110px',
+                                        borderRadius: '20px',
+                                        background: enteredPassword === "1234" ? '#76ac5e' : 'gray',
+                                        cursor: enteredPassword === "1234" ? 'pointer' : 'not-allowed'
+                                    }} onClick={func === "company" ? deleteCompany : deleteList} disabled={enteredPassword === "1234" ? false : true}>Delete</button>
+                        </div>
+                        
                     </div>    
                 </div>;
             </div>

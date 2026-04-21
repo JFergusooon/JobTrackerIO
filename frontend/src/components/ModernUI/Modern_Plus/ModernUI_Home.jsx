@@ -13,6 +13,34 @@ import ModernFooterComponent from '../../ModernFooter.jsx';
 
 function ModernUI_Home() { 
 
+  const [allJobs, setAllJobs] = useState([]);
+
+  const fetchAllJobs = async () => {
+        const stage = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev";
+        const url = `${stage}/Jobs/getByUsername?username=${localStorage.getItem("username")}`;
+        const encode = window.btoa("admin:admin");
+
+        try {
+            const res = await fetch(url, {
+                headers: { 'Authorization': 'Basic ' + encode },
+                method: "GET"
+            });
+
+            const data = await res.json();
+            setAllJobs(data);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    useEffect(() => {
+        fetchAllJobs();
+    }, []);
+
+    
+    
+
+
 
     return (
         <div className='modernHomeContainer'>
@@ -43,8 +71,8 @@ function ModernUI_Home() {
 
           {/* Right Column */} 
           <div style={{display: 'flex', flexDirection: 'column', width: '100%'}}>
-            <Modern_StatsChart />
-            <Modern_StatsInfo />
+            <Modern_StatsChart allJobs={allJobs} />
+            <Modern_StatsInfo rejectedCount={allJobs} />
           </div>
         </div>
     );
