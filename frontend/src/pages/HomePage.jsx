@@ -28,8 +28,8 @@ function HomePage() {
             : 
         <>
           {/* Box that holds update boxes */}
-          <div style={{ height: '100vh', display: 'flex', flexDirection: 'row', width: '50%', justifyContent: 'center', 
-              alignItems: 'center', gap: '30px', padding: '20px', borderRadius: '10px', background: 'rgba(255, 255, 255, 0.4)' }}>
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'row', width: '50%', justifyContent: 'center', 
+              alignItems: 'center', gap: '30px', padding: '20px', borderRadius: '10px'}}>
 
             {/* Left Side Grey Box */}
             <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)', width: '50%', height: '450px', borderRadius: '40px'}}>
