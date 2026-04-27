@@ -31,11 +31,11 @@ const Modern_RecentLists = ({text, closePopup}) => {
         fetchAllListNames();
     }, []);
 
-    const lists = jobLists || [];
+    //const lists = jobLists || [];
 
-    const recentLists = lists
-        .slice(-12)     // last 12
-        .reverse();     // newest first
+    //const recentLists = lists
+    //    .slice(-12)     // last 12
+    //    .reverse();     // newest first
 
 
     return (
@@ -66,13 +66,13 @@ const Modern_RecentLists = ({text, closePopup}) => {
                     <div className='modernRecentListsButton'>List #12</div>
                 </div>
 
-                <div className='modernRecentListsGrid'>
+                {/*<div className='modernRecentListsGrid'>
                 {recentLists.map((list, index) => (
                     <div key={index} className='modernRecentListsButton'>
                         {list}
                     </div>
                 ))}
-            </div>
+                </div>*/}
             </div>
 
             
