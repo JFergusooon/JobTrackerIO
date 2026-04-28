@@ -14,7 +14,7 @@ const Modern_QuickSettings = ({text, closePopup}) => {
                 <div className='modernQuickSettingsButton'>---</div>
                 <div className='modernQuickSettingsButton'>---</div>
                 <div className='modernQuickSettingsButton'>---</div>
-                <div className='modernQuickSettingsButton'><LegacyToggle /></div>
+                <div className='modernQuickSettingsButtonBig'><LegacyToggle /></div>
             </div>
         </div>
     );

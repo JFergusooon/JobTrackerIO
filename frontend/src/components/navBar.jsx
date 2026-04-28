@@ -79,8 +79,8 @@ function NavBar() {
       </p>
     )}
 
-    <div className="menu-item is-active menu-item--play" style={{backgroundColor: 'white', color: 'black', padding: '3px', borderRadius: '5px', border: '1px solid black'}}>
-      <a href="#" className="menu-link" onClick={togglePopup} style={{ color: 'black' }}>
+    <div className='loginStateButton'>
+      <a href="#" onClick={togglePopup} style={{ color: 'black' }}>
         {loginState}
       </a>
     </div>
