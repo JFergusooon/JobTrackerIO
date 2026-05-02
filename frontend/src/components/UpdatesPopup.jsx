@@ -14,10 +14,13 @@ const UpdatesPopup = ({text, closePopup}) => {
 
                         <h2 style={{ marginTop: 0 }}>Updates</h2>
 
-                        <p>New Legacy UI</p>
+                        <p style={{textAlign: 'left'}}>New Modern UI</p>
+                        <p style={{textAlign: 'left'}}>Home Screen Changes:</p>
+                        <p style={{textAlign: 'left'}}>ProfileBox Setup</p>
+                        <p style={{textAlign: 'left'}}>StatsChart grabs last 6 months</p>
 
                     </div>    
-                </div>;
+                </div>
             </div>
         </div>
     );
