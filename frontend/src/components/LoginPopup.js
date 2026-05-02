@@ -70,8 +70,13 @@ const Popup = ({text, closePopup}) => {
 
             if (inputUser === allUsers[i].username) {
                 console.log("USERNAME MATCHED!");
-                match = true;
-                break;
+                if(inputPass === allUsers[i].password) {
+                    console.log("PASSWORD MATCHED!");
+                    match = true;
+                    break;
+                }                else {
+                    console.log("PASSWORD DID NOT MATCH");
+                }
             }
         }
 

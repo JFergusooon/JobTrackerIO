@@ -38,10 +38,10 @@ const Modern_StatsInfo = ({allJobs}) => {
     return (
         <div className='modernStatsInfoContainer'>
             <p className='modernStatsInfoTitle'> Stats </p>
-            <p>Total Applied This Month: {totalAppliedThisMonth}</p>
-            <p>Total Rejected This Month: {totalRejectedThisMonth}</p>
-            <p>Jobs in stage 2: {totalJobsStageTwo}</p>
-            <p>Jobs in stage 3: {totalJobsStageThree}</p>
+            <p style={{textAlign: 'left', paddingLeft: '15px'}}>Total Applied This Month: {totalAppliedThisMonth}</p>
+            <p style={{textAlign: 'left', paddingLeft: '15px'}}>Total Rejected This Month: {totalRejectedThisMonth}</p>
+            <p style={{textAlign: 'left', paddingLeft: '15px'}}>Jobs in stage 2: {totalJobsStageTwo}</p>
+            <p style={{textAlign: 'left', paddingLeft: '15px'}}e>Jobs in stage 3: {totalJobsStageThree}</p>
         </div>
     );
 };

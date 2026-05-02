@@ -28,11 +28,11 @@ function HomePage() {
             : 
         <>
           {/* Box that holds update boxes */}
-          <div style={{ display: 'flex', flexDirection: 'row', width: '50%', justifyContent: 'center', 
-              alignItems: 'center', gap: '30px', padding: '20px', borderRadius: '10px', background: 'red' }}>
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'row', width: '50%', justifyContent: 'center', 
+              alignItems: 'center', gap: '30px', padding: '20px', borderRadius: '10px'}}>
 
             {/* Left Side Grey Box */}
-            <div style={{ backgroundColor: '#a59595ff', width: '50%', height: '450px', borderRadius: '40px'}}>
+            <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)', width: '50%', height: '450px', borderRadius: '40px'}}>
               <h1 style={{ color: 'white' , borderBottom: '1px solid black' }}>Why Join JobTracker?</h1>
               <p style={{ color: 'white', margin: '0px' }}>JobTracker offers easy application tracking abilities for job seekers looking to land that next step in their career journey. </p>
               <p style={{ color: 'white', margin: '0px', borderBottom: '1px solid black'   }}>We are here to help!</p>
@@ -58,7 +58,7 @@ function HomePage() {
       </div>
 
       {/* Right Side Grey Box */}
-      <div style={{ backgroundColor: '#a59595ff', width: '50%', height: '450px', borderRadius: '40px' }}>
+      <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)', width: '50%', height: '450px', borderRadius: '40px' }}>
         <h1 style={{ color: 'white' }}>JobTracker ChangeList</h1>
         <p>Update 0.0.5 - Setup Update</p>
         <p>Changes: </p>

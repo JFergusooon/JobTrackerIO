@@ -15,6 +15,11 @@ function ModernUI_Home() {
 
   const [allJobs, setAllJobs] = useState([]);
 
+  const [userInfo, setUserInfo] = useState();
+
+  const [error, setError] = useState(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+
   const fetchAllJobs = async () => {
         const stage = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev";
         const url = `${stage}/Jobs/getByUsername?username=${localStorage.getItem("username")}`;
@@ -37,7 +42,28 @@ function ModernUI_Home() {
         fetchAllJobs();
     }, []);
 
-    
+    useEffect(() => {
+            let stage_url = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev"
+            let url = stage_url + "/Users/getByUsername?username=" + localStorage.getItem('username')
+            let encode = window.btoa("admin:admin");
+            fetch(url, {
+                headers: {
+                    'Authorization':  'Basic ' + encode
+                }}    
+            )
+                .then(res => res.json())
+                .then(
+                    (result) => {
+                        console.log("getting all applications from this month: " + JSON.stringify(result));
+                        setIsLoaded(true);
+                        setUserInfo(result);
+                    },
+                    (error) => {
+                        setIsLoaded(true);
+                        setError(error);
+                    }
+                )
+        }, [])
     
 
 
@@ -50,14 +76,14 @@ function ModernUI_Home() {
                     gap: '10px'
                     , padding: '5px'
           }}>
-            <Modern_ProfileBox />
+            <Modern_ProfileBox userData={userInfo} />
             
             <div style={{display: 'flex', flexDirection: 'row'}}>
               <div style={{width: '55%'}}>
               </div>
               <div style={{width: '45%', height: '100%'}}>
                   <Modern_QuickSettings />
-                  <Modern_QuickNotes />
+                  <Modern_QuickNotes userData={userInfo} />
               </div>
             </div>
             
