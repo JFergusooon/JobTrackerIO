@@ -37,14 +37,13 @@ const [quickNotes, setQuickNotes] = useState("");
     return (
         <div className='modernQuickNotesContainer'>
             <p className='modernQuickNotesTitle'> Quick Notes </p>
-            <input
+            <textarea
     className='modernQuickNotesInput'
+    rows={1}
     value={quickNotes}
     onChange={(e) => {
         const newValue = e.target.value;
         setQuickNotes(newValue);
-
-        // OPTIONAL: auto-save on every keystroke
         updateQuickNotes(newValue);
     }}
 />

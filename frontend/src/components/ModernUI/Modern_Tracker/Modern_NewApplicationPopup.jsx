@@ -1,18 +1,26 @@
-import '../../../css/Modern_TrackerPageCSS.css';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
 const Modern_NewApplicationPopup = ({text, closePopup, listNames }) => {
 
-
+    const location = useLocation();
     const [newCompanyName, setNewCompanyName] = useState("");
     const [newJobLink, setNewJobLink] = useState("");
     const [newList, setNewList] = useState("");
     const [newLocation, setNewLocation] = useState("");
     const [newPosition, setNewPosition] = useState("");
 
+    useEffect(() => {
+        const listName = new URLSearchParams(location.search).get("listName");
+        if (listName) {
+            setNewList(listName);
+        }
+    }, [location.search]);
+
+    const isFormValid = newCompanyName && newPosition && newJobLink && newLocation && newList;
+
     async function addNewApplication() {
         console.log('Adding new application' + text)
-
 
         const stage = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev";
         const url = stage + "/Jobs/create" 
@@ -27,7 +35,6 @@ const Modern_NewApplicationPopup = ({text, closePopup, listNames }) => {
             position: newPosition, 
             rejected: false
         };
-
 
         try {
             const res = await fetch(url, {
@@ -48,50 +55,215 @@ const Modern_NewApplicationPopup = ({text, closePopup, listNames }) => {
         window.location.reload()
     }
 
+    return (
+        <div style={{
+            position: "fixed", inset: 0,
+            backgroundColor: "rgba(0,0,0,0.4)",
+            display: "flex", justifyContent: "center", alignItems: "center",
+            zIndex: 9999,
+        }} onClick={closePopup}>
+            <div
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                    backgroundColor: "rgba(0, 0, 0, 0.8)",
+                    borderRadius: "16px",
+                    padding: "36px 32px 28px",
+                    width: "520px",
+                    maxWidth: "95vw",
+                    boxShadow: "0 20px 60px rgba(0,0,0,0.6)",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "0px",
+                    color: "#f0f0f0",
+                    fontFamily: "system-ui, -apple-system, sans-serif",
+                }}
+            >
+                {/* Title */}
+                <h2 style={{ margin: "0 0 12px", fontSize: "26px", fontWeight: "700", color: "#ffffff" }}>
+                    Add Job Application
+                </h2>
 
-    return <div>
-                <div>
-                    <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.4)", display: "flex",
-                                justifyContent: "center", alignItems: "center", zIndex: 9999, }}>
-                        {/* Actual Login Box */}
-                        <div onClick={(e) => e.stopPropagation()} className='newApplicationFormContainer'>
-                            <button onClick={closePopup} className='newListCloseButton'> × </button>
+                {/* Subtitle */}
+                <p style={{ margin: "0 0 20px", fontSize: "14px", color: "#a0a0a0" }}>
+                    Enter the details for the new job application
+                </p>
 
-                            <h3 style={{ margin: '2px', background:'#3069aa', color: 'white', width: '100%'}}>Add Job Application</h3>
+                {/* Divider */}
+                <hr style={{ border: "none", borderTop: "1px solid #333", margin: "0 0 20px" }} />
 
-                            <p style={{margin: '0px'}}>Company Name: </p>
-                            <input placeholder="Enter Text..." style={{width: '80%', height: '30px', borderRadius: '10px'}} onChange={({ target }) => setNewCompanyName(target.value)}/>
+                {/* Form Fields */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "20px", marginBottom: "20px" }}>
+                    {/* Company Name */}
+                    <div>
+                        <label style={{ fontSize: "14px", fontWeight: "600", color: "#f0f0f0", display: "block", marginBottom: "8px" }}>
+                            Company Name *
+                        </label>
+                        <input
+                            placeholder="Enter company name..."
+                            value={newCompanyName}
+                            onChange={({ target }) => setNewCompanyName(target.value)}
+                            style={{
+                                width: "100%",
+                                padding: "12px 14px",
+                                borderRadius: "8px",
+                                border: "1px solid #3a3a3c",
+                                backgroundColor: "#2c2c2e",
+                                color: "#f0f0f0",
+                                fontSize: "14px",
+                                outline: "none",
+                                boxSizing: "border-box",
+                            }}
+                        />
+                    </div>
 
-                            <p style={{margin: '0px'}}>Position: </p>
-                            <input placeholder="Enter Text..." style={{width: '80%', height: '30px', borderRadius: '10px'}} onChange={({ target }) => setNewPosition(target.value)}/>
+                    {/* Position */}
+                    <div>
+                        <label style={{ fontSize: "14px", fontWeight: "600", color: "#f0f0f0", display: "block", marginBottom: "8px" }}>
+                            Position *
+                        </label>
+                        <input
+                            placeholder="Enter position..."
+                            value={newPosition}
+                            onChange={({ target }) => setNewPosition(target.value)}
+                            style={{
+                                width: "100%",
+                                padding: "12px 14px",
+                                borderRadius: "8px",
+                                border: "1px solid #3a3a3c",
+                                backgroundColor: "#2c2c2e",
+                                color: "#f0f0f0",
+                                fontSize: "14px",
+                                outline: "none",
+                                boxSizing: "border-box",
+                            }}
+                        />
+                    </div>
 
-                            <p style={{margin: '0px'}}>Remote / Location: </p>
-                            <input placeholder="Enter Text..." style={{width: '80%', height: '30px', borderRadius: '10px'}} onChange={({ target }) => setNewLocation(target.value)}/>
+                    {/* Location */}
+                    <div>
+                        <label style={{ fontSize: "14px", fontWeight: "600", color: "#f0f0f0", display: "block", marginBottom: "8px" }}>
+                            Location / Remote *
+                        </label>
+                        <input
+                            placeholder="Enter location or 'Remote'..."
+                            value={newLocation}
+                            onChange={({ target }) => setNewLocation(target.value)}
+                            style={{
+                                width: "100%",
+                                padding: "12px 14px",
+                                borderRadius: "8px",
+                                border: "1px solid #3a3a3c",
+                                backgroundColor: "#2c2c2e",
+                                color: "#f0f0f0",
+                                fontSize: "14px",
+                                outline: "none",
+                                boxSizing: "border-box",
+                            }}
+                        />
+                    </div>
 
-                            <p style={{margin: '0px'}}>Job Link: </p>
-                            <input placeholder="Enter Text..." style={{width: '80%', height: '30px', borderRadius: '10px'}} onChange={({ target }) => setNewJobLink(target.value)}/>
+                    {/* Job Link */}
+                    <div>
+                        <label style={{ fontSize: "14px", fontWeight: "600", color: "#f0f0f0", display: "block", marginBottom: "8px" }}>
+                            Job Link *
+                        </label>
+                        <input
+                            placeholder="Enter job link..."
+                            value={newJobLink}
+                            onChange={({ target }) => setNewJobLink(target.value)}
+                            style={{
+                                width: "100%",
+                                padding: "12px 14px",
+                                borderRadius: "8px",
+                                border: "1px solid #3a3a3c",
+                                backgroundColor: "#2c2c2e",
+                                color: "#f0f0f0",
+                                fontSize: "14px",
+                                outline: "none",
+                                boxSizing: "border-box",
+                            }}
+                        />
+                    </div>
 
-                            <p style={{margin: '0px'}}>List: </p>
-                            <select style={{ width: '80%', height: '30px', borderRadius: '10px' }} onChange={(e) => setNewList(e.target.value)} defaultValue="">
-                                <option value="" disabled> Select a list... </option>
-                                {listNames?.map((list, index) => (
-                                    <option key={index} value={list}> {list} </option>
-                                ))}
-                            </select>
-
-                            <div style={{display: 'flex', flexDirection: 'row', gap: '20px'}}>
-                                <button onClick={addNewApplication} disabled={!newList} style={{ height: '30px', width: '110px', 
-                                                                    borderRadius: '20px', background: newList ? '#76ac5e' : 'gray',
-                                                                    cursor: newList ? 'pointer' : 'not-allowed' }}> Add Application
-                                </button>
-                            </div>
-
-                        </div>    
-                    </div>;
+                    {/* List Dropdown */}
+                    <div>
+                        <label style={{ fontSize: "14px", fontWeight: "600", color: "#f0f0f0", display: "block", marginBottom: "8px" }}>
+                            List *
+                        </label>
+                        <select
+                            value={newList}
+                            onChange={(e) => setNewList(e.target.value)}
+                            style={{
+                                width: "100%",
+                                padding: "12px 14px",
+                                borderRadius: "8px",
+                                border: "1px solid #3a3a3c",
+                                backgroundColor: "#2c2c2e",
+                                color: "#f0f0f0",
+                                fontSize: "14px",
+                                outline: "none",
+                                boxSizing: "border-box",
+                                cursor: "pointer",
+                            }}
+                        >
+                            <option value="" disabled> Select a list... </option>
+                            {listNames?.map((list, index) => (
+                                <option key={index} value={list}> {list} </option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
-            </div>;
 
-        
-    
+                {/* Divider */}
+                <hr style={{ border: "none", borderTop: "1px solid #333", margin: "0 0 20px" }} />
+
+                {/* Buttons */}
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", alignItems: "flex-start" }}>
+                    <button
+                        onClick={closePopup}
+                        style={{
+                            padding: "10px 22px",
+                            borderRadius: "8px",
+                            border: "1px solid #444",
+                            backgroundColor: "#2c2c2e",
+                            color: "#f0f0f0",
+                            fontSize: "14px",
+                            fontWeight: "600",
+                            cursor: "pointer",
+                            transition: "background-color 0.2s"
+                        }}
+                        onMouseEnter={(e) => e.target.style.backgroundColor = "#3a3a3c"}
+                        onMouseLeave={(e) => e.target.style.backgroundColor = "#2c2c2e"}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={addNewApplication}
+                        disabled={!isFormValid}
+                        style={{
+                            padding: "10px 22px",
+                            borderRadius: "8px",
+                            border: "none",
+                            backgroundColor: isFormValid ? "#4a9eff" : "#3a5080",
+                            color: isFormValid ? "#ffffff" : "#7a9aaa",
+                            fontSize: "14px",
+                            fontWeight: "600",
+                            cursor: isFormValid ? "pointer" : "not-allowed",
+                            transition: "background-color 0.2s"
+                        }}
+                        onMouseEnter={(e) => {
+                            if (isFormValid) e.target.style.backgroundColor = "#3a8eef";
+                        }}
+                        onMouseLeave={(e) => {
+                            if (isFormValid) e.target.style.backgroundColor = "#4a9eff";
+                        }}
+                    >
+                        Add Application
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
 };
+
 export default Modern_NewApplicationPopup;

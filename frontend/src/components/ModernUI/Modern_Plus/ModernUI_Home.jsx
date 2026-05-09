@@ -9,11 +9,13 @@ import Modern_ImportantJobs from '../Modern_Home/Modern_ImportantJobs.jsx';
 import Modern_RecentLists from '../Modern_Home/Modern_RecentLists.jsx';
 import Modern_StatsChart from '../Modern_Home/Modern_StatsChart.jsx';
 import Modern_StatsInfo from '../Modern_Home/Modern_StatsInfo.jsx';
+import Modern_NewListPopup from '../Modern_Tracker/Modern_NewListPopup.jsx';
 import ModernFooterComponent from '../../ModernFooter.jsx';
 
-function ModernUI_Home() { 
+function ModernUI_Home({ onOpenUpdates }) { 
 
   const [allJobs, setAllJobs] = useState([]);
+    const [showNewListPopup, setShowNewListPopup] = useState(false);
 
   const [userInfo, setUserInfo] = useState();
 
@@ -41,6 +43,10 @@ function ModernUI_Home() {
     useEffect(() => {
         fetchAllJobs();
     }, []);
+
+        const toggleNewListPopup = () => {
+            setShowNewListPopup(!showNewListPopup);
+        };
 
     useEffect(() => {
             let stage_url = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev"
@@ -82,7 +88,7 @@ function ModernUI_Home() {
               <div style={{width: '55%'}}>
               </div>
               <div style={{width: '45%', height: '100%'}}>
-                  <Modern_QuickSettings />
+                  <Modern_QuickSettings onOpenUpdates={onOpenUpdates} onOpenNewList={toggleNewListPopup} />
                   <Modern_QuickNotes userData={userInfo} />
               </div>
             </div>
@@ -98,8 +104,10 @@ function ModernUI_Home() {
           {/* Right Column */} 
           <div style={{display: 'flex', flexDirection: 'column', width: '100%'}}>
             <Modern_StatsChart allJobs={allJobs} />
-            <Modern_StatsInfo rejectedCount={allJobs} />
+            <Modern_StatsInfo allJobs={allJobs} />
           </div>
+
+                    {showNewListPopup ? <Modern_NewListPopup text='NewList' closePopup={toggleNewListPopup} /> : null }
         </div>
     );
 };

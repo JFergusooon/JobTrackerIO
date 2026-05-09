@@ -80,7 +80,7 @@ const filteredData = last6Months.map(({ key, label }) => ({
 
     return (
         <div className='modernStatsChartContainer'>
-            <p className='modernStatsChartTitle'> Jobs Applied Over Time </p>
+            <p className='modernStatsChartTitle'> Jobs Applied Over Last 6 Months </p>
 
             <div style={{
     width: "90%",

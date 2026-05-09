@@ -7,7 +7,7 @@ const Modern_ImportantJobs = ({importantJobsList, closePopup}) => {
 
     const [importantJobs, setImportantJobs] = useState(importantJobsList);
 
-    let importantJobsData = [{
+    const [jobsData, setJobsData] = useState([{
         company: "Ferguson Software Solutions",
         position: "Software Engineer",
         interviewDate: "2026-04-27",
@@ -24,12 +24,16 @@ const Modern_ImportantJobs = ({importantJobsList, closePopup}) => {
         position: "Frontend Developer",
         interviewDate: "2026-04-27",
         stage: "Stage 1 Interview"
-    }]
+    }]);
+
+    const updateDate = (index, newDate) => {
+        setJobsData(prev => prev.map((job, i) => i === index ? { ...job, interviewDate: newDate } : job));
+    };
 
 
-    const buildImportantJobBox = (jobInfo) => {
+    const buildImportantJobBox = (jobInfo, index) => {
         return (
-        <div style={{ height: '140px', background: '#07c5b5', border: '1px solid black', margin: '5px', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ height: '150px', background: 'rgba(255, 255, 255, 0.4)', border: '1px solid black', borderRadius: '20px', margin: '3px 5px', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', flexDirection: 'row', height: '70px', width: '100%'}}>
                 <div style={{ display: 'flex', flexDirection: 'row', gap: '100px', margin: '5px', width: '100%' }}>
                     <div>
@@ -45,8 +49,8 @@ const Modern_ImportantJobs = ({importantJobsList, closePopup}) => {
                         <div style={{display: 'flex', flexDirection: 'column', gap: '3px', margin: '5px', textAlign: 'right'}}>
                             <div style={{display: 'flex', flexDirection: 'row', gap: '3px', textAlign: 'right'}}>
                                 <p style={{margin: '0px', fontSize: '15px', textAlign: 'right'}}> Interview Date: {jobInfo.interviewDate} </p>
-                                <input type="date" value={jobInfo.interviewDate || ""} onChange={(e) => {console.log(e.target.value);}}
-                                        style={{ width: '18px', height: '20px', padding: 0, border: 'none', color: 'transparent', cursor: 'pointer' }}/>
+                                <input type="date" value={jobInfo.interviewDate || ""} onChange={(e) => updateDate(index, e.target.value)}
+                                        style={{ width: '18px', height: '20px', padding: 0, border: 'none', color: 'transparent', cursor: 'pointer'}}/>
                             </div>
 
                             <div style={{display: 'flex', flexDirection: 'row', gap: '3px', margin: '5px', width: '100%', justifyContent: 'right'}}>
@@ -65,9 +69,9 @@ const Modern_ImportantJobs = ({importantJobsList, closePopup}) => {
                 </div>
             </div>
 
-            <div style={{ height: '70px', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-                <p style={{width: '10%', margin: '5px', textAlign: 'right'}}>Notes: </p>
-                <input style={{height: '80%', width: '95%'}} />
+            <div style={{ height: '90px', display: 'flex', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '6px' }}>
+                <p style={{width: '10%', margin: '0 5px 0 5px', textAlign: 'right', paddingTop: '2px'}}>Notes: </p>
+                <textarea style={{height: '90%', width: '95%', borderRadius: '20px', resize: 'none', padding: '4px 8px', boxSizing: 'border-box', verticalAlign: 'top', textAlign: 'left', overflow: 'auto', border: '1px solid orange'}} />
             </div>
 
         </div>
@@ -80,7 +84,7 @@ const Modern_ImportantJobs = ({importantJobsList, closePopup}) => {
             <p className='modernImportantJobsTitle'> Important Interviews </p>
             <div style={{display: 'flex', flexDirection: 'column', gap: '3px'}}>
 
-                {importantJobsData.map((jobInfo) => buildImportantJobBox(jobInfo))}
+                {jobsData.map((jobInfo, index) => buildImportantJobBox(jobInfo, index))}
 
             </div>
         </div>

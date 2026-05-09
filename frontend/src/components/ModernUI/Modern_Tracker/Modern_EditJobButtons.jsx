@@ -4,19 +4,22 @@ import '../../../css/Modern_HomePageCSS.css';
 import { useNavigate, useLocation } from "react-router-dom";
 import '../../../css/Modern_TrackerPageCSS.css';
 
-import Modern_DeletePopup from './Modern_DeletePopup';
+import Modern_DeletePopup_v2 from './Modern_DeletePopup_v2';
 import Modern_EditApplicationPopup from './Modern_EditApplicationPopup';
 
 
-const Modern_EditJobButtons = ({text, job, closePopup, goToListButton}) => {
+const Modern_EditJobButtons = ({text, job, listNames, closePopup, goToListButton, onRejectedToggled}) => {
 
     const [showDeletePopup, setShowDeletePopup] = useState(false);
     const [showEditApplicationPopup, setShowEditApplicationPopup] = useState(false);
+    const [isUpdatingRejected, setIsUpdatingRejected] = useState(false);
 
     const navigate = useNavigate();
 
     async function setRejected() {
+    if (isUpdatingRejected) return;
     console.log('Updating Rejected: ' + text)
+    setIsUpdatingRejected(true);
 
     const stage = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev";
     const url = stage + "/Jobs/flipRejected" 
@@ -35,13 +38,14 @@ const Modern_EditJobButtons = ({text, job, closePopup, goToListButton}) => {
         const data = await res.json();
         console.log("SUCCESS:", data);
 
-        // ✅ only reload AFTER success is confirmed
-        if(res.status === 200) {
-            window.location.reload()
+        if (typeof onRejectedToggled === 'function') {
+            onRejectedToggled(text, !job.rejected);
         }
 
     } catch (err) {
         console.error("ERROR:", err);
+    } finally {
+        setIsUpdatingRejected(false);
     }
 }
 
@@ -60,20 +64,22 @@ const Modern_EditJobButtons = ({text, job, closePopup, goToListButton}) => {
 
     return (
         <div className='modernEditJobButtonsContainer'>
-            <button onClick={setRejected} style={{
+            <button onClick={setRejected} disabled={isUpdatingRejected} style={{
                             height: '30px',
                             width: '200px',
                             padding: '3px',
-                            borderRadius: '20px'
-            }}>Set Rejected / Not Rejected</button>
+                            borderRadius: '20px',
+                            cursor: isUpdatingRejected ? 'not-allowed' : 'pointer',
+                            opacity: isUpdatingRejected ? 0.7 : 1
+            }}>{isUpdatingRejected ? 'Updating...' : 'Set Rejected / Not Rejected'}</button>
             <div style={{display: 'flex', flexDirection: 'row'}}>
                 <button className='editJobButton' onClick={toggleEditPopup}>Edit Application</button>
                 <button className='editJobButton' onClick={toggleDeletePopup}>Delete Company</button>
             </div>
             {goToListButton === true ? <button onClick={goToList}>Go To List</button> : <></>}
             
-        {showDeletePopup ? <Modern_DeletePopup func={'company'} companyOrListName={text} closePopup={toggleDeletePopup} /> : null}
-        {showEditApplicationPopup ? <Modern_EditApplicationPopup job={job} closePopup={toggleEditPopup}/> : null}
+        {showDeletePopup ? <Modern_DeletePopup_v2 func={'company'} companyOrListName={text} closePopup={toggleDeletePopup} /> : null}
+        {showEditApplicationPopup ? <Modern_EditApplicationPopup job={job} listNames={listNames} closePopup={toggleEditPopup}/> : null}
         </div>
 
         

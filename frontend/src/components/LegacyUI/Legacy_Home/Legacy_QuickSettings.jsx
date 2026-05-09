@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import '../../../css/Legacy_HomePageCSS.css';
 import LegacyToggle from '../Legacy_Plus/LegacyToggle';
 
-const Legacy_QuickSettings = ({text, closePopup}) => {
+const Legacy_QuickSettings = ({text, closePopup, onOpenUpdates}) => {
 
 
     return (
@@ -11,7 +11,7 @@ const Legacy_QuickSettings = ({text, closePopup}) => {
             <p className='quickSettingsTitle'> Quick Settings </p>
             <div className='quickSettingsButtonContainer'>
                 <div className='quickSettingsButton'>Add New List</div>
-                <div className='quickSettingsButton'>---</div>
+                <div className='quickSettingsButton' onClick={onOpenUpdates}>Updates</div>
                 <div className='quickSettingsButton'>---</div>
                 <div className='quickSettingsButton'>---</div>
                 <div className='quickSettingsButton'><LegacyToggle /></div>

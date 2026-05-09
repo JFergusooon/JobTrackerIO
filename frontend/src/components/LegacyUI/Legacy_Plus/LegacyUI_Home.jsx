@@ -11,7 +11,7 @@ import StatsInfo from '../Legacy_Home/Legacy_StatsInfo'
 import ModernFooterComponent from '../../ModernFooter.jsx';
 import LegacyToggle from './LegacyToggle.jsx';
 
-function ModernUI_Home() { 
+function ModernUI_Home({ onOpenUpdates }) { 
 
 
     return (
@@ -28,7 +28,7 @@ function ModernUI_Home() {
               <div style={{width: '55%'}}>
               </div>
               <div style={{width: '45%', height: '100%'}}>
-                  <QuickSettings />
+                  <QuickSettings onOpenUpdates={onOpenUpdates} />
                   <QuickNotes />
               </div>
             </div>

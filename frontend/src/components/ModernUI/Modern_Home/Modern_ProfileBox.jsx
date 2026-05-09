@@ -1,28 +1,22 @@
 import React, {useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
+import { useNavigate } from 'react-router-dom';
 import '../../../css/Modern_HomePageCSS.css';
 
 const Modern_ProfileBox = ({userData, closePopup}) => {
+    const navigate = useNavigate();
     let username = "JFergusooon"
     let role = "SDET | Software Engineer"
-
-
-
-
-    
-
-
-
 
 
     return (
         <div className='modernProfileBoxContainer'>
             {/* Left Column */}
-            <div style={{width: '20%', justifyContent: 'left'}}>
-                <div style={{ width: '75px', height: '75px', borderRadius: '50%', backgroundColor: 'blue', margin: '5px'}}>
+            <div style={{width: '20%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start'}}>
+                <div style={{ width: '75px', height: '75px', borderRadius: '50%', backgroundColor: 'blue', margin: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
                     <img src='person.png' alt='person' style={{width: '60%', height: '60%'}}></img>
                 </div>
-                <p style={{textAlign: 'left', width: '100%', paddingLeft: '10px'}}>Edit</p>
+                <p className='modernQuickSettingsButton' onClick={() => navigate('/settings')} style={{textAlign: 'center', margin: '2px 0 0 0', width: 'fit-content', height: 'auto', padding: '1px 6px', cursor: 'pointer', fontSize: '12px'}}>Edit</p>
             </div>
 
             <div style={{width: '56%', textAlign: 'left', marginLeft: '5px', marginTop: '5px'}}>

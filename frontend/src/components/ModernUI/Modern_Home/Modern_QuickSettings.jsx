@@ -3,18 +3,18 @@ import PropTypes from 'prop-types';
 import '../../../css/Modern_HomePageCSS.css';
 import LegacyToggle from '../../LegacyUI/Legacy_Plus/LegacyToggle';
 
-const Modern_QuickSettings = ({text, closePopup}) => {
+const Modern_QuickSettings = ({text, closePopup, onOpenUpdates, onOpenNewList}) => {
 
 
     return (
         <div className='modernQuickSettingsContainer'>
             <p className='modernQuickSettingsTitle'> Quick Settings </p>
             <div className='modernQuickSettingsButtonContainer'>
-                <div className='modernQuickSettingsButton'>Add New List</div>
+                <div className='modernQuickSettingsButton' onClick={onOpenNewList}>Add New List</div>
+                <div className='modernQuickSettingsButton' onClick={onOpenUpdates}>Updates</div>
                 <div className='modernQuickSettingsButton'>---</div>
                 <div className='modernQuickSettingsButton'>---</div>
-                <div className='modernQuickSettingsButton'>---</div>
-                <div className='modernQuickSettingsButtonBig'><LegacyToggle /></div>
+                <div className='modernQuickSettingsButton'><LegacyToggle /></div>
             </div>
         </div>
     );

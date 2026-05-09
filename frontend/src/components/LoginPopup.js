@@ -1,13 +1,12 @@
 import React, {useEffect, useState} from 'react';
-import PropTypes from 'prop-types';
-import '../css/ModernLoginCSS.css';
+import { useNavigate } from 'react-router-dom';
 
 const Popup = ({text, closePopup}) => {
+    const navigate = useNavigate();
     const [curFunc, setCurFunc] = useState("login");
 
     const [inputUser, setInputUser] = useState("");
     const [inputPass, setInputPass] = useState("");
-
 
     const [regUser, setRegUser] = useState("");
     const [regPass, setRegPass] = useState("");
@@ -15,11 +14,8 @@ const Popup = ({text, closePopup}) => {
     const [regLast, setRegLast] = useState("");
     const [regEmail, setRegEmail] = useState("");
 
-
-    const [searUser, setSearUser] = useState([]);
     const [error, setError] = useState(null);
     const [isLoaded, setIsLoaded] = useState(false);
-
     const [allUsers, setAllUsers] = useState([]);
 
 
@@ -83,10 +79,8 @@ const Popup = ({text, closePopup}) => {
         if(match) {
             localStorage.setItem('username', inputUser)
             localStorage.setItem('password', inputPass)
-            console.log("[localStorage] cur Username Set : " + localStorage.getItem("username"))
-            console.log("[localStorage] cur Password Set : " + localStorage.getItem("password"))
-            closePopup()
-            window.location.reload();
+            closePopup();
+            window.dispatchEvent(new Event('authChange'));
         }
 
 
@@ -132,74 +126,263 @@ const Popup = ({text, closePopup}) => {
 
     /* Performs the Switching of the Login & Register Forms */
     function performSwitch() {
+        const overlayStyle = {
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(0,0,0,0.4)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 9999,
+        };
+
+        const cardStyle = {
+            backgroundColor: "rgba(0, 0, 0, 0.8)",
+            borderRadius: "16px",
+            padding: "0",
+            width: "440px",
+            maxWidth: "95vw",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.6)",
+            border: "2px solid rgba(0, 0, 0, 0.2)",
+            display: "flex",
+            flexDirection: "column",
+            color: "#f0f0f0",
+            fontFamily: "system-ui, -apple-system, sans-serif",
+            overflow: "hidden",
+        };
+
+        const tabContainerStyle = {
+            display: "flex",
+            gap: "8px",
+            padding: "20px 32px 0 32px",
+            borderBottom: "1px solid rgba(0, 0, 0, 0.15)",
+        };
+
+        const tabButtonStyle = (isActive) => ({
+            padding: "10px 24px",
+            borderRadius: "8px 8px 0 0",
+            border: isActive ? "none" : "1px solid rgba(0, 0, 0, 0.2)",
+            backgroundColor: isActive ? "#4a9eff" : "#2c2c2e",
+            color: isActive ? "#ffffff" : "#a0a0a0",
+            fontSize: "14px",
+            fontWeight: "600",
+            cursor: "pointer",
+            transition: "background-color 0.2s",
+        });
+
+        const contentStyle = {
+            padding: "32px 32px 28px",
+            display: "flex",
+            flexDirection: "column",
+        };
+
+        const inputStyle = {
+            width: "100%",
+            padding: "12px 14px",
+            borderRadius: "8px",
+            border: "1px solid #3a3a3c",
+            backgroundColor: "#2c2c2e",
+            color: "#f0f0f0",
+            fontSize: "14px",
+            outline: "none",
+            boxSizing: "border-box",
+            marginBottom: "16px",
+        };
+
+        const buttonStyle = {
+            padding: "10px 22px",
+            borderRadius: "8px",
+            border: "1px solid transparent",
+            backgroundColor: "#4a9eff",
+            color: "#ffffff",
+            fontSize: "14px",
+            fontWeight: "600",
+            cursor: "pointer",
+            transition: "background-color 0.2s",
+            width: "100%",
+            boxSizing: "border-box",
+            height: "40px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+        };
+
+        const cancelButtonStyle = {
+            padding: "10px 22px",
+            borderRadius: "8px",
+            border: "1px solid #444",
+            backgroundColor: "#2c2c2e",
+            color: "#f0f0f0",
+            fontSize: "14px",
+            fontWeight: "600",
+            cursor: "pointer",
+            transition: "background-color 0.2s",
+            width: "100%",
+            boxSizing: "border-box",
+            height: "40px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+        };
+
         switch(curFunc) {
             case 'login':
-                        /* Transparent Gray Background When Popup is open to stop users from clicking behind.  */
-                return <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.4)", display: "flex",
-                                    justifyContent: "center", alignItems: "center", zIndex: 9999, }}>
-                            {/* Actual Login Box */}
-                            <div onClick={(e) => e.stopPropagation()} className='loginFormContainer'>
-                                <button onClick={closePopup} className='loginCloseButton'> × </button>
+                return (
+                    <div style={overlayStyle} onClick={closePopup}>
+                        <div onClick={(e) => e.stopPropagation()} style={cardStyle}>
+                            <div style={tabContainerStyle}>
+                                <button style={tabButtonStyle(true)} disabled>
+                                    Login
+                                </button>
+                                <button
+                                    style={tabButtonStyle(false)}
+                                    onClick={changeForm}
+                                    onMouseEnter={(e) => !false && (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.1)")}
+                                    onMouseLeave={(e) => !false && (e.target.style.backgroundColor = "transparent")}
+                                >
+                                    Register
+                                </button>
+                            </div>
+                            <form
+                                onSubmit={(e) => { e.preventDefault(); loginUser(); }}
+                                style={contentStyle}
+                                method="post"
+                                action=""
+                            >
+                                <input
+                                type="text"
+                                placeholder="Username"
+                                name="username"
+                                autoComplete="username"
+                                value={inputUser}
+                                onChange={({ target }) => setInputUser(target.value)}
+                                style={inputStyle}
+                            />
+                                <input
+                                    type="password"
+                                    placeholder="Password"
+                                    name="password"
+                                    autoComplete="current-password"
+                                    value={inputPass}
+                                    onChange={({ target }) => setInputPass(target.value)}
+                                    style={inputStyle}
+                                />
 
-                                <h2 style={{ marginTop: 0 }}>Login</h2>
-
-                                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                                    
-                                    {/* Text Inputs */}
-                                    <input type="text" placeholder="Username" className="loginFormTextBox" onChange={({ target }) => setInputUser(target.value)}/>
-                                    <input type="password" placeholder="Password" className="loginFormTextBox" onChange={({ target }) => setInputPass(target.value)}/>
-                                    
-                                    
-                                    
-                                    
-                                    
-                                    {/* Buttons */}
-                                    <button className="loginSubmitButton" onClick={loginUser}> Log In </button>
-
-                                    <p style={{padding: '0px', margin: '0px'}}> Dont have an account? 
-                                        <button style={{padding: '0px', margin: '0px', color: '#3F5EFB'}} onClick={changeForm}>Register</button>
-                                    </p>
+                                <div style={{ display: "flex", gap: "12px", flexDirection: "row" }}>
+                                    <button
+                                        type="submit"
+                                        style={{...buttonStyle, flex: 1}}
+                                        onMouseEnter={(e) => e.target.style.backgroundColor = "#3a8eef"}
+                                        onMouseLeave={(e) => e.target.style.backgroundColor = "#4a9eff"}
+                                    >
+                                        Log In
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={closePopup}
+                                        style={{...cancelButtonStyle, flex: 1, marginBottom: "0px"}}
+                                        onMouseEnter={(e) => e.target.style.backgroundColor = "#3a3a3c"}
+                                        onMouseLeave={(e) => e.target.style.backgroundColor = "#2c2c2e"}
+                                    >
+                                        Cancel
+                                    </button>
                                 </div>
-                            </div>    
-                        </div>;
+                            </form>
+                        </div>
+                    </div>
+                );
             case 'register':
-                        /* Transparent Gray Background When Popup is open to stop users from clicking behind.  */
-                return <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.4)", display: "flex",
-                                    justifyContent: "center", alignItems: "center", zIndex: 9999, }}>
-                            {/* Actual Register Box */}            
-                            <div onClick={(e) => e.stopPropagation()} className='loginFormContainer'>
-                                <button onClick={closePopup} className='loginCloseButton'> × </button>
+                return (
+                    <div style={overlayStyle} onClick={closePopup}>
+                        <div onClick={(e) => e.stopPropagation()} style={cardStyle}>
+                            <div style={tabContainerStyle}>
+                                <button
+                                    style={tabButtonStyle(false)}
+                                    onClick={changeForm}
+                                    onMouseEnter={(e) => !false && (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.1)")}
+                                    onMouseLeave={(e) => !false && (e.target.style.backgroundColor = "transparent")}
+                                >
+                                    Login
+                                </button>
+                                <button style={tabButtonStyle(true)} disabled>
+                                    Register
+                                </button>
+                            </div>
+                            <div style={contentStyle}>
+                                <input
+                                type="text"
+                                placeholder="First Name"
+                                name="firstName"
+                                value={regFirst}
+                                onChange={({ target }) => setRegFirst(target.value)}
+                                style={inputStyle}
+                            />
+                            <input
+                                type="text"
+                                placeholder="Last Name"
+                                name="lastName"
+                                value={regLast}
+                                onChange={({ target }) => setRegLast(target.value)}
+                                style={inputStyle}
+                            />
+                            <input
+                                type="text"
+                                placeholder="Username"
+                                name="username"
+                                autoComplete="username"
+                                value={regUser}
+                                onChange={({ target }) => setRegUser(target.value)}
+                                style={inputStyle}
+                            />
+                            <input
+                                type="email"
+                                placeholder="Email"
+                                name="email"
+                                autoComplete="email"
+                                value={regEmail}
+                                onChange={({ target }) => setRegEmail(target.value)}
+                                style={inputStyle}
+                            />
+                                <input
+                                    type="password"
+                                    placeholder="Password"
+                                    name="password"
+                                    autoComplete="new-password"
+                                    value={regPass}
+                                    onChange={({ target }) => setRegPass(target.value)}
+                                    style={inputStyle}
+                                />
 
-                                <h2 style={{ marginTop: 0 }}>Register</h2>
-
-                                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                                    {/* Text Inputs */}
-                                    <input placeholder="First Name" className="loginFormTextBox" onChange={({ target }) => setRegFirst(target.value)}/>
-                                    <input placeholder="Last Name" className="loginFormTextBox" onChange={({ target }) => setRegLast(target.value)}/>
-                                    <input placeholder="Username" className="loginFormTextBox" onChange={({ target }) => setRegUser(target.value)}/>
-                                    <input placeholder="Email" className="loginFormTextBox" onChange={({ target }) => setRegEmail(target.value)}/>
-                                    <input placeholder="Password" className="loginFormTextBox" onChange={({ target }) => setRegPass(target.value)}/>
-                                    
-                                    
-                                    {/* Buttons */}
-                                    <button className="loginSubmitButton" onClick={registerUser}> Submit </button>
-
-                                    <p style={{padding: '0px', margin: '0px'}}> Already have an account? 
-                                        <button style={{padding: '0px', margin: '0px', color: '#3F5EFB'}} onClick={changeForm}>Login</button>
-                                    </p>
+                                <div style={{ display: "flex", gap: "12px", flexDirection: "row" }}>
+                                    <button
+                                        onClick={registerUser}
+                                        style={{...buttonStyle, flex: 1}}
+                                        onMouseEnter={(e) => e.target.style.backgroundColor = "#3a8eef"}
+                                        onMouseLeave={(e) => e.target.style.backgroundColor = "#4a9eff"}
+                                    >
+                                        Create Account
+                                    </button>
+                                    <button
+                                        onClick={closePopup}
+                                        style={{...cancelButtonStyle, flex: 1, marginBottom: "0px"}}
+                                        onMouseEnter={(e) => e.target.style.backgroundColor = "#3a3a3c"}
+                                        onMouseLeave={(e) => e.target.style.backgroundColor = "#2c2c2e"}
+                                    >
+                                        Cancel
+                                    </button>
                                 </div>
-                            </div>    
-                        </div>;
+                            </div>
+                        </div>
+                    </div>
+                );
             default:
                 return <p>DEFAULT</p>;
         }
     }
 
     return (
-        <div className='popup'>
-            <div className='popup_open'>
-                {performSwitch()}
-            </div>
+        <div>
+            {performSwitch()}
         </div>
     );
 };

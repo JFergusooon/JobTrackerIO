@@ -1,29 +1,30 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import LoginPopup from '../components/LoginPopup';
-import UpdatesPopup from '../components/UpdatesPopup';
 import "../css/navBarCSS.css"
 import LegacyToggle from './LegacyUI/Legacy_Plus/LegacyToggle.jsx';
 
 function NavBar() { 
   const [showPopup, setShowPopup] = useState(false);
-  const [showUpdatesPopup, setShowUpdatesPopup] = useState(false);
+  const [, forceUpdate] = useState(0);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleAuth = () => forceUpdate(n => n + 1);
+    window.addEventListener('authChange', handleAuth);
+    return () => window.removeEventListener('authChange', handleAuth);
+  }, []);
   const togglePopup = () => {
     // If Button is 'Logout':
     if(loginState === "Logout" && localStorage.getItem('username') !== "" && localStorage.getItem('password') !== "") {
             localStorage.setItem('username', '')
             localStorage.setItem('password', '')
-            navigate(`/`)
-            window.location.reload()
+            navigate('/')
+            window.dispatchEvent(new Event('authChange'))
     }
     else {
       setShowPopup(!showPopup);
     }
-  }
-
-  const toggleUpdatePopup = () => {
-    setShowUpdatesPopup(!showUpdatesPopup);
   }
 
   let loginState = ""
@@ -35,7 +36,7 @@ function NavBar() {
 
   {/* LEFT */}
   <div style={{ flex: 1 }}>
-    <Link to="/" style={{ color: 'white', fontSize: '25px' }}>
+    <Link to="/" style={{ color: 'white', fontSize: '25px', position: 'relative', left: '-125px' }}>
       job-tracker.io
     </Link>
   </div>
@@ -55,11 +56,8 @@ function NavBar() {
         <div className='loggedInNavBarButton' onClick={() => navigate('/tracker')}>
           <Link to="/tracker">Tracker</Link>
         </div>
-        <div onClick={toggleUpdatePopup} className='loggedInNavBarButton'>
-          Updates
-        </div>
-        <div className='loggedInNavBarButton'>
-          Settings
+        <div className='loggedInNavBarButton' onClick={() => navigate('/settings')}>
+          <Link to="/settings">Settings</Link>
         </div>
       </>
     )}
@@ -91,8 +89,6 @@ function NavBar() {
 
     {/* Show Login/Register Popup if button is clicked */}
     {showPopup ? <LoginPopup text='Login' closePopup={togglePopup} /> : null }
-
-    {showUpdatesPopup ? <UpdatesPopup text='Updates' closePopup={toggleUpdatePopup} /> : null }
     </>
   );
 }

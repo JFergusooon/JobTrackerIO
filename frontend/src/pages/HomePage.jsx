@@ -1,19 +1,62 @@
 // pages/Home.jsx
 import React from 'react';
+import { useState, useEffect } from 'react';
 import NavBar from '../components/navBar.jsx';
 import LegacyUI_Home from '../components/LegacyUI/Legacy_Plus/LegacyUI_Home.jsx';
 import ModernUI_Home from '../components/ModernUI/Modern_Plus/ModernUI_Home.jsx';
 import ModernFooterComponent from '../components/ModernFooter.jsx'
+import UpdatesPopup from '../components/UpdatesPopup';
 
 
 function HomePage() {
+  const [showUpdatesPopup, setShowUpdatesPopup] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem('username') !== '');
+
+  useEffect(() => {
+    const handleLogin = () => setIsLoggedIn(localStorage.getItem('username') !== '');
+    window.addEventListener('authChange', handleLogin);
+    return () => window.removeEventListener('authChange', handleLogin);
+  }, []);
+
+  const toggleUpdatePopup = () => {
+    setShowUpdatesPopup(!showUpdatesPopup);
+  };
+
+  const updatesData = [
+    {
+        category: "Modern UI Launch",
+        items: [
+            "Completely redesigned interface with improved usability",
+            "New color scheme and typography",
+            "Enhanced responsive design"
+        ]
+    },
+    {
+        category: "Home Screen",
+        items: [
+            "Redesigned Profile Box with cleaner layout",
+            "Stats Chart now displays data from last 6 months",
+            "Quick Notes section for easy access",
+            "Recent Lists widget for faster navigation"
+        ]
+    },
+    {
+        category: "Tracker",
+        items: [
+            "Improved job application management",
+            "Enhanced sorting and filtering options",
+            "Better delete confirmations with safety warnings"
+        ]
+    }
+  ];
+
   return <>
     <NavBar/>
   
     {/* Background Gradient */}
     <div
       style={{
-        height: '100%',
+        minHeight: 'calc(100vh - 75px)',
         background: 'linear-gradient(180deg, #9DBF9E 85%, #005157ff 100%)',
         display: 'flex',
         justifyContent: 'center',
@@ -21,51 +64,64 @@ function HomePage() {
         marginTop: '30px'
       }}>
 
-      {localStorage.getItem("username") !== "" ? 
+      {isLoggedIn ? 
         <>
-          {localStorage.getItem('legacyMode') === "true" ? <LegacyUI_Home /> : <ModernUI_Home />}
+          {localStorage.getItem('legacyMode') === "true" ? (
+            <LegacyUI_Home onOpenUpdates={toggleUpdatePopup} />
+          ) : (
+            <ModernUI_Home onOpenUpdates={toggleUpdatePopup} />
+          )}
         </>
             : 
         <>
           {/* Box that holds update boxes */}
-          <div style={{ height: '100%', display: 'flex', flexDirection: 'row', width: '50%', justifyContent: 'center', 
-              alignItems: 'center', gap: '30px', padding: '20px', borderRadius: '10px'}}>
+          <div style={{ display: 'flex', flexDirection: 'row', width: '100%', justifyContent: 'center', 
+              alignItems: 'stretch', gap: '30px', padding: '20px', borderRadius: '10px'}}>
 
             {/* Left Side Grey Box */}
-            <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)', width: '50%', height: '450px', borderRadius: '40px'}}>
-              <h1 style={{ color: 'white' , borderBottom: '1px solid black' }}>Why Join JobTracker?</h1>
-              <p style={{ color: 'white', margin: '0px' }}>JobTracker offers easy application tracking abilities for job seekers looking to land that next step in their career journey. </p>
-              <p style={{ color: 'white', margin: '0px', borderBottom: '1px solid black'   }}>We are here to help!</p>
-              <ul>
-                <li>Create Lists to seperate applications</li>
-                <li>Track Rejection Status</li>
+            <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.4)', width: '520px', minHeight: '520px', maxWidth: '95vw', maxHeight: '75vh', borderRadius: '16px', padding: '32px', boxSizing: 'border-box', color: '#000000', fontFamily: 'system-ui, -apple-system, sans-serif', overflow: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', border: '0.1px solid black'}}>
+              <h2 style={{ margin: "0 0 12px", fontSize: "26px", fontWeight: "700", color: "#000000" }}>Why Join JobTracker?</h2>
+              <p style={{ color: '#333333', margin: '0px', fontSize: '14px' }}>JobTracker offers easy application tracking abilities for job seekers looking to land that next step in their career journey.</p>
+              <p style={{ color: '#333333', margin: '0px', fontSize: '14px' }}>We are here to help!</p>
+              <hr style={{ border: "none", borderTop: "1px solid rgba(0, 0, 0, 0.2)", margin: "0" }} />
+              <ul style={{ paddingLeft: '20px', margin: '0px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <li style={{ fontSize: '13px', color: '#555555', lineHeight: '1.5' }}>Create Lists to separate applications</li>
+                <li style={{ fontSize: '13px', color: '#555555', lineHeight: '1.5' }}>Track Rejection Status</li>
               </ul>
-              <div style={{height: '125px'}}/>
-              <p style={{padding: '0px', margin: '0px'}}>Create an Account or Log In to get Started!</p>
-            
-            <div style={{width: '100%', height: '5%', borderBottom: '2px solid black'}}>
+              <p style={{padding: '0px', margin: '8px 0 0 0', fontSize: '14px', color: '#333333'}}>Create an Account or Log In to get Started!</p>
+              <div style={{display: 'flex', flexDirection: 'column', gap: '4px', marginTop: 'auto'}}>
+                <h3 style={{height: 'auto', padding: '0px', margin: '0px', fontSize: '13px', fontWeight: '600', color: '#000000'}}>
+                  Also enjoy a Windows application version
+                </h3>
+                <a href='/github' style={{padding: '0px', color: '#4a9eff', textDecoration: 'none', fontSize: '13px'}}> Download Link </a>
+              </div>
             </div>
 
-
-
-
-      <div style={{display: 'flex', flexDirection: 'column', gap: '0px'}}>
-        <h3 style={{height: '25px', padding: '0px', margin: '0px'}}>
-          Also enjoy a windows application version
-        </h3>
-        <a href='/github' style={{padding: '0px'}}> Download Link </a>
-      </div>
-      </div>
-
       {/* Right Side Grey Box */}
-      <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)', width: '50%', height: '450px', borderRadius: '40px' }}>
-        <h1 style={{ color: 'white' }}>JobTracker ChangeList</h1>
-        <p>Update 0.0.5 - Setup Update</p>
-        <p>Changes: </p>
-        <ul style={{width: '300px'}}>
-          <li style={{width: '300px', textAlign: 'Left', marginLeft: '15%'}}>Setup Home Page</li>
-          <li style={{width: '300px', textAlign: 'Left', marginLeft: '15%'}}>Create Login/SignUp Popup Component</li>
-        </ul>
+      <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.4)', width: '520px', minHeight: '520px', maxWidth: '95vw', maxHeight: '75vh', borderRadius: '20px', padding: '32px', boxSizing: 'border-box', color: '#000000', fontFamily: 'system-ui, -apple-system, sans-serif', overflow: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', border: '0.1px solid black'}}>
+        <h2 style={{ margin: "0 0 12px", fontSize: "26px", fontWeight: "700", color: "#000000" }}>
+          Updates
+        </h2>
+        <p style={{ margin: "0 0 20px", fontSize: "14px", color: "#333333" }}>
+          Here's what's new in JobTracker
+        </p>
+        <hr style={{ border: "none", borderTop: "1px solid rgba(0, 0, 0, 0.2)", margin: "0 0 20px" }} />
+        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+          {updatesData.map((section, idx) => (
+            <div key={idx}>
+              <h3 style={{ margin: "0 0 10px", fontSize: "15px", fontWeight: "700", color: "#000000", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                {section.category}
+              </h3>
+              <ul style={{ margin: 0, paddingLeft: "20px", display: "flex", flexDirection: "column", gap: "6px" }}>
+                {section.items.map((item, itemIdx) => (
+                  <li key={itemIdx} style={{ fontSize: "13px", color: "#555555", lineHeight: "1.5" }}>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
       </div>
 
           </div>
@@ -76,6 +132,7 @@ function HomePage() {
   
     </div>
     <ModernFooterComponent />
+    {showUpdatesPopup ? <UpdatesPopup text='Updates' closePopup={toggleUpdatePopup} /> : null }
   </>
 }
 

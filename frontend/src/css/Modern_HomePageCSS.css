@@ -45,6 +45,12 @@
         justify-content: center;
         align-items: center;
 }
+
+.modernQuickSettingsButton:hover {
+    background-color: lightgray;
+    cursor: pointer;
+}
+
 .modernQuickSettingsButtonBig {
     border: solid 1px orange;
     width: 70%;
@@ -73,10 +79,15 @@
 
 .modernQuickNotesInput {
     border: solid 1px orange;
-    height: 70%;
+    height: calc(70% - 10px);
     margin: 3px;
     width: 80%;
-    justify-content: top;
+    resize: none;
+    vertical-align: top;
+    text-align: left;
+    padding: 4px;
+    box-sizing: border-box;
+    overflow-y: auto;
 }
 
 
@@ -151,8 +162,8 @@
     font-size: 20px;
     margin-top: 5px;
     margin-bottom: 5px;
-    text-align: left;
-    margin-left: 30px;
+    text-align: center;
+    margin-left: 0;
 }
 
 .modernStatsChartContainer {
@@ -168,8 +179,8 @@
     font-size: 20px;
     margin-top: 5px;
     margin-bottom: 10px;
-    text-align: left;
-    margin-left: 30px;
+    text-align: center;
+    margin-left: 0;
 }
 
 .modernStatsChart {
@@ -187,3 +198,5 @@
     margin-top: 0px;
     margin-left: 5px;
 }
+
+
