@@ -4,7 +4,6 @@ import '../../../css/Modern_TrackerPageCSS.css'
 import Modern_EditJobButtons from '../Modern_Tracker/Modern_EditJobButtons.jsx';
 import Modern_NewListPopup from '../Modern_Tracker/Modern_NewListPopup.jsx';
 import Modern_NewApplicationPopup from '../Modern_Tracker/Modern_NewApplicationPopup.jsx'
-import Modern_DeletePopup from '../Modern_Tracker/Modern_DeletePopup.jsx';
 import Modern_ListManagement from '../Modern_Tracker/Modern_ListManagement.jsx';
 import Modern_NewDeleteList from '../Modern_Tracker/Modern_NewDeleteList.jsx';
 import Modern_ApplicationCount from '../Modern_Tracker/Modern_ApplicationCount.jsx';
