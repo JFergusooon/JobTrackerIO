@@ -84,9 +84,18 @@ function HomePage() {
               <p style={{ color: '#333333', margin: '0px', fontSize: '14px' }}>JobTracker offers easy application tracking abilities for job seekers looking to land that next step in their career journey.</p>
               <p style={{ color: '#333333', margin: '0px', fontSize: '14px' }}>We are here to help!</p>
               <hr style={{ border: "none", borderTop: "1px solid rgba(0, 0, 0, 0.2)", margin: "0" }} />
+              <p style={{ color: '#333333', margin: '0px', fontSize: '14px', fontWeight: '500' }}>This application has a plethora of features to help users stay organized and on top of their job search. This includes:</p>
               <ul style={{ paddingLeft: '20px', margin: '0px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <li style={{ fontSize: '13px', color: '#555555', lineHeight: '1.5' }}>Create Lists to separate applications</li>
                 <li style={{ fontSize: '13px', color: '#555555', lineHeight: '1.5' }}>Track Rejection Status</li>
+                <li style={{ fontSize: '13px', color: '#555555', lineHeight: '1.5' }}>Create and manage a profile</li>
+                <li style={{ fontSize: '13px', color: '#555555', lineHeight: '1.5' }}>Add and track job applications</li>
+                <li style={{ fontSize: '13px', color: '#555555', lineHeight: '1.5' }}>Create multiple lists to organize applications how you see fit</li>
+                <li style={{ fontSize: '13px', color: '#555555', lineHeight: '1.5' }}>Visualize application progress with interactive charts</li>
+                <li style={{ fontSize: '13px', color: '#555555', lineHeight: '1.5' }}>Profile Customization to tailor the experience to your needs</li>
+                <li style={{ fontSize: '13px', color: '#555555', lineHeight: '1.5' }}>An advanced search feature to quickly find specific companies</li>
+                <li style={{ fontSize: '13px', color: '#555555', lineHeight: '1.5' }}>Frequent updates and improvements based on user feedback</li>
+                <li style={{ fontSize: '13px', color: '#555555', lineHeight: '1.5' }}>Secure authentication system</li>
               </ul>
               <p style={{padding: '0px', margin: '8px 0 0 0', fontSize: '14px', color: '#333333'}}>Create an Account or Log In to get Started!</p>
               <div style={{display: 'flex', flexDirection: 'column', gap: '4px', marginTop: 'auto'}}>
