@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from "react-router-dom";
 import '../../../css/Modern_HomePageCSS.css'
 import LegacyToggle from '../../LegacyUI/Legacy_Plus/LegacyToggle.jsx';
 import Modern_ProfileBox from '../Modern_Home/Modern_ProfileBox.jsx';
@@ -21,6 +20,44 @@ function ModernUI_Home({ onOpenUpdates }) {
 
   const [error, setError] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const normalizeCompanyKey = (name) => (name ?? '').trim().toLowerCase();
+
+  const handleFavoriteChanged = (companyName, nextFavorited) => {
+        setAllJobs((prevJobs) => {
+            if (!Array.isArray(prevJobs)) return prevJobs;
+            return prevJobs.map((job) => {
+                const jobCompanyName = job.companyName ?? job.company;
+
+                if (normalizeCompanyKey(jobCompanyName) !== normalizeCompanyKey(companyName)) {
+                    return job;
+                }
+
+                return {
+                    ...job,
+                    favorite: nextFavorited,
+                    favorited: nextFavorited,
+                };
+            });
+        });
+  };
+
+  const handleStageChanged = (companyName, newStage) => {
+        setAllJobs((prevJobs) => {
+            if (!Array.isArray(prevJobs)) return prevJobs;
+            return prevJobs.map((job) => {
+                const jobCompanyName = job.companyName ?? job.company;
+
+                if (normalizeCompanyKey(jobCompanyName) !== normalizeCompanyKey(companyName)) {
+                    return job;
+                }
+
+                return {
+                    ...job,
+                    stage: newStage,
+                };
+            });
+        });
+  };
 
   const fetchAllJobs = async () => {
         const stage = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev";
@@ -97,7 +134,7 @@ function ModernUI_Home({ onOpenUpdates }) {
           
           {/* Middle Column */}
           <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
-            <Modern_ImportantJobs />
+                                                <Modern_ImportantJobs importantJobsList={allJobs} onFavoriteChanged={handleFavoriteChanged} onStageChanged={handleStageChanged} />
             <Modern_RecentLists />
           </div>
 

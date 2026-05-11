@@ -39,10 +39,11 @@ function ModernUI_Tracker() {
     const [curUserListNames, setCurUserListNames] = useState([]);
 
     const [showDeletePopup, setShowDeletePopup] = useState(false);
-    const curWaitingJobs = allJobs.filter(job => !job.rejected).length;
-    const curRejectedJobs = allJobs.filter(job => job.rejected).length;
+    const curWaitingJobs = (Array.isArray(allJobs) ? allJobs : []).filter(job => !job.rejected).length;
+    const curRejectedJobs = (Array.isArray(allJobs) ? allJobs : []).filter(job => job.rejected).length;
 
     const location = useLocation();
+    const navigate = useNavigate();
     const listName = new URLSearchParams(location.search).get("listName");
 
     const [searchTerm, setSearchTerm] = useState("");
@@ -98,13 +99,17 @@ function ModernUI_Tracker() {
             const res = await fetch(url);
             const data = await res.json();
 
-            const filtered = data.filter(job =>
-                job.companyName.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-
-            setSearchResults(filtered);
+            if (Array.isArray(data)) {
+                const filtered = data.filter(job =>
+                    job.companyName.toLowerCase().includes(searchTerm.toLowerCase())
+                );
+                setSearchResults(filtered);
+            } else {
+                setSearchResults([]);
+            }
         } catch (err) {
             console.error(err);
+            setSearchResults([]);
         }
 
         setSearchLoading(false);
@@ -117,23 +122,25 @@ function ModernUI_Tracker() {
         return position;
     };
 
+    const getFavoriteValue = (job) => (job.favorite ?? job.favorited ?? false);
+
     const handleRejectedToggled = (companyName, isRejected) => {
         setCurJobsByListName((prevJobs) =>
-            prevJobs.map((job) =>
+            Array.isArray(prevJobs) ? prevJobs.map((job) =>
                 job.companyName === companyName ? { ...job, rejected: isRejected } : job
-            )
+            ) : prevJobs
         );
 
         setAllJobs((prevJobs) =>
-            prevJobs.map((job) =>
+            Array.isArray(prevJobs) ? prevJobs.map((job) =>
                 job.companyName === companyName ? { ...job, rejected: isRejected } : job
-            )
+            ) : prevJobs
         );
 
         setSearchResults((prevResults) =>
-            prevResults.map((job) =>
+            Array.isArray(prevResults) ? prevResults.map((job) =>
                 job.companyName === companyName ? { ...job, rejected: isRejected } : job
-            )
+            ) : prevResults
         );
 
         setSelectedJob((prevJob) =>
@@ -151,6 +158,71 @@ function ModernUI_Tracker() {
         setActionStatusMessage(
             `${companyName}: ${isRejected ? "set to rejected" : "set to not rejected"}`
         );
+    };
+
+    const handleFavoriteToggled = async (companyName, currentFavoriteValue) => {
+        const nextFavorited = !currentFavoriteValue;
+        const username = localStorage.getItem('username') || 'JFergusooon';
+        const stage = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev";
+        const url = `${stage}/Jobs/updateFavorited?username=${encodeURIComponent(username)}&companyName=${encodeURIComponent(companyName)}`;
+
+        const applyFavoriteState = (favoritedValue) => {
+            setCurJobsByListName((prevJobs) =>
+                Array.isArray(prevJobs) ? prevJobs.map((job) =>
+                    job.companyName === companyName
+                        ? { ...job, favorite: favoritedValue, favorited: favoritedValue }
+                        : job
+                ) : prevJobs
+            );
+
+            setAllJobs((prevJobs) =>
+                Array.isArray(prevJobs) ? prevJobs.map((job) =>
+                    job.companyName === companyName
+                        ? { ...job, favorite: favoritedValue, favorited: favoritedValue }
+                        : job
+                ) : prevJobs
+            );
+
+            setSearchResults((prevResults) =>
+                Array.isArray(prevResults) ? prevResults.map((job) =>
+                    job.companyName === companyName
+                        ? { ...job, favorite: favoritedValue, favorited: favoritedValue }
+                        : job
+                ) : prevResults
+            );
+
+            setSelectedJob((prevJob) =>
+                prevJob && prevJob.companyName === companyName
+                    ? { ...prevJob, favorite: favoritedValue, favorited: favoritedValue }
+                    : prevJob
+            );
+
+            setCompanyItem((prevJob) =>
+                prevJob && prevJob.companyName === companyName
+                    ? { ...prevJob, favorite: favoritedValue, favorited: favoritedValue }
+                    : prevJob
+            );
+        };
+
+        applyFavoriteState(nextFavorited);
+        setActionStatusMessage(`${companyName}: ${nextFavorited ? "set to favorited" : "set to not favorited"}`);
+
+        try {
+            const res = await fetch(url, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            });
+
+            if (!res.ok) {
+                throw new Error(`Failed with status ${res.status}`);
+            }
+        } catch (err) {
+            console.error("Failed to update favorited status:", err);
+            applyFavoriteState(currentFavoriteValue);
+            setActionStatusMessage(`${companyName}: failed to update favorited status`);
+        }
     };
 
     const handleSortChange = (field) => {
@@ -231,8 +303,8 @@ function ModernUI_Tracker() {
                     bVal = b.rejected ? 1 : 0;
                     break;
                 case "favorite":
-                    aVal = a.favorite ? 1 : 0;
-                    bVal = b.favorite ? 1 : 0;
+                    aVal = getFavoriteValue(a) ? 1 : 0;
+                    bVal = getFavoriteValue(b) ? 1 : 0;
                     break;
                 default:
                     return 0;
@@ -294,6 +366,15 @@ function ModernUI_Tracker() {
                             }
                         )
                 }, [])
+
+    // Auto-navigate to random list when tracker is opened without a listName
+    useEffect(() => {
+        if (curUserListNames.length > 0 && !listName) {
+            const randomIndex = Math.floor(Math.random() * curUserListNames.length);
+            const randomList = curUserListNames[randomIndex];
+            navigate(`?listName=${encodeURIComponent(randomList)}`);
+        }
+    }, [curUserListNames, listName, navigate]);
 
     const toggleNewListPopup = () => {
         setShowNewListPopup(!showNewListPopup);
@@ -515,7 +596,13 @@ function ModernUI_Tracker() {
                                     checked={job.rejected} readOnly
                                     />
 
-                                    <input type='checkbox' style={{height: '15px', justifySelf: 'center', alignSelf: 'center'}} checked={job.favorite} readOnly />
+                                    <input
+                                    type='checkbox'
+                                    style={{height: '15px', justifySelf: 'center', alignSelf: 'center', cursor: 'pointer'}}
+                                    checked={job.favorite ?? job.favorited ?? false}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onChange={() => handleFavoriteToggled(job.companyName, job.favorite ?? job.favorited ?? false)}
+                                    />
                                 </div>
                                 ))}
                             </div>

@@ -17,6 +17,8 @@ const Modern_StatsInfo = ({allJobs}) => {
     const [error, setError] = useState(null);
     const [isLoaded, setIsLoaded] = useState(false);
 
+    const getStageString = (stageValue) => String(stageValue ?? '').trim();
+
 
     useEffect(() => {
             const now = new Date();
@@ -48,52 +50,50 @@ const Modern_StatsInfo = ({allJobs}) => {
                         const rejectedThisMonth = jobsThisMonth.filter((job) => job.status === 'Rejected' || job.rejected === true).length;
                         setTotalRejectedThisMonth(rejectedThisMonth);
                         
-                        // Calculate stats from allJobs if available
-                        if (allJobs && allJobs.length > 0) {
-                            setTotalApplicationsEver(allJobs.length);
-                            
-                            const interviewsScheduled = allJobs.filter(job => 
-                                job.stage && (job.stage.includes('Interview') || job.stage.includes('Stage 2') || job.stage.includes('Stage 3'))
-                            ).length;
-                            setTotalInterviewsScheduled(interviewsScheduled);
-                            
-                            const rejected = allJobs.filter(job => job.status === 'Rejected' || job.rejected === true).length;
-                            const pending = allJobs.length - rejected;
-                            setPendingResponses(pending);
-                            setTotalRejectionsEver(rejected);
+                        const jobs = Array.isArray(allJobs) ? allJobs : [];
+                        setTotalApplicationsEver(jobs.length);
 
-                            const rate = allJobs.length > 0 ? Math.round((interviewsScheduled / allJobs.length) * 100) : 0;
-                            setSuccessRate(rate);
+                        const interviewsScheduled = jobs.filter((job) => {
+                            const stage = getStageString(job.stage);
+                            return stage === '1' || stage === '2' || stage === '3';
+                        }).length;
+                        setTotalInterviewsScheduled(interviewsScheduled);
+                        
+                        const rejected = jobs.filter(job => job.status === 'Rejected' || job.rejected === true).length;
+                        const pending = jobs.length - rejected;
+                        setPendingResponses(pending);
+                        setTotalRejectionsEver(rejected);
 
-                            const validAppliedDates = allJobs
-                                .map(job => new Date(job.dateApplied))
-                                .filter(date => !Number.isNaN(date.getTime()));
+                        const rate = jobs.length > 0 ? ((interviewsScheduled / jobs.length) * 100).toFixed(1) : 0;
+                        setSuccessRate(rate);
 
-                            if (validAppliedDates.length > 0) {
-                                const firstApplicationDate = new Date(Math.min(...validAppliedDates.map(date => date.getTime())));
-                                const latestApplicationDate = new Date(Math.max(...validAppliedDates.map(date => date.getTime())));
-                                const firstDateOnlyMs = new Date(
-                                    firstApplicationDate.getFullYear(),
-                                    firstApplicationDate.getMonth(),
-                                    firstApplicationDate.getDate()
-                                ).getTime();
-                                const latestDateOnlyMs = new Date(
-                                    latestApplicationDate.getFullYear(),
-                                    latestApplicationDate.getMonth(),
-                                    latestApplicationDate.getDate()
-                                ).getTime();
-                                const dayDifference = Math.floor((latestDateOnlyMs - firstDateOnlyMs) / (1000 * 60 * 60 * 24));
-                                setTotalTimeLookingForJob(`${dayDifference} Days`);
-                            } else {
-                                setTotalTimeLookingForJob("0 Days");
-                            }
+                        const validAppliedDates = jobs
+                            .map(job => new Date(job.dateApplied))
+                            .filter(date => !Number.isNaN(date.getTime()));
 
-                            
-                            const stage2 = allJobs.filter(job => job.stage === 'Stage 2').length;
-                            const stage3 = allJobs.filter(job => job.stage === 'Stage 3').length;
-                            setTotalJobsStageTwo(stage2);
-                            setTotalJobsStageThree(stage3);
+                        if (validAppliedDates.length > 0) {
+                            const firstApplicationDate = new Date(Math.min(...validAppliedDates.map(date => date.getTime())));
+                            const latestApplicationDate = new Date(Math.max(...validAppliedDates.map(date => date.getTime())));
+                            const firstDateOnlyMs = new Date(
+                                firstApplicationDate.getFullYear(),
+                                firstApplicationDate.getMonth(),
+                                firstApplicationDate.getDate()
+                            ).getTime();
+                            const latestDateOnlyMs = new Date(
+                                latestApplicationDate.getFullYear(),
+                                latestApplicationDate.getMonth(),
+                                latestApplicationDate.getDate()
+                            ).getTime();
+                            const dayDifference = Math.floor((latestDateOnlyMs - firstDateOnlyMs) / (1000 * 60 * 60 * 24));
+                            setTotalTimeLookingForJob(`${dayDifference} Days`);
+                        } else {
+                            setTotalTimeLookingForJob("0 Days");
                         }
+
+                        const stage2 = jobs.filter((job) => getStageString(job.stage) === '2').length;
+                        const stage3 = jobs.filter((job) => getStageString(job.stage) === '3').length;
+                        setTotalJobsStageTwo(stage2);
+                        setTotalJobsStageThree(stage3);
                     },
                     (error) => {
                         setIsLoaded(true);
