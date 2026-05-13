@@ -19,6 +19,19 @@ const Modern_NewApplicationPopup = ({text, closePopup, listNames }) => {
 
     const isFormValid = newCompanyName && newPosition && newJobLink && newLocation && newList;
 
+    const buildDateAppliedValue = () => {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        const microseconds = `${String(now.getMilliseconds()).padStart(3, '0')}000`;
+
+        return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${microseconds}`;
+    };
+
     async function addNewApplication() {
         console.log('Adding new application' + text)
 
@@ -27,13 +40,17 @@ const Modern_NewApplicationPopup = ({text, closePopup, listNames }) => {
 
         const params = {
             username: localStorage.getItem('username'),
-            dateApplied: new Date().toISOString(),
+            dateApplied: buildDateAppliedValue(),
             companyName: newCompanyName,
-            jobLink: newJobLink,
+            jobLink: newJobLink || "N/A",
             list: newList,
-            location: newLocation,
-            position: newPosition, 
-            rejected: false
+            location: newLocation || "N/A",
+            position: newPosition || "N/A", 
+            nextInterviewDate: "",
+            notes: "No Notes...",
+            rejected: false,
+            favorited: false,
+            stage: "0"
         };
 
         try {

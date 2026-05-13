@@ -20,7 +20,7 @@ const Modern_ProfileBox = ({userData, closePopup}) => {
         <div className='modernProfileBoxContainer'>
             {/* Left Column */}
             <div style={{width: '20%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start'}}>
-                <div style={{ width: '75px', height: '75px', borderRadius: '50%', backgroundColor: 'blue', margin: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                <div style={{ width: '75px', height: '75px', borderRadius: '50%', backgroundColor: 'var(--nav-background)', margin: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
                     <img src='person.png' alt='person' style={{width: '60%', height: '60%'}}></img>
                 </div>
                 <p className='modernQuickSettingsButton' onClick={() => navigate('/settings')} style={{textAlign: 'center', margin: '2px 0 0 0', width: 'fit-content', height: 'auto', padding: '1px 6px', cursor: 'pointer', fontSize: '12px'}}>Edit</p>
