@@ -10,7 +10,7 @@ function TermsPage() {
     <NavBar/>
   
     {/* Background Gradient */}
-    <div style={{background: 'linear-gradient(180deg,#9DBF9E 85%, #005157ff 100%)', display: 'flex',
+    <div style={{background: 'var(--page-gradient)', display: 'flex',
                 justifyContent: 'center', alignItems: 'center', marginTop: '30px', height: '100%', flexDirection: 'column', textAlign: 'center'}}>
       
       <div style={{borderBottom: 'solid 1px black'}}>

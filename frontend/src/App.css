@@ -2,6 +2,13 @@
   text-align: center;
 }
 
+:root {
+  --page-gradient: linear-gradient(180deg, #9DBF9E 85%, #005157 100%);
+  --page-gradient-bottom: #005157;
+  --nav-background: #005157;
+  --footer-background: #00444a;
+}
+
 .App-logo {
   height: 40vmin;
   pointer-events: none;

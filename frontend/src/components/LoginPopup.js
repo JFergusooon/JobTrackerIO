@@ -58,17 +58,21 @@ const Popup = ({text, closePopup}) => {
         }
 
         let match = false;
+        let matchedUsername = "";
+        const normalizedInputUser = inputUser.trim().toLowerCase();
         let allUsersSize = allUsers.length;
         console.log("Total Number of Users: " + allUsersSize)
         console.log("Searching for username in system: " + inputUser)
         for (let i = 0; i < allUsers.length; i++) {
             console.log(i + ": " + allUsers[i].username);
 
-            if (inputUser === allUsers[i].username) {
+            const candidateUsername = String(allUsers[i].username || '').trim().toLowerCase();
+            if (normalizedInputUser === candidateUsername) {
                 console.log("USERNAME MATCHED!");
                 if(inputPass === allUsers[i].password) {
                     console.log("PASSWORD MATCHED!");
                     match = true;
+                    matchedUsername = allUsers[i].username;
                     break;
                 }                else {
                     console.log("PASSWORD DID NOT MATCH");
@@ -77,7 +81,7 @@ const Popup = ({text, closePopup}) => {
         }
 
         if(match) {
-            localStorage.setItem('username', inputUser)
+            localStorage.setItem('username', matchedUsername)
             localStorage.setItem('password', inputPass)
             closePopup();
             window.dispatchEvent(new Event('authChange'));

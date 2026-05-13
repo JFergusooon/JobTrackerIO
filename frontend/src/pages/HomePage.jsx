@@ -57,7 +57,7 @@ function HomePage() {
     <div
       style={{
         minHeight: 'calc(100vh - 75px)',
-        background: 'linear-gradient(180deg, #9DBF9E 85%, #005157ff 100%)',
+        background: 'var(--page-gradient)',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center', 

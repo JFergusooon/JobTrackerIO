@@ -196,6 +196,7 @@ function SettingsPage() {
 				setAppearanceMode(resolvedAppearance);
 				setInitialAppearanceMode(resolvedAppearance);
 				localStorage.setItem('curAppearanceScheme', resolvedAppearance);
+				window.dispatchEvent(new Event('appearanceChange'));
 			} catch (err) {
 				console.error('Failed to load settings user data:', err);
 			}
@@ -311,6 +312,7 @@ function SettingsPage() {
 			localStorage.setItem('curAppearanceScheme', appearanceMode);
 			setInitialAppearanceMode(appearanceMode);
 			setAppearanceSaveMessage('Appearance scheme saved.');
+			window.dispatchEvent(new Event('appearanceChange'));
 		} catch (err) {
 			console.error('Failed to update appearance scheme:', err);
 			setAppearanceSaveMessage('Failed to save appearance scheme.');

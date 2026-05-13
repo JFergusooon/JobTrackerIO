@@ -59,7 +59,7 @@
 }
 
 .modernTrackerPageBackground {
-    background: linear-gradient(180deg,#9DBF9E 85%, #005157ff 100%);
+    background: var(--page-gradient);
     display: flex;
     justify-content: center;
     align-items: center;

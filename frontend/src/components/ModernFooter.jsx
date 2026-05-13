@@ -15,7 +15,7 @@ export default function ModernFooter() {
       <div style={{background: '#3b007e', height: '28px', marginBottom: '0px', position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px'}}>
           {/* Copyright */}
           <div style={{color: 'white'}}>
-            © {new Date().getFullYear()} Ferguson Software Solutions LLC - <a href="/terms" className="nav-link">Terms of Service</a>
+            © {new Date().getFullYear()} <a href="https://fergusonsoftwaresolutions.pages.dev/" className="nav-link" target="_blank" rel="noreferrer">Ferguson Software Solutions LLC</a> - <a href="/terms" className="nav-link">Terms of Service</a>
           </div>
       </div>
     </footer>
