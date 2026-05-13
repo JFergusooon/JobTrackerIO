@@ -1,7 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
 import '../../../css/Modern_HomePageCSS.css';
-import LegacyToggle from '../../LegacyUI/Legacy_Plus/LegacyToggle';
 
 const Modern_QuickSettings = ({text, closePopup, onOpenUpdates, onOpenNewList}) => {
 
@@ -14,7 +13,7 @@ const Modern_QuickSettings = ({text, closePopup, onOpenUpdates, onOpenNewList}) 
                 <div className='modernQuickSettingsButton' onClick={onOpenUpdates}>Updates</div>
                 <div className='modernQuickSettingsButton'>---</div>
                 <div className='modernQuickSettingsButton'>---</div>
-                <div className='modernQuickSettingsButton'><LegacyToggle /></div>
+                <div className='modernQuickSettingsButton'>---</div>
             </div>
         </div>
     );

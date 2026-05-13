@@ -435,7 +435,6 @@ function ModernUI_Tracker() {
 
                     {/* New Application Button */}   
                     <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '2px'}}>
-                        <LegacyToggle />
                         <button style={{height: '40px', width: '150px', borderRadius: '20px'}} onClick={toggleNewApplicationPopup}>New Application</button>
                     </div>      
                     

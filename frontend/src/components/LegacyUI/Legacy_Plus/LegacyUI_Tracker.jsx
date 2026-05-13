@@ -5,7 +5,6 @@ import EditJobButtons from '../Legacy_Tracker/Legacy_EditJobButtons.jsx'
 import NewListPopup from '../Legacy_Tracker/Legacy_NewListPopup.jsx';
 import NewApplicationPopup from '../Legacy_Tracker/Legacy_NewApplicationPopup.jsx'
 import DeletePopup from '../Legacy_Tracker/Legacy_DeletePopup.jsx';
-import LegacyToggle from './LegacyToggle.jsx';
 
 function LegacyUI_Tracker() { 
 
@@ -235,7 +234,6 @@ function LegacyUI_Tracker() {
                         </div>          
 
                         <div>            
-                            <LegacyToggle />
                             <button style={{height: '40px', width: '150px', borderRadius: '20px'}} onClick={toggleNewApplicationPopup}>New Application</button>
                         </div>
 
