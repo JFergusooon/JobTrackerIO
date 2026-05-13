@@ -514,7 +514,7 @@ function ModernUI_Tracker() {
                 {/* Right Column */}
                 <div className='modernRightColumn'>
                     <div style={{width: '100%', background: 'rgba(255, 255, 255, 0.4)', height: '100%', borderRadius: '20px'}}>
-                        <p style={{fontWeight: 'bold', marginBottom: '0px', fontSize: '24px', margin: '0px'}}> {listName} </p>
+                        <p style={{fontWeight: 'bold', marginBottom: '0px', fontSize: '24px', margin: '0px', textAlign: 'center', width: '100%', transform: 'translateX(calc(-10.5% + 5px))'}}> {listName} </p>
                         <div style={{display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '10px', marginTop: '0px', textAlign: 'left', padding: '0 10px'}}>
                             <p style={{color: 'green', margin: '0px'}}>Active Applications: {waitingByList}</p>
                             <p style={{color: 'red', margin: '0px'}}>Rejected Applications: {rejectByList}</p>

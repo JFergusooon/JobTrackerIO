@@ -6,7 +6,11 @@
   --page-gradient: linear-gradient(180deg, #9DBF9E 85%, #005157 100%);
   --page-gradient-bottom: #005157;
   --nav-background: #005157;
+  --nav-background-disabled: #00393d;
   --footer-background: #00444a;
+  --nav-button-background: rgba(84, 199, 49, 0.3);
+  --nav-button-hover-background: rgba(255, 255, 255, 0.3);
+  --nav-button-active-background: rgba(185, 24, 24, 0.3);
 }
 
 .App-logo {

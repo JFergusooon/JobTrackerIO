@@ -329,8 +329,10 @@ function SettingsPage() {
 		padding: '10px 16px',
 		borderRadius: '8px',
 		border: '1px solid #3a3a3c',
-		backgroundColor: activeTab === tabName ? '#2f6db3' : 'rgba(255, 255, 255, 0.4)',
-		color: '#000000',
+		backgroundColor: activeTab === tabName ? 'var(--nav-background)' : 'rgba(255, 255, 255, 0.4)',
+		color: activeTab === tabName
+			? (initialAppearanceMode === 'Sunset' ? '#000000' : '#ffffff')
+			: '#000000',
 		fontSize: '14px',
 		fontWeight: '600',
 		cursor: 'pointer'
@@ -556,10 +558,10 @@ function SettingsPage() {
 											padding: '10px 20px',
 											borderRadius: '8px',
 											border: '1px solid #3a3a3c',
-											backgroundColor: hasAccountChanges && isCareerTitleValid && isLocationValid && isFirstNameValid && isLastNameValid && !isSavingAccount ? '#2f6db3' : '#3a5080',
-											color: '#000000',
+											backgroundColor: hasAccountChanges && isCareerTitleValid && isLocationValid && isFirstNameValid && isLastNameValid && !isSavingAccount ? 'var(--nav-background)' : 'var(--nav-background-disabled)',
+											color: '#ffffff',
 											fontSize: '14px',
-											fontWeight: '600',
+											fontWeight: '400',
 											cursor: hasAccountChanges && isCareerTitleValid && isLocationValid && isFirstNameValid && isLastNameValid && !isSavingAccount ? 'pointer' : 'not-allowed'
 										}}
 									>
@@ -590,7 +592,7 @@ function SettingsPage() {
 										{appearanceSaveMessage !== '' ? (
 											<span style={{
 												fontSize: '12px',
-												color: appearanceSaveMessage.includes('Failed') ? '#f5b0b0' : '#8fd1a0',
+												color: '#000000',
 												backgroundColor: appearanceSaveMessage.includes('Failed') ? 'rgba(204, 0, 0, 0.2)' : 'rgba(0, 153, 72, 0.18)',
 												border: appearanceSaveMessage.includes('Failed') ? '1px solid rgba(204, 0, 0, 0.45)' : '1px solid rgba(0, 153, 72, 0.45)',
 												padding: '6px 10px',
@@ -606,10 +608,10 @@ function SettingsPage() {
 												padding: '10px 20px',
 												borderRadius: '8px',
 												border: '1px solid #3a3a3c',
-												backgroundColor: hasAppearanceChanges && !isSavingAppearance ? '#2f6db3' : '#3a5080',
-												color: '#000000',
+												backgroundColor: hasAppearanceChanges && !isSavingAppearance ? 'var(--nav-background)' : 'var(--nav-background-disabled)',
+												color: '#ffffff',
 												fontSize: '14px',
-												fontWeight: '600',
+												fontWeight: '400',
 												cursor: hasAppearanceChanges && !isSavingAppearance ? 'pointer' : 'not-allowed',
 												marginLeft: '12px'
 											}}

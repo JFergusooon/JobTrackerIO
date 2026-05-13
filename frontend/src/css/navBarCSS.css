@@ -33,26 +33,26 @@
   width: 100px;
   padding: 3px;
   color: black;
-  background: rgba(84, 199, 49, 0.3);
+  background: var(--nav-button-background);
   border: 1px solid black;
   margin: 5px;
   border-radius: 5px;
 }
 
 .loggedInNavBarButton:hover {
-  background-color: rgba(255, 255, 255, 0.3);
+  background-color: var(--nav-button-hover-background);
   cursor: pointer;
   color: white;
 }
 
 .loggedInNavBarButton:active {
-  background-color: rgba(185, 24, 24, 0.3);
+  background-color: var(--nav-button-active-background);
   cursor: pointer;
   color: white;
 }
 
 .loggedInNavBarButton:visited {
-  background-color: rgba(84, 199, 49, 0.3);
+  background-color: var(--nav-button-background);
   cursor: pointer;
   color: black;
 }

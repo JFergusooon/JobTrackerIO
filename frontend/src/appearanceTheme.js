@@ -15,15 +15,27 @@ const APPEARANCE_GRADIENT_BOTTOM_COLORS = {
 const APPEARANCE_CHROME_COLORS = {
   Forest: {
     nav: '#005157',
-    footer: '#00444a'
+    navDisabled: '#00393d',
+    footer: '#00444a',
+    navButton: 'rgba(84, 199, 49, 0.3)',
+    navButtonHover: 'rgba(255, 255, 255, 0.3)',
+    navButtonActive: 'rgba(185, 24, 24, 0.3)'
   },
   Ocean: {
     nav: '#0c4b78',
-    footer: '#093a5e'
+    navDisabled: '#083353',
+    footer: '#093a5e',
+    navButton: 'rgba(84, 199, 49, 0.3)',
+    navButtonHover: 'rgba(255, 255, 255, 0.3)',
+    navButtonActive: 'rgba(185, 24, 24, 0.3)'
   },
   Sunset: {
     nav: '#d45a20',
-    footer: '#b8421c'
+    navDisabled: '#9f3f12',
+    footer: '#b8421c',
+    navButton: 'rgba(84, 199, 49, 0.3)',
+    navButtonHover: 'rgba(255, 255, 255, 0.3)',
+    navButtonActive: 'rgba(185, 24, 24, 0.3)'
   }
 };
 
@@ -57,5 +69,9 @@ export function applyCurrentGradient() {
   document.documentElement.style.setProperty('--page-gradient', getAppearanceGradient(scheme));
   document.documentElement.style.setProperty('--page-gradient-bottom', gradientBottom);
   document.documentElement.style.setProperty('--nav-background', chrome.nav);
+  document.documentElement.style.setProperty('--nav-background-disabled', chrome.navDisabled);
   document.documentElement.style.setProperty('--footer-background', chrome.footer);
+  document.documentElement.style.setProperty('--nav-button-background', chrome.navButton);
+  document.documentElement.style.setProperty('--nav-button-hover-background', chrome.navButtonHover);
+  document.documentElement.style.setProperty('--nav-button-active-background', chrome.navButtonActive);
 }
