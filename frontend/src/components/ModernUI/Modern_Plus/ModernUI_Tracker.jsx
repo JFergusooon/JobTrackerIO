@@ -49,6 +49,7 @@ function ModernUI_Tracker() {
     const [searchTerm, setSearchTerm] = useState("");
     const [searchResults, setSearchResults] = useState([]);
     const [searchLoading, setSearchLoading] = useState(false);
+    const [listLoading, setListLoading] = useState(false);
     const [actionStatusMessage, setActionStatusMessage] = useState("");
 
     const [sortField, setSortField] = useState("dateApplied");
@@ -322,28 +323,39 @@ function ModernUI_Tracker() {
     useEffect(() => {
         if (!listName) return;
 
+        let isCurrentRequest = true;
         let stage_url = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev";
         let url = `${stage_url}/Jobs/getByListName?username=${localStorage.getItem('username')}&listName=${listName}`;
         let encode = window.btoa("admin:admin");
+
+        setListLoading(true);
+        setCurJobsByListName([]);
 
         fetch(url, {
             headers: { 'Authorization': 'Basic ' + encode },
             method: "GET"
         })
         .then(res => res.json())
-        .then(
-            (result) => {
-                setIsLoaded(true);
-                setCurJobsByListName(result);
-            },
-            (error) => {
-                setIsLoaded(true);
-                setError(error);
-                
-            }
-        );
+        .then((result) => {
+            if (!isCurrentRequest) return;
+            setIsLoaded(true);
+            setCurJobsByListName(Array.isArray(result) ? result : []);
+        })
+        .catch((error) => {
+            if (!isCurrentRequest) return;
+            setIsLoaded(true);
+            setError(error);
+            setCurJobsByListName([]);
+        })
+        .finally(() => {
+            if (!isCurrentRequest) return;
+            setListLoading(false);
+        });
 
-    }, [listName]);   // 👈 THIS IS THE KEY FIX
+        return () => {
+            isCurrentRequest = false;
+        };
+    }, [listName]);
 
     useEffect(() => {
                     let stage_url = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev"
@@ -433,10 +445,17 @@ function ModernUI_Tracker() {
                         <p style={{margin: '0px', fontSize: '20px'}}>Search for Company:</p>
                         <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="" style={{ width: "65%", marginBottom: '10px' }}/>
                         {/* ALWAYS mounted dropdown */}
-                        <div style={{left: 0, width: "80%", maxHeight: '140px', minHeight: '140px', overflowY: "auto", background: "white",
+                        <div className='modernSearchResultsContainer' style={{left: 0, width: "80%", maxHeight: '140px', minHeight: '140px', overflowY: "auto", overflowX: 'hidden', background: "white",
                                     border: "1px solid black", zIndex: 1000, marginBottom: '6px'  }}>
 
-                            {searchLoading && ( <div style={{ padding: "8px" }}>Loading...</div> )}
+                            {searchLoading && (
+                                <div className='modernSearchLoadingContainer'>
+                                    <div className='modernListLoadingBadge'>
+                                        <span className='modernListLoadingSpinner'></span>
+                                        <span>Loading...</span>
+                                    </div>
+                                </div>
+                            )}
                             {!searchLoading && searchTerm && searchResults.length === 0 && (
                                 <div style={{ padding: "8px", color: "gray" }}> No results </div>
                             )}
@@ -544,7 +563,15 @@ function ModernUI_Tracker() {
                             <div className="modernJobContainer" style={{padding: '10px'}}>
                                 
                                 {/* Print Out All Jobs From This Month */}
-                                {getSortedJobs().map((job, index) => (
+                                {listLoading ? (
+                                <div className='modernListLoadingContainer'>
+                                    <div className='modernListLoadingBadge'>
+                                        <span className='modernListLoadingSpinner'></span>
+                                        <span>Loading...</span>
+                                    </div>
+                                </div>
+                                ) : (
+                                getSortedJobs().map((job, index) => (
                                 <div
                                     key={index}
                                     onClick={() => {
@@ -604,7 +631,7 @@ function ModernUI_Tracker() {
                                     onChange={() => handleFavoriteToggled(job.companyName, job.favorite ?? job.favorited ?? false)}
                                     />
                                 </div>
-                                ))}
+                                )))}
                             </div>
                             </div>
                         </div>

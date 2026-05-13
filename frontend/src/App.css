@@ -57,4 +57,32 @@
   color: #000;
 }
 
+.settingsScrollableSection,
+.modernImportantJobsScroll {
+  scrollbar-width: auto;
+  scrollbar-color: var(--nav-background) #ffffff;
+}
+
+.settingsScrollableSection::-webkit-scrollbar,
+.modernImportantJobsScroll::-webkit-scrollbar {
+  width: 20px;
+}
+
+.settingsScrollableSection::-webkit-scrollbar-track,
+.modernImportantJobsScroll::-webkit-scrollbar-track {
+  background: #ffffff;
+}
+
+.settingsScrollableSection::-webkit-scrollbar-thumb,
+.modernImportantJobsScroll::-webkit-scrollbar-thumb {
+  background-color: var(--nav-background);
+  border-radius: 999px;
+  border: 3px solid #ffffff;
+}
+
+.settingsScrollableSection::-webkit-scrollbar-thumb:hover,
+.modernImportantJobsScroll::-webkit-scrollbar-thumb:hover {
+  background-color: var(--nav-background-disabled);
+}
+
 

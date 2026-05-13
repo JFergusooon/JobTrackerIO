@@ -308,7 +308,7 @@ const Modern_ImportantJobs = ({importantJobsList, onFavoriteChanged, onStageChan
     return (
         <div className='modernImportantJobsContainer'>
             <p className='modernImportantJobsTitle'> Important Interviews </p>
-            <div style={{display: 'flex', flexDirection: 'column', gap: '3px', maxHeight: '480px', overflowY: 'auto', paddingRight: '4px'}}>
+            <div className='modernImportantJobsScroll' style={{display: 'flex', flexDirection: 'column', gap: '3px', maxHeight: '480px', overflowY: 'auto', paddingRight: '4px'}}>
                 {favoritedJobs.length > 0 ? (
                     favoritedJobs.map((jobInfo, index) => buildImportantJobBox(jobInfo, index))
                 ) : (

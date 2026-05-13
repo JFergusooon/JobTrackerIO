@@ -422,7 +422,7 @@ function SettingsPage() {
 						}}>
 							{activeTab === 'account' ? (
 								<div style={{ display: 'flex', flexDirection: 'column', gap: '12px', height: '100%', minHeight: 0 }}>
-									<div style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: 1, minHeight: 0, overflowY: activeSettingsCount > 3 ? 'auto' : 'hidden', paddingRight: '4px' }}>
+									<div className='settingsScrollableSection' style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: 1, minHeight: 0, overflowY: activeSettingsCount > 3 ? 'auto' : 'hidden', paddingRight: '4px' }}>
 										<h3 style={{ margin: 0, fontSize: '18px', color: '#000000' }}>Account Settings</h3>
 
 										<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -571,7 +571,7 @@ function SettingsPage() {
 								</div>
 							) : (
 								<div style={{ display: 'flex', flexDirection: 'column', gap: '12px', height: '100%', minHeight: 0 }}>
-									<div style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: 1, minHeight: 0, overflowY: activeSettingsCount > 3 ? 'auto' : 'hidden', paddingRight: '4px' }}>
+									<div className='settingsScrollableSection' style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: 1, minHeight: 0, overflowY: activeSettingsCount > 3 ? 'auto' : 'hidden', paddingRight: '4px' }}>
 										<h3 style={{ margin: 0, fontSize: '18px', color: '#000000' }}>Appearance</h3>
 
 										<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
