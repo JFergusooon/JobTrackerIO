@@ -297,7 +297,7 @@ const Modern_ImportantJobs = ({importantJobsList, onFavoriteChanged, onStageChan
 
             <div style={{ height: '90px', display: 'flex', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '6px' }}>
                 <p style={{width: '10%', margin: '0 5px 0 5px', textAlign: 'right', paddingTop: '2px'}}>Notes: </p>
-                <textarea value={currentNotes} onChange={(e) => handleNotesChange(jobInfo, e.target.value)} style={{height: '90%', width: '95%', borderRadius: '20px', resize: 'none', padding: '4px 8px', boxSizing: 'border-box', verticalAlign: 'top', textAlign: 'left', overflow: 'auto', border: '1px solid orange'}} placeholder="Add notes..." />
+                <textarea value={currentNotes} onChange={(e) => handleNotesChange(jobInfo, e.target.value)} style={{height: '90%', width: '95%', borderRadius: '20px', resize: 'none', padding: '4px 8px', boxSizing: 'border-box', verticalAlign: 'top', textAlign: 'left', overflow: 'auto', border: '1px solid var(--nav-background)'}} placeholder="Add notes..." />
             </div>
 
         </div>

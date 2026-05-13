@@ -36,7 +36,7 @@
 }
 
 .modernQuickSettingsButton {
-    border: solid 1px orange;
+    border: solid 1px var(--nav-background);
     width: 70%;
     margin: 2%;
     height: 30px;
@@ -52,7 +52,7 @@
 }
 
 .modernQuickSettingsButtonBig {
-    border: solid 1px orange;
+    border: solid 1px var(--nav-background);
     width: 70%;
     margin: 2%;
     height: 50px;
@@ -78,7 +78,7 @@
 }
 
 .modernQuickNotesInput {
-    border: solid 1px orange;
+    border: solid 1px var(--nav-background);
     height: calc(70% - 10px);
     margin: 3px;
     width: 80%;
@@ -118,7 +118,7 @@
 }
 
 .modernRecentListsButton {
-    border: solid 1px orange;
+    border: solid 1px var(--nav-background);
     width: 180px;
     margin: 2%;
     height: 30px;
