@@ -263,7 +263,8 @@ function SettingsPage() {
 					firstName: sourceUser?.firstName || '',
 					lastName: sourceUser?.lastName || '',
 					email: sourceUser?.email || '',
-					dateCreated: sourceUser?.dateCreated || ''
+					dateCreated: sourceUser?.dateCreated || '',
+					profilePictureFileName: sourceUser?.profilePictureFileName || ''
 				});
 
 				const validSchemes = ['Forest', 'Ocean', 'Sunset'];
@@ -658,7 +659,7 @@ function SettingsPage() {
 												>
 													Choose File
 												</button>
-												{profilePictureFile && (
+												{profilePictureFile ? (
 													<>
 														<p style={{
 															fontSize: '13px',
@@ -691,7 +692,20 @@ function SettingsPage() {
 															{isUploadingProfilePicture ? 'Uploading...' : 'Upload to S3'}
 														</button>
 													</>
-												)}
+												) : userAccountFields?.profilePictureFileName ? (
+													<p style={{
+														fontSize: '13px',
+														color: '#666',
+														margin: '0',
+														overflow: 'hidden',
+														textOverflow: 'ellipsis',
+														whiteSpace: 'nowrap'
+													}}
+													title={userAccountFields.profilePictureFileName}
+													>
+														Current: {userAccountFields.profilePictureFileName}
+													</p>
+												) : null}
 												{profilePictureUploadStatus && (
 													<span style={{
 														fontSize: '12px',
