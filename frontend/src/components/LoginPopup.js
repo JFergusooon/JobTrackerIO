@@ -93,14 +93,21 @@ const Popup = ({text, closePopup}) => {
 
         const url = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev/Users/create";
 
+        const today = new Date();
+        const dateCreated = `${String(today.getMonth() + 1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}/${today.getFullYear()}`;
+
         const params = {
             username: regUser,
             firstName: regFirst,
             lastName: regLast,
             email: regEmail,
             password: regPass,
-            jobJson: "{}",
-            dateCreated: "04/07/2026"
+            dateCreated: dateCreated,
+            curAppearanceScheme: 'Forest',
+            careerTitle: [],
+            listNames: [],
+            location: '',
+            quickNotes: ''
         };
 
         try {

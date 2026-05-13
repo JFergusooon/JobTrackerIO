@@ -4,23 +4,125 @@ import ModernFooter from '../components/ModernFooter';
 
 function SettingsPage() {
 	const [activeTab, setActiveTab] = useState('account');
-	const [position, setPosition] = useState(localStorage.getItem('profilePosition') || '');
+	const [careerTitle, setCareerTitle] = useState(localStorage.getItem('profilePosition') || '');
 	const [location, setLocation] = useState(localStorage.getItem('profileLocation') || '');
-	const [initialPosition, setInitialPosition] = useState(localStorage.getItem('profilePosition') || '');
+	const [firstName, setFirstName] = useState('');
+	const [lastName, setLastName] = useState('');
+	const [initialCareerTitle, setInitialCareerTitle] = useState(localStorage.getItem('profilePosition') || '');
 	const [initialLocation, setInitialLocation] = useState(localStorage.getItem('profileLocation') || '');
+	const [initialFirstName, setInitialFirstName] = useState('');
+	const [initialLastName, setInitialLastName] = useState('');
 	const [saveMessage, setSaveMessage] = useState('');
-	const [appearanceMode, setAppearanceMode] = useState('default');
-	const [placeholderFields, setPlaceholderFields] = useState({
-		placeholder1: '',
-		placeholder2: '',
-		placeholder3: '',
-		placeholder4: '',
-		placeholder5: '',
-		placeholder6: '',
-		placeholder7: ''
+	const [appearanceMode, setAppearanceMode] = useState(localStorage.getItem('curAppearanceScheme') || 'Forest');
+	const [initialAppearanceMode, setInitialAppearanceMode] = useState(localStorage.getItem('curAppearanceScheme') || 'Forest');
+	const [appearanceSaveMessage, setAppearanceSaveMessage] = useState('');
+	const [isSavingAppearance, setIsSavingAppearance] = useState(false);
+	const [careerTitleValidationError, setCareerTitleValidationError] = useState('');
+	const [locationValidationError, setLocationValidationError] = useState('');
+	const [firstNameValidationError, setFirstNameValidationError] = useState('');
+	const [lastNameValidationError, setLastNameValidationError] = useState('');
+	const [isSavingAccount, setIsSavingAccount] = useState(false);
+	const [userAccountFields, setUserAccountFields] = useState({
+		firstName: '',
+		lastName: '',
+		email: '',
+		dateCreated: ''
 	});
-	const hasAccountChanges = position !== initialPosition || location !== initialLocation;
-	const accountSettingsCount = 10;
+
+	const validateLocationFormat = (loc) => {
+		if (!loc || loc.trim() === '') return true;
+		const locationRegex = /^.+,\s*[A-Z]{2}$/;
+		return locationRegex.test(loc);
+	};
+
+	const validateFirstNameFormat = (name) => {
+		if (!name || name.trim() === '') return true;
+		const firstNameRegex = /^[a-zA-Z]+$/;
+		return firstNameRegex.test(name);
+	};
+
+	const validateLastNameFormat = (name) => {
+		if (!name || name.trim() === '') return true;
+		const lastNameRegex = /^[a-zA-Z]+$/;
+		return lastNameRegex.test(name);
+	};
+
+	const validateCareerTitleFormat = (title) => {
+		if (!title || title.trim() === '') return true;
+
+		if (title !== title.trim()) {
+			return false;
+		}
+
+		const allowedCharsRegex = /^[A-Za-z,\s]+$/;
+		if (!allowedCharsRegex.test(title)) {
+			return false;
+		}
+
+		const segments = title.split(',');
+		if (segments.some((segment) => segment.trim() === '')) {
+			return false;
+		}
+
+		const wordOnlyRegex = /^[A-Za-z]+(?:\s+[A-Za-z]+)*$/;
+		return segments.every((segment) => wordOnlyRegex.test(segment.trim()));
+	};
+
+	const handleCareerTitleChange = (newCareerTitle) => {
+		setCareerTitle(newCareerTitle);
+		if (newCareerTitle.trim() === '') {
+			setCareerTitleValidationError('');
+		} else if (!validateCareerTitleFormat(newCareerTitle)) {
+			setCareerTitleValidationError('Letters, spaces, and commas only. No spaces at the beginning or end.');
+		} else {
+			setCareerTitleValidationError('');
+		}
+	};
+
+	const handleLocationChange = (newLocation) => {
+		setLocation(newLocation);
+		if (newLocation.trim() === '') {
+			setLocationValidationError('Location is required');
+		} else if (!validateLocationFormat(newLocation)) {
+			setLocationValidationError('Format: City, XX (where XX is 2-letter state code)');
+		} else {
+			setLocationValidationError('');
+		}
+	};
+
+	const handleFirstNameChange = (newFirstName) => {
+		setFirstName(newFirstName);
+		if (newFirstName.trim() === '') {
+			setFirstNameValidationError('');
+		} else if (!validateFirstNameFormat(newFirstName)) {
+			setFirstNameValidationError('Letters only (no spaces, digits, or symbols)');
+		} else {
+			setFirstNameValidationError('');
+		}
+	};
+
+	const handleLastNameChange = (newLastName) => {
+		setLastName(newLastName);
+		if (newLastName.trim() === '') {
+			setLastNameValidationError('');
+		} else if (!validateLastNameFormat(newLastName)) {
+			setLastNameValidationError('Letters only (no spaces, digits, or symbols)');
+		} else {
+			setLastNameValidationError('');
+		}
+	};
+
+	const hasAccountChanges =
+		careerTitle !== initialCareerTitle ||
+		location !== initialLocation ||
+		firstName !== initialFirstName ||
+		lastName !== initialLastName;
+	const isLocationValid = location.trim() !== '' && validateLocationFormat(location);
+	const isCareerTitleValid = careerTitle.trim() === '' || validateCareerTitleFormat(careerTitle);
+	const isFirstNameValid = firstName.trim() === '' || validateFirstNameFormat(firstName);
+	const isLastNameValid = lastName.trim() === '' || validateLastNameFormat(lastName);
+	const hasAppearanceChanges = appearanceMode !== initialAppearanceMode;
+	const accountSettingsCount = 7;
 	const appearanceSettingsCount = 1;
 	const activeSettingsCount = activeTab === 'account' ? accountSettingsCount : appearanceSettingsCount;
 
@@ -41,20 +143,59 @@ function SettingsPage() {
 				}
 
 				const userData = await res.json();
+				const sourceUser = userData?.body || userData;
 
-				const backendPosition =
-					userData?.position ||
-					(typeof userData?.careerTitle === 'string'
-						? userData.careerTitle.replace(/[{}"]/g, '').split(',')[0]?.trim()
-						: '');
-				const backendLocation = userData?.location || '';
-				const resolvedPosition = backendPosition || localStorage.getItem('profilePosition') || '';
+				let backendCareerTitle = '';
+				if (typeof sourceUser?.careerTitle === 'string') {
+					backendCareerTitle = sourceUser.careerTitle;
+				} else if (Array.isArray(sourceUser?.careerTitle)) {
+					backendCareerTitle = `{${sourceUser.careerTitle.join(',')}}`;
+				} else if (sourceUser?.careerTitle != null) {
+					backendCareerTitle = JSON.stringify(sourceUser.careerTitle);
+				}
+				if (!backendCareerTitle && typeof sourceUser?.position === 'string') {
+					backendCareerTitle = sourceUser.position;
+				}
+				const normalizeCareerTitleValue = (value) => {
+					if (typeof value !== 'string') return '';
+					const stripped = value.replace(/^\{/, '').replace(/\}$/, '').trim();
+					if (!stripped) return '';
+					return stripped
+						.split(',')
+						.map((part) => part.trim())
+						.filter(Boolean)
+						.join(', ');
+				};
+				const backendLocation = sourceUser?.location || '';
+				const resolvedCareerTitle = normalizeCareerTitleValue(backendCareerTitle) || normalizeCareerTitleValue(localStorage.getItem('profilePosition') || '');
 				const resolvedLocation = backendLocation || localStorage.getItem('profileLocation') || '';
 
-				setPosition(resolvedPosition);
+				const backendFirstName = sourceUser?.firstName || '';
+				const backendLastName = sourceUser?.lastName || '';
+				setCareerTitle(resolvedCareerTitle);
 				setLocation(resolvedLocation);
-				setInitialPosition(resolvedPosition);
+				setFirstName(backendFirstName);
+				setLastName(backendLastName);
+				setInitialCareerTitle(resolvedCareerTitle);
 				setInitialLocation(resolvedLocation);
+				setInitialFirstName(backendFirstName);
+				setInitialLastName(backendLastName);
+				setUserAccountFields({
+					firstName: sourceUser?.firstName || '',
+					lastName: sourceUser?.lastName || '',
+					email: sourceUser?.email || '',
+					dateCreated: sourceUser?.dateCreated || ''
+				});
+
+				const validSchemes = ['Forest', 'Ocean', 'Sunset'];
+				const backendAppearance = sourceUser?.curAppearanceScheme;
+				const resolvedAppearance = validSchemes.includes(backendAppearance)
+					? backendAppearance
+					: (localStorage.getItem('curAppearanceScheme') || 'Forest');
+
+				setAppearanceMode(resolvedAppearance);
+				setInitialAppearanceMode(resolvedAppearance);
+				localStorage.setItem('curAppearanceScheme', resolvedAppearance);
 			} catch (err) {
 				console.error('Failed to load settings user data:', err);
 			}
@@ -63,17 +204,122 @@ function SettingsPage() {
 		fetchUserSettings();
 	}, []);
 
-	const handleSaveAccount = () => {
-		if (!hasAccountChanges) return;
+	const handleSaveAccount = async () => {
+		if (!hasAccountChanges || !isCareerTitleValid || !isLocationValid || !isFirstNameValid || !isLastNameValid || isSavingAccount) return;
 
-		localStorage.setItem('profilePosition', position);
-		localStorage.setItem('profileLocation', location);
-		setInitialPosition(position);
-		setInitialLocation(location);
-		setSaveMessage('Account settings saved.');
+		const username = localStorage.getItem('username');
+		if (!username) {
+			setSaveMessage('Failed to save account settings.');
+			return;
+		}
+
+		setIsSavingAccount(true);
+
+		try {
+			const stage = 'https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev';
+			const encode = window.btoa('admin:admin');
+
+			const careerTitleUpdateUrl = `${stage}/Users/updateCareerTitle?username=${encodeURIComponent(username)}&newCareerTitle=${encodeURIComponent(careerTitle)}`;
+			const careerTitleRes = await fetch(careerTitleUpdateUrl, {
+				headers: { Authorization: 'Basic ' + encode },
+				method: 'PATCH'
+			});
+
+			if (!careerTitleRes.ok) {
+				throw new Error('Failed to update career title');
+			}
+
+			const locationUpdateUrl = `${stage}/Users/updateLocation?username=${encodeURIComponent(username)}&newLocation=${encodeURIComponent(location)}`;
+			const locationRes = await fetch(locationUpdateUrl, {
+				headers: { Authorization: 'Basic ' + encode },
+				method: 'PATCH'
+			});
+
+			if (!locationRes.ok) {
+				throw new Error('Failed to update location');
+			}
+
+			const firstNameUpdateUrl = `${stage}/Users/updateFirstName?username=${encodeURIComponent(username)}&newFirstName=${encodeURIComponent(firstName)}`;
+			const firstNameRes = await fetch(firstNameUpdateUrl, {
+				headers: { Authorization: 'Basic ' + encode },
+				method: 'PATCH'
+			});
+
+			if (!firstNameRes.ok) {
+				throw new Error('Failed to update first name');
+			}
+
+			const lastNameUpdateUrl = `${stage}/Users/updateLastName?username=${encodeURIComponent(username)}&newLastName=${encodeURIComponent(lastName)}`;
+			const lastNameRes = await fetch(lastNameUpdateUrl, {
+				headers: { Authorization: 'Basic ' + encode },
+				method: 'PATCH'
+			});
+
+			if (!lastNameRes.ok) {
+				throw new Error('Failed to update last name');
+			}
+
+			localStorage.setItem('profilePosition', careerTitle);
+			localStorage.setItem('profileLocation', location);
+			setInitialCareerTitle(careerTitle);
+			setInitialLocation(location);
+			setInitialFirstName(firstName);
+			setInitialLastName(lastName);
+			setSaveMessage('Account settings saved.');
+		} catch (err) {
+			console.error('Failed to save account settings:', err);
+			setSaveMessage('Failed to save account settings.');
+		} finally {
+			setIsSavingAccount(false);
+		}
 
 		setTimeout(() => {
 			setSaveMessage('');
+		}, 2000);
+	};
+
+	const handleAppearanceChange = (newAppearanceScheme) => {
+		setAppearanceMode(newAppearanceScheme);
+		setAppearanceSaveMessage('');
+	};
+
+	const handleSaveAppearance = async () => {
+		if (!hasAppearanceChanges || isSavingAppearance) return;
+
+		const username = localStorage.getItem('username');
+		if (!username) {
+			setAppearanceSaveMessage('Failed to save appearance scheme.');
+			return;
+		}
+
+		setIsSavingAppearance(true);
+
+		try {
+			const stage = 'https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev';
+			const url = `${stage}/Users/updateCurAppearanceScheme?username=${encodeURIComponent(username)}&newAppearanceScheme=${encodeURIComponent(appearanceMode)}`;
+			const encode = window.btoa('admin:admin');
+
+			const res = await fetch(url, {
+				headers: { Authorization: 'Basic ' + encode },
+				method: 'PATCH'
+			});
+
+			if (!res.ok) {
+				throw new Error('Failed to update appearance scheme');
+			}
+
+			localStorage.setItem('curAppearanceScheme', appearanceMode);
+			setInitialAppearanceMode(appearanceMode);
+			setAppearanceSaveMessage('Appearance scheme saved.');
+		} catch (err) {
+			console.error('Failed to update appearance scheme:', err);
+			setAppearanceSaveMessage('Failed to save appearance scheme.');
+		} finally {
+			setIsSavingAppearance(false);
+		}
+
+		setTimeout(() => {
+			setAppearanceSaveMessage('');
 		}, 2000);
 	};
 
@@ -99,8 +345,25 @@ function SettingsPage() {
 		boxSizing: 'border-box'
 	};
 
-	return (
-		<>
+	const appearanceSelectStyle = {
+		...inputStyle,
+		textTransform: 'capitalize'
+	};
+
+	const readOnlyFieldStyle = {
+		...inputStyle,
+		color: '#888'
+	};
+
+	const jsonEditorStyle = {
+		...inputStyle,
+		fontFamily: 'Consolas, monospace',
+		resize: 'none',
+		height: '44px',
+		overflow: 'hidden'
+	};
+
+	return (<>
 			<NavBar />
 
 			<div className='modernTrackerPageBackground'>
@@ -171,45 +434,111 @@ function SettingsPage() {
 										</div>
 
 										<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-											<label style={{ fontSize: '14px', fontWeight: '600', color: 'black' }}>Position</label>
-											<input
-												value={position}
-												onChange={(e) => setPosition(e.target.value)}
-												placeholder='Enter your role or target position'
-												style={inputStyle}
+											<label style={{ fontSize: '14px', fontWeight: '600', color: 'black' }}>Career Title</label>
+											<textarea
+												value={careerTitle}
+												onChange={(e) => handleCareerTitleChange(e.target.value)}
+												placeholder='Example: SDET, Software Engineer'
+												rows={1}
+												style={jsonEditorStyle}
 											/>
+											{careerTitleValidationError && (
+												<span style={{
+													fontSize: '12px',
+													color: '#333333',
+													backgroundColor: 'rgba(204, 0, 0, 0.2)',
+													border: '1px solid rgba(204, 0, 0, 0.45)',
+													padding: '6px 10px',
+													borderRadius: '8px'
+												}}>
+													{careerTitleValidationError}
+												</span>
+											)}
 										</div>
 
 										<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
 											<label style={{ fontSize: '14px', fontWeight: '600', color: 'black' }}>Location</label>
 											<input
 												value={location}
-												onChange={(e) => setLocation(e.target.value)}
-												placeholder='Enter city, state or Remote'
+												onChange={(e) => handleLocationChange(e.target.value)}
+												placeholder='Example: New York, NY'
 												style={inputStyle}
 											/>
+											{locationValidationError && (
+												<span style={{
+													fontSize: '12px',
+												color: '#333333',
+													backgroundColor: 'rgba(204, 0, 0, 0.2)',
+													border: '1px solid rgba(204, 0, 0, 0.45)',
+													padding: '6px 10px',
+													borderRadius: '8px'
+												}}>
+													{locationValidationError}
+												</span>
+											)}
 										</div>
 
-										{Object.entries(placeholderFields).map(([fieldKey, fieldValue], index) => (
-											<div key={fieldKey} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-												<label style={{ fontSize: '14px', fontWeight: '600', color: 'black' }}>
-													Placeholder Field {index + 1}
-												</label>
-												<input
-													value={fieldValue}
-													onChange={(e) => setPlaceholderFields((prev) => ({ ...prev, [fieldKey]: e.target.value }))}
-													placeholder={`Placeholder input ${index + 1}`}
-													style={inputStyle}
-												/>
-											</div>
-										))}
+										<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+											<label style={{ fontSize: '14px', fontWeight: '600', color: 'black' }}>First Name</label>
+											<input
+												value={firstName}
+												onChange={(e) => handleFirstNameChange(e.target.value)}
+												placeholder='Enter your first name'
+												style={inputStyle}
+											/>
+											{firstNameValidationError && (
+												<span style={{
+													fontSize: '12px',
+													color: '#333333',
+													backgroundColor: 'rgba(204, 0, 0, 0.2)',
+													border: '1px solid rgba(204, 0, 0, 0.45)',
+													padding: '6px 10px',
+													borderRadius: '8px'
+												}}>
+													{firstNameValidationError}
+												</span>
+											)}
+										</div>
+
+										<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+											<label style={{ fontSize: '14px', fontWeight: '600', color: 'black' }}>Last Name</label>
+											<input
+												value={lastName}
+												onChange={(e) => handleLastNameChange(e.target.value)}
+												placeholder='Enter your last name'
+												style={inputStyle}
+											/>
+											{lastNameValidationError && (
+												<span style={{
+													fontSize: '12px',
+													color: '#333333',
+													backgroundColor: 'rgba(204, 0, 0, 0.2)',
+													border: '1px solid rgba(204, 0, 0, 0.45)',
+													padding: '6px 10px',
+													borderRadius: '8px'
+												}}>
+													{lastNameValidationError}
+												</span>
+											)}
+										</div>
+
+										<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+											<label style={{ fontSize: '14px', fontWeight: '600', color: 'black' }}>Email</label>
+											<input value={userAccountFields.email} readOnly style={readOnlyFieldStyle} />
+										</div>
+
+										<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+											<label style={{ fontSize: '14px', fontWeight: '600', color: 'black' }}>Date Created</label>
+											<input value={userAccountFields.dateCreated} readOnly style={readOnlyFieldStyle} />
+										</div>
+
 									</div>
 
 									<div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '12px', borderTop: '1px solid #333', paddingTop: '12px' }}>
 										{saveMessage !== '' ? (
 											<span style={{
 												fontSize: '12px',
-												color: '#8fd1a0',
+												color: '#000000',
 												backgroundColor: 'rgba(0, 153, 72, 0.18)',
 												border: '1px solid rgba(0, 153, 72, 0.45)',
 												padding: '6px 10px',
@@ -220,20 +549,20 @@ function SettingsPage() {
 										) : null}
 										<button
 											onClick={handleSaveAccount}
-											disabled={!hasAccountChanges}
-											style={{
-												padding: '10px 20px',
-												borderRadius: '8px',
-												border: 'none',
-												backgroundColor: hasAccountChanges ? '#4a9eff' : '#3a5080',
-												color: hasAccountChanges ? '#ffffff' : '#7a9aaa',
-												fontSize: '14px',
-												fontWeight: '600',
-												cursor: hasAccountChanges ? 'pointer' : 'not-allowed'
-											}}
-										>
-											Save Account
-										</button>
+											disabled={!hasAccountChanges || !isCareerTitleValid || !isLocationValid || !isFirstNameValid || !isLastNameValid || isSavingAccount}
+										style={{
+											padding: '10px 20px',
+											borderRadius: '8px',
+											border: '1px solid #3a3a3c',
+											backgroundColor: hasAccountChanges && isCareerTitleValid && isLocationValid && isFirstNameValid && isLastNameValid && !isSavingAccount ? '#2f6db3' : '#3a5080',
+											color: '#000000',
+											fontSize: '14px',
+											fontWeight: '600',
+											cursor: hasAccountChanges && isCareerTitleValid && isLocationValid && isFirstNameValid && isLastNameValid && !isSavingAccount ? 'pointer' : 'not-allowed'
+										}}
+									>
+										{isSavingAccount ? 'Saving...' : 'Save Account'}
+									</button>
 									</div>
 								</div>
 							) : (
@@ -245,32 +574,45 @@ function SettingsPage() {
 											<label style={{ fontSize: '14px', fontWeight: '600', color: 'black'  }}>Color Scheme</label>
 											<select
 												value={appearanceMode}
-												onChange={(e) => setAppearanceMode(e.target.value)}
-												style={inputStyle}
+												onChange={(e) => handleAppearanceChange(e.target.value)}
+												style={appearanceSelectStyle}
 											>
-												<option value='default'>Default (Current)</option>
-												<option value='forest'>Forest</option>
-												<option value='ocean'>Ocean</option>
-												<option value='sunset'>Sunset</option>
+												<option value='Forest'>Forest</option>
+												<option value='Ocean'>Ocean</option>
+												<option value='Sunset'>Sunset</option>
 											</select>
 										</div>
 									</div>
 
-									<div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid #333', paddingTop: '12px' }}>
+									<div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid #333', paddingTop: '12px', minHeight: '38px' }}>
+										{appearanceSaveMessage !== '' ? (
+											<span style={{
+												fontSize: '12px',
+												color: appearanceSaveMessage.includes('Failed') ? '#f5b0b0' : '#8fd1a0',
+												backgroundColor: appearanceSaveMessage.includes('Failed') ? 'rgba(204, 0, 0, 0.2)' : 'rgba(0, 153, 72, 0.18)',
+												border: appearanceSaveMessage.includes('Failed') ? '1px solid rgba(204, 0, 0, 0.45)' : '1px solid rgba(0, 153, 72, 0.45)',
+												padding: '6px 10px',
+												borderRadius: '8px'
+											}}>
+												{appearanceSaveMessage}
+											</span>
+										) : null}
 										<button
-											disabled
+											onClick={handleSaveAppearance}
+											disabled={!hasAppearanceChanges || isSavingAppearance}
 											style={{
 												padding: '10px 20px',
 												borderRadius: '8px',
-												border: 'none',
-												backgroundColor: '#3a5080',
-												color: '#7a9aaa',
+												border: '1px solid #3a3a3c',
+												backgroundColor: hasAppearanceChanges && !isSavingAppearance ? '#2f6db3' : '#3a5080',
+												color: '#000000',
 												fontSize: '14px',
 												fontWeight: '600',
-												cursor: 'not-allowed'
+												cursor: hasAppearanceChanges && !isSavingAppearance ? 'pointer' : 'not-allowed',
+												marginLeft: '12px'
 											}}
 										>
-											Save Appearance (Coming Soon)
+											{isSavingAppearance ? 'Saving...' : 'Save Appearance'}
 										</button>
 									</div>
 								</div>

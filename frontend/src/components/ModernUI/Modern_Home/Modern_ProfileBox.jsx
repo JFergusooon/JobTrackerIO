@@ -8,6 +8,13 @@ const Modern_ProfileBox = ({userData, closePopup}) => {
     let username = "JFergusooon"
     let role = "SDET | Software Engineer"
 
+    const formattedCareerTitle = (userData?.careerTitle || '')
+        .replace(/[{}"]/g, '')
+        .split(',')
+        .map((titlePart) => titlePart.trim())
+        .filter(Boolean)
+        .join(' | ');
+
 
     return (
         <div className='modernProfileBoxContainer'>
@@ -21,14 +28,13 @@ const Modern_ProfileBox = ({userData, closePopup}) => {
 
             <div style={{width: '56%', textAlign: 'left', marginLeft: '5px', marginTop: '5px'}}>
                 <p className='modernProfileBoxTitle'> {userData?.username} </p>
-                <p style={{marginTop: '2px', fontSize: '20px', marginBottom: '0px'}}> {userData?.careerTitle
-                    ?.replace(/[{}"]/g, "")?.split(",")?.map(t => t.trim())?.join(" | ")} 
+                <p style={{marginTop: '2px', fontSize: '20px', marginBottom: '0px'}}> {formattedCareerTitle} 
                 </p>
                 
-                <p style={{margin: '0px', marginTop: '60px'}}>{userData?.location}</p>
+                <p style={{margin: '0px', marginTop: '8px'}}>{userData?.location}</p>
             </div>
 
-            <div style={{justifyContent: 'right'}}>
+            <div style={{display: 'flex', justifyContent: 'flex-end', width: '24%', paddingRight: '16px'}}>
                 <p style={{marginTop: '5px'}}>Joined {userData?.dateCreated?.split("/")[0] + "/" + userData?.dateCreated?.split("/")[2]}</p>
             </div>
             
