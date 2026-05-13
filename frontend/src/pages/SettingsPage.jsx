@@ -22,6 +22,7 @@ function SettingsPage() {
 	const [firstNameValidationError, setFirstNameValidationError] = useState('');
 	const [lastNameValidationError, setLastNameValidationError] = useState('');
 	const [isSavingAccount, setIsSavingAccount] = useState(false);
+	const [profilePictureFile, setProfilePictureFile] = useState(null);
 	const [userAccountFields, setUserAccountFields] = useState({
 		firstName: '',
 		lastName: '',
@@ -122,7 +123,7 @@ function SettingsPage() {
 	const isFirstNameValid = firstName.trim() === '' || validateFirstNameFormat(firstName);
 	const isLastNameValid = lastName.trim() === '' || validateLastNameFormat(lastName);
 	const hasAppearanceChanges = appearanceMode !== initialAppearanceMode;
-	const accountSettingsCount = 7;
+	const accountSettingsCount = 8;
 	const appearanceSettingsCount = 1;
 	const activeSettingsCount = activeTab === 'account' ? accountSettingsCount : appearanceSettingsCount;
 
@@ -523,17 +524,56 @@ function SettingsPage() {
 												}}>
 													{lastNameValidationError}
 												</span>
-											)}
-										</div>
-
-										<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-											<label style={{ fontSize: '14px', fontWeight: '600', color: 'black' }}>Email</label>
-											<input value={userAccountFields.email} readOnly style={readOnlyFieldStyle} />
-										</div>
+													)}
+												</div>
 
 										<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
 											<label style={{ fontSize: '14px', fontWeight: '600', color: 'black' }}>Date Created</label>
 											<input value={userAccountFields.dateCreated} readOnly style={readOnlyFieldStyle} />
+										</div>
+
+										<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+											<label style={{ fontSize: '14px', fontWeight: '600', color: 'black' }}>Profile Picture</label>
+											<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+												<input
+													type='file'
+													accept='.png,.jpg,.jpeg'
+													style={{ display: 'none' }}
+													id='profilePictureInput'
+													onChange={(e) => setProfilePictureFile(e.target.files?.[0] || null)}
+												/>
+												<button
+													type='button'
+													onClick={() => document.getElementById('profilePictureInput').click()}
+													style={{
+														padding: '10px 16px',
+														borderRadius: '8px',
+														border: '1px solid #3a3a3c',
+														backgroundColor: '#2c2c2e',
+														color: '#ffffff',
+														fontSize: '14px',
+														fontWeight: '600',
+														cursor: 'pointer',
+														transition: 'background-color 0.2s'
+													}}
+												>
+													Upload
+												</button>
+												{profilePictureFile && (
+													<p style={{
+														fontSize: '13px',
+														color: '#666',
+														margin: '0',
+														overflow: 'hidden',
+														textOverflow: 'ellipsis',
+														whiteSpace: 'nowrap'
+													}}
+													title={profilePictureFile.name}
+													>
+														Selected: {profilePictureFile.name}
+													</p>
+												)}
+											</div>
 										</div>
 
 									</div>
