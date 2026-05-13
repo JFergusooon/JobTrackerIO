@@ -111,7 +111,8 @@ const Popup = ({text, closePopup}) => {
             careerTitle: [],
             listNames: [],
             location: '',
-            quickNotes: ''
+            quickNotes: '',
+            profilePictureFileName: ''
         };
 
         try {

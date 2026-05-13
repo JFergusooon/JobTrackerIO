@@ -25,6 +25,7 @@ function SettingsPage() {
 	const [profilePictureFile, setProfilePictureFile] = useState(null);
 	const [isUploadingProfilePicture, setIsUploadingProfilePicture] = useState(false);
 	const [profilePictureUploadStatus, setProfilePictureUploadStatus] = useState('');
+	const [profilePictureFileNameError, setProfilePictureFileNameError] = useState('');
 	const [userAccountFields, setUserAccountFields] = useState({
 		firstName: '',
 		lastName: '',
@@ -67,6 +68,10 @@ function SettingsPage() {
 			setTimeout(() => {
 				setProfilePictureUploadStatus('');
 			}, 2000);
+
+			// After successful upload, update the user's profilePictureFileName
+			const username = localStorage.getItem('username') || '';
+			await updateProfilePictureFileName(username, file.name);
 		} catch (err) {
 			console.error('Failed to upload profile picture:', err);
 			setProfilePictureUploadStatus('Upload failed. Please try again.');
@@ -79,8 +84,28 @@ function SettingsPage() {
 	};
 
 	const handleProfilePictureUpload = () => {
-		if (!profilePictureFile) return;
+		if (!profilePictureFile || profilePictureFileNameError) return;
 		uploadProfilePictureToS3(profilePictureFile);
+	};
+
+	const handleProfilePictureFileSelect = (e) => {
+		const file = e.target.files?.[0] || null;
+		if (!file) {
+			setProfilePictureFile(null);
+			setProfilePictureFileNameError('');
+			return;
+		}
+
+		const username = localStorage.getItem('username') || '';
+		const expectedPrefix = `${username}_`;
+
+		if (!file.name.startsWith(expectedPrefix)) {
+			setProfilePictureFileNameError(`File must be named ${expectedPrefix}filename.png`);
+			setProfilePictureFile(null);
+		} else {
+			setProfilePictureFile(file);
+			setProfilePictureFileNameError('');
+		}
 	};
 
 	const validateLocationFormat = (loc) => {
@@ -379,6 +404,15 @@ function SettingsPage() {
 		}, 2000);
 	};
 
+	const updateProfilePictureFileName = async (username, fileName) => {
+		try {
+			const url = `https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev/Users/updateProfilePictureFileName?username=${encodeURIComponent(username)}&newFileName=${encodeURIComponent(fileName)}`;
+			await fetch(url, { method: 'PATCH' });
+		} catch (err) {
+			console.error('Failed to update profilePictureFileName:', err);
+		}
+	};
+
 	const tabButtonStyle = (tabName) => ({
 		padding: '10px 16px',
 		borderRadius: '8px',
@@ -593,8 +627,20 @@ function SettingsPage() {
 													accept='.png,.jpg,.jpeg'
 													style={{ display: 'none' }}
 													id='profilePictureInput'
-													onChange={(e) => setProfilePictureFile(e.target.files?.[0] || null)}
+													onChange={handleProfilePictureFileSelect}
 												/>
+												{profilePictureFileNameError && (
+													<span style={{
+														fontSize: '12px',
+														color: '#333333',
+														backgroundColor: 'rgba(204, 0, 0, 0.2)',
+														border: '1px solid rgba(204, 0, 0, 0.45)',
+														padding: '6px 10px',
+														borderRadius: '8px'
+													}}>
+														{profilePictureFileNameError}
+													</span>
+												)}
 												<button
 													type='button'
 													onClick={() => document.getElementById('profilePictureInput').click()}
@@ -629,16 +675,16 @@ function SettingsPage() {
 														<button
 															type='button'
 															onClick={handleProfilePictureUpload}
-															disabled={isUploadingProfilePicture}
-															style={{
-																padding: '10px 16px',
-																borderRadius: '8px',
-																border: '1px solid #3a3a3c',
-																backgroundColor: isUploadingProfilePicture ? 'var(--nav-background-disabled)' : 'var(--nav-background)',
-																color: '#ffffff',
-																fontSize: '14px',
-																fontWeight: '600',
-																cursor: isUploadingProfilePicture ? 'not-allowed' : 'pointer',
+														disabled={isUploadingProfilePicture || profilePictureFileNameError}
+														style={{
+															padding: '10px 16px',
+															borderRadius: '8px',
+															border: '1px solid #3a3a3c',
+															backgroundColor: (isUploadingProfilePicture || profilePictureFileNameError) ? 'var(--nav-background-disabled)' : 'var(--nav-background)',
+															color: '#ffffff',
+															fontSize: '14px',
+															fontWeight: '600',
+															cursor: (isUploadingProfilePicture || profilePictureFileNameError) ? 'not-allowed' : 'pointer',
 																transition: 'background-color 0.2s'
 															}}
 														>

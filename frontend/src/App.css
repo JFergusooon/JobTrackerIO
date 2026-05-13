@@ -5,6 +5,7 @@
 :root {
   --page-gradient: linear-gradient(180deg, #9DBF9E 85%, #005157 100%);
   --page-gradient-bottom: #005157;
+  --gradient-top-color: #9DBF9E;
   --nav-background: #005157;
   --nav-background-disabled: #00393d;
   --footer-background: #00444a;

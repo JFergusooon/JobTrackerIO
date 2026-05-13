@@ -66,8 +66,16 @@ export function applyCurrentGradient() {
   const chrome = APPEARANCE_CHROME_COLORS[scheme] || APPEARANCE_CHROME_COLORS.Forest;
   const gradientBottom = APPEARANCE_GRADIENT_BOTTOM_COLORS[scheme] || APPEARANCE_GRADIENT_BOTTOM_COLORS.Forest;
 
+  const gradientTopColors = {
+    Forest: '#9DBF9E',
+    Ocean: '#87b9d8',
+    Sunset: '#ffd36b'
+  };
+  const gradientTopColor = gradientTopColors[scheme] || gradientTopColors.Forest;
+
   document.documentElement.style.setProperty('--page-gradient', getAppearanceGradient(scheme));
   document.documentElement.style.setProperty('--page-gradient-bottom', gradientBottom);
+  document.documentElement.style.setProperty('--gradient-top-color', gradientTopColor);
   document.documentElement.style.setProperty('--nav-background', chrome.nav);
   document.documentElement.style.setProperty('--nav-background-disabled', chrome.navDisabled);
   document.documentElement.style.setProperty('--footer-background', chrome.footer);
