@@ -23,12 +23,65 @@ function SettingsPage() {
 	const [lastNameValidationError, setLastNameValidationError] = useState('');
 	const [isSavingAccount, setIsSavingAccount] = useState(false);
 	const [profilePictureFile, setProfilePictureFile] = useState(null);
+	const [isUploadingProfilePicture, setIsUploadingProfilePicture] = useState(false);
+	const [profilePictureUploadStatus, setProfilePictureUploadStatus] = useState('');
 	const [userAccountFields, setUserAccountFields] = useState({
 		firstName: '',
 		lastName: '',
 		email: '',
 		dateCreated: ''
 	});
+
+	const getPresignedUrl = async (file) => {
+		const response = await fetch('https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev/generate-upload-url', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				fileName: file.name,
+				fileType: file.type
+			})
+		});
+
+		const data = await response.json();
+		return data.uploadUrl;
+	};
+
+	const uploadProfilePictureToS3 = async (file) => {
+		try {
+			setIsUploadingProfilePicture(true);
+			setProfilePictureUploadStatus('Uploading...');
+
+			const uploadUrl = await getPresignedUrl(file);
+
+			await fetch(uploadUrl, {
+				method: 'PUT',
+				headers: { 'Content-Type': file.type },
+				body: file
+			});
+
+			setProfilePictureUploadStatus('Upload successful!');
+			setIsUploadingProfilePicture(false);
+
+			setTimeout(() => {
+				setProfilePictureUploadStatus('');
+			}, 2000);
+		} catch (err) {
+			console.error('Failed to upload profile picture:', err);
+			setProfilePictureUploadStatus('Upload failed. Please try again.');
+			setIsUploadingProfilePicture(false);
+
+			setTimeout(() => {
+				setProfilePictureUploadStatus('');
+			}, 2000);
+		}
+	};
+
+	const handleProfilePictureUpload = () => {
+		if (!profilePictureFile) return;
+		uploadProfilePictureToS3(profilePictureFile);
+	};
 
 	const validateLocationFormat = (loc) => {
 		if (!loc || loc.trim() === '') return true;
@@ -557,21 +610,53 @@ function SettingsPage() {
 														transition: 'background-color 0.2s'
 													}}
 												>
-													Upload
+													Choose File
 												</button>
 												{profilePictureFile && (
-													<p style={{
-														fontSize: '13px',
-														color: '#666',
-														margin: '0',
-														overflow: 'hidden',
-														textOverflow: 'ellipsis',
-														whiteSpace: 'nowrap'
-													}}
-													title={profilePictureFile.name}
-													>
-														Selected: {profilePictureFile.name}
-													</p>
+													<>
+														<p style={{
+															fontSize: '13px',
+															color: '#666',
+															margin: '0',
+															overflow: 'hidden',
+															textOverflow: 'ellipsis',
+															whiteSpace: 'nowrap'
+														}}
+														title={profilePictureFile.name}
+														>
+															Selected: {profilePictureFile.name}
+														</p>
+														<button
+															type='button'
+															onClick={handleProfilePictureUpload}
+															disabled={isUploadingProfilePicture}
+															style={{
+																padding: '10px 16px',
+																borderRadius: '8px',
+																border: '1px solid #3a3a3c',
+																backgroundColor: isUploadingProfilePicture ? 'var(--nav-background-disabled)' : 'var(--nav-background)',
+																color: '#ffffff',
+																fontSize: '14px',
+																fontWeight: '600',
+																cursor: isUploadingProfilePicture ? 'not-allowed' : 'pointer',
+																transition: 'background-color 0.2s'
+															}}
+														>
+															{isUploadingProfilePicture ? 'Uploading...' : 'Upload to S3'}
+														</button>
+													</>
+												)}
+												{profilePictureUploadStatus && (
+													<span style={{
+														fontSize: '12px',
+														color: '#000000',
+														backgroundColor: profilePictureUploadStatus.includes('failed') ? 'rgba(255, 107, 107, 0.18)' : 'rgba(0, 184, 148, 0.18)',
+														border: profilePictureUploadStatus.includes('failed') ? '1px solid rgba(255, 107, 107, 0.45)' : '1px solid rgba(0, 184, 148, 0.45)',
+														padding: '6px 10px',
+														borderRadius: '8px'
+													}}>
+														{profilePictureUploadStatus}
+													</span>
 												)}
 											</div>
 										</div>
