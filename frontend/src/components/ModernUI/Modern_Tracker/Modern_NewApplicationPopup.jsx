@@ -9,6 +9,28 @@ const Modern_NewApplicationPopup = ({text, closePopup, listNames }) => {
     const [newList, setNewList] = useState("");
     const [newLocation, setNewLocation] = useState("");
     const [newPosition, setNewPosition] = useState("");
+    const [locationValidationError, setLocationValidationError] = useState("");
+    const [isSaving, setIsSaving] = useState(false);
+    const [saveStatus, setSaveStatus] = useState("");
+
+    const validateLocationFormat = (loc) => {
+        if (!loc || loc.trim() === '') return false;
+        const normalized = loc.trim().toLowerCase();
+        if (normalized === 'remote') return true;
+        const locationRegex = /^.+,\s*[a-z]{2}$/i;
+        return locationRegex.test(loc);
+    };
+
+    const handleLocationChange = (newLoc) => {
+        setNewLocation(newLoc);
+        if (newLoc.trim() === '') {
+            setLocationValidationError('Location is required');
+        } else if (!validateLocationFormat(newLoc)) {
+            setLocationValidationError('Format: Remote or City, XX (case-insensitive)');
+        } else {
+            setLocationValidationError('');
+        }
+    };
 
     useEffect(() => {
         const listName = new URLSearchParams(location.search).get("listName");
@@ -17,7 +39,8 @@ const Modern_NewApplicationPopup = ({text, closePopup, listNames }) => {
         }
     }, [location.search]);
 
-    const isFormValid = newCompanyName && newPosition && newJobLink && newLocation && newList;
+    const isLocationValid = validateLocationFormat(newLocation);
+    const isFormValid = newCompanyName && newPosition && newJobLink && isLocationValid && newList;
 
     const buildDateAppliedValue = () => {
         const now = new Date();
@@ -33,6 +56,8 @@ const Modern_NewApplicationPopup = ({text, closePopup, listNames }) => {
     };
 
     async function addNewApplication() {
+        setIsSaving(true);
+        setSaveStatus('Saving...');
         console.log('Adding new application' + text)
 
         const stage = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev";
@@ -64,12 +89,18 @@ const Modern_NewApplicationPopup = ({text, closePopup, listNames }) => {
 
             const data = await res.json();
             console.log("SUCCESS:", data);
+            setSaveStatus('Success!');
+            setTimeout(() => {
+                closePopup();
+                window.location.reload();
+            }, 1500);
+            return;
         } catch (err) {
             console.error("ERROR:", err);
+            setSaveStatus('Failed to save. Please try again.');
+            setIsSaving(false);
+            return;
         }
-
-        closePopup()
-        window.location.reload()
     }
 
     return (
@@ -164,7 +195,7 @@ const Modern_NewApplicationPopup = ({text, closePopup, listNames }) => {
                         <input
                             placeholder="Enter location or 'Remote'..."
                             value={newLocation}
-                            onChange={({ target }) => setNewLocation(target.value)}
+                            onChange={({ target }) => handleLocationChange(target.value)}
                             style={{
                                 width: "100%",
                                 padding: "12px 14px",
@@ -177,6 +208,20 @@ const Modern_NewApplicationPopup = ({text, closePopup, listNames }) => {
                                 boxSizing: "border-box",
                             }}
                         />
+                        {locationValidationError && (
+                            <span style={{
+                                fontSize: '12px',
+                                color: '#ffffff',
+                                backgroundColor: 'rgba(204, 0, 0, 0.2)',
+                                border: '1px solid rgba(204, 0, 0, 0.45)',
+                                padding: '6px 10px',
+                                borderRadius: '8px',
+                                marginTop: '6px',
+                                display: 'block'
+                            }}>
+                                {locationValidationError}
+                            </span>
+                        )}
                     </div>
 
                     {/* Job Link */}
@@ -234,6 +279,24 @@ const Modern_NewApplicationPopup = ({text, closePopup, listNames }) => {
                 {/* Divider */}
                 <hr style={{ border: "none", borderTop: "1px solid #333", margin: "0 0 20px" }} />
 
+                {/* Status Message */}
+                {saveStatus && (
+                    <div style={{ marginBottom: '20px' }}>
+                        <span style={{
+                            fontSize: '14px',
+                            color: saveStatus.includes('Failed') ? '#ff6b6b' : '#00b894',
+                            backgroundColor: saveStatus.includes('Failed') ? 'rgba(255, 107, 107, 0.15)' : 'rgba(0, 184, 148, 0.15)',
+                            border: saveStatus.includes('Failed') ? '1px solid rgba(255, 107, 107, 0.4)' : '1px solid rgba(0, 184, 148, 0.4)',
+                            padding: '10px 14px',
+                            borderRadius: '8px',
+                            display: 'block',
+                            textAlign: 'center'
+                        }}>
+                            {saveStatus}
+                        </span>
+                    </div>
+                )}
+
                 {/* Buttons */}
                 <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", alignItems: "flex-start" }}>
                     <button
@@ -256,26 +319,26 @@ const Modern_NewApplicationPopup = ({text, closePopup, listNames }) => {
                     </button>
                     <button
                         onClick={addNewApplication}
-                        disabled={!isFormValid}
+                        disabled={!isFormValid || isSaving}
                         style={{
                             padding: "10px 22px",
                             borderRadius: "8px",
                             border: "none",
-                            backgroundColor: isFormValid ? "#4a9eff" : "#3a5080",
-                            color: isFormValid ? "#ffffff" : "#7a9aaa",
+                            backgroundColor: isFormValid && !isSaving ? "#4a9eff" : "#3a5080",
+                            color: isFormValid && !isSaving ? "#ffffff" : "#7a9aaa",
                             fontSize: "14px",
                             fontWeight: "600",
-                            cursor: isFormValid ? "pointer" : "not-allowed",
+                            cursor: isFormValid && !isSaving ? "pointer" : "not-allowed",
                             transition: "background-color 0.2s"
                         }}
                         onMouseEnter={(e) => {
-                            if (isFormValid) e.target.style.backgroundColor = "#3a8eef";
+                            if (isFormValid && !isSaving) e.target.style.backgroundColor = "#3a8eef";
                         }}
                         onMouseLeave={(e) => {
-                            if (isFormValid) e.target.style.backgroundColor = "#4a9eff";
+                            if (isFormValid && !isSaving) e.target.style.backgroundColor = "#4a9eff";
                         }}
                     >
-                        Add Application
+                        {isSaving ? 'Saving...' : 'Add Application'}
                     </button>
                 </div>
             </div>

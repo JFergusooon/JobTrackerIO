@@ -7,12 +7,35 @@ const Modern_EditApplicationPopup = ({job, listNames, closePopup}) => {
     const [location, setLocation] = useState(job.location);
     const [jobLink, setJobLink] = useState(job.jobLink);
     const [list, setList] = useState(job.list);
+    const [locationValidationError, setLocationValidationError] = useState("");
+    const [isSaving, setIsSaving] = useState(false);
+    const [saveStatus, setSaveStatus] = useState("");
 
+    const validateLocationFormat = (loc) => {
+        if (!loc || loc.trim() === '') return false;
+        const normalized = loc.trim().toLowerCase();
+        if (normalized === 'remote') return true;
+        const locationRegex = /^.+,\s*[a-z]{2}$/i;
+        return locationRegex.test(loc);
+    };
+
+    const handleLocationChange = (newLoc) => {
+        setLocation(newLoc);
+        if (newLoc.trim() === '') {
+            setLocationValidationError('Location is required');
+        } else if (!validateLocationFormat(newLoc)) {
+            setLocationValidationError('Format: Remote or City, XX (case-insensitive)');
+        } else {
+            setLocationValidationError('');
+        }
+    };
+
+    const isLocationValid = validateLocationFormat(location);
     const hasChanges =
-        position !== job.position ||
+        (position !== job.position ||
         location !== job.location ||
         jobLink !== job.jobLink ||
-        list !== job.list;
+        list !== job.list) && isLocationValid;
 
     const buildPatchBody = () => {
         const body = {};
@@ -26,6 +49,8 @@ const Modern_EditApplicationPopup = ({job, listNames, closePopup}) => {
     };
 
     async function editApplication() {
+        setIsSaving(true);
+        setSaveStatus('Saving...');
         const stage = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev";
         const url = stage + "/Jobs/update?username=" + localStorage.getItem('username') + "&companyName=" + companyName;
 
@@ -42,12 +67,18 @@ const Modern_EditApplicationPopup = ({job, listNames, closePopup}) => {
 
             const data = await res.json();
             console.log("SUCCESS:", data);
+            setSaveStatus('Success!');
+            setTimeout(() => {
+                closePopup();
+                window.location.reload();
+            }, 1500);
+            return;
         } catch (err) {
             console.error("ERROR:", err);
+            setSaveStatus('Failed to save. Please try again.');
+            setIsSaving(false);
+            return;
         }
-
-        closePopup();
-        window.location.reload();
     }
 
     return (
@@ -142,7 +173,7 @@ const Modern_EditApplicationPopup = ({job, listNames, closePopup}) => {
                         <input
                             placeholder="Enter location or 'Remote'..."
                             value={location}
-                            onChange={(e) => setLocation(e.target.value)}
+                            onChange={(e) => handleLocationChange(e.target.value)}
                             style={{
                                 width: "100%",
                                 padding: "12px 14px",
@@ -155,6 +186,20 @@ const Modern_EditApplicationPopup = ({job, listNames, closePopup}) => {
                                 boxSizing: "border-box",
                             }}
                         />
+                        {locationValidationError && (
+                            <span style={{
+                                fontSize: '12px',
+                                color: '#ffffff',
+                                backgroundColor: 'rgba(204, 0, 0, 0.2)',
+                                border: '1px solid rgba(204, 0, 0, 0.45)',
+                                padding: '6px 10px',
+                                borderRadius: '8px',
+                                marginTop: '6px',
+                                display: 'block'
+                            }}>
+                                {locationValidationError}
+                            </span>
+                        )}
                     </div>
 
                     {/* Job Link */}
@@ -212,6 +257,24 @@ const Modern_EditApplicationPopup = ({job, listNames, closePopup}) => {
                 {/* Divider */}
                 <hr style={{ border: "none", borderTop: "1px solid #333", margin: "0 0 20px" }} />
 
+                {/* Status Message */}
+                {saveStatus && (
+                    <div style={{ marginBottom: '20px' }}>
+                        <span style={{
+                            fontSize: '14px',
+                            color: saveStatus.includes('Failed') ? '#ff6b6b' : '#00b894',
+                            backgroundColor: saveStatus.includes('Failed') ? 'rgba(255, 107, 107, 0.15)' : 'rgba(0, 184, 148, 0.15)',
+                            border: saveStatus.includes('Failed') ? '1px solid rgba(255, 107, 107, 0.4)' : '1px solid rgba(0, 184, 148, 0.4)',
+                            padding: '10px 14px',
+                            borderRadius: '8px',
+                            display: 'block',
+                            textAlign: 'center'
+                        }}>
+                            {saveStatus}
+                        </span>
+                    </div>
+                )}
+
                 {/* Buttons */}
                 <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", alignItems: "flex-start" }}>
                     <button
@@ -234,26 +297,26 @@ const Modern_EditApplicationPopup = ({job, listNames, closePopup}) => {
                     </button>
                     <button
                         onClick={editApplication}
-                        disabled={!hasChanges}
+                        disabled={!hasChanges || isSaving}
                         style={{
                             padding: "10px 22px",
                             borderRadius: "8px",
                             border: "none",
-                            backgroundColor: hasChanges ? "#4a9eff" : "#3a5080",
-                            color: hasChanges ? "#ffffff" : "#7a9aaa",
+                            backgroundColor: hasChanges && !isSaving ? "#4a9eff" : "#3a5080",
+                            color: hasChanges && !isSaving ? "#ffffff" : "#7a9aaa",
                             fontSize: "14px",
                             fontWeight: "600",
-                            cursor: hasChanges ? "pointer" : "not-allowed",
+                            cursor: hasChanges && !isSaving ? "pointer" : "not-allowed",
                             transition: "background-color 0.2s"
                         }}
                         onMouseEnter={(e) => {
-                            if (hasChanges) e.target.style.backgroundColor = "#3a8eef";
+                            if (hasChanges && !isSaving) e.target.style.backgroundColor = "#3a8eef";
                         }}
                         onMouseLeave={(e) => {
-                            if (hasChanges) e.target.style.backgroundColor = "#4a9eff";
+                            if (hasChanges && !isSaving) e.target.style.backgroundColor = "#4a9eff";
                         }}
                     >
-                        Save Changes
+                        {isSaving ? 'Saving...' : 'Save Changes'}
                     </button>
                 </div>
             </div>
