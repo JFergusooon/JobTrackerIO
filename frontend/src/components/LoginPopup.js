@@ -83,8 +83,32 @@ const Popup = ({text, closePopup}) => {
         if(match) {
             localStorage.setItem('username', matchedUsername)
             localStorage.setItem('password', inputPass)
+
+            // Fetch the user's appearance scheme immediately after login
+            try {
+                const stage = 'https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev';
+                const url = `${stage}/Users/getByUsername?username=${encodeURIComponent(matchedUsername)}`;
+                const encode = window.btoa('admin:admin');
+                const res = await fetch(url, {
+                    headers: { Authorization: 'Basic ' + encode },
+                    method: 'GET'
+                });
+                if (res.ok) {
+                    const userData = await res.json();
+                    const sourceUser = userData?.body || userData;
+                    const validSchemes = ['Forest', 'Ocean', 'Sunset'];
+                    const backendAppearance = sourceUser?.curAppearanceScheme;
+                    if (validSchemes.includes(backendAppearance)) {
+                        localStorage.setItem('curAppearanceScheme', backendAppearance);
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to fetch appearance scheme on login:', err);
+            }
+
             closePopup();
             window.dispatchEvent(new Event('authChange'));
+            window.dispatchEvent(new Event('appearanceChange'));
         }
 
 
