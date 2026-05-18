@@ -2,7 +2,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from "react";
 import LoginPopup from '../components/LoginPopup';
 import "../css/navBarCSS.css"
-import LegacyToggle from './LegacyUI/Legacy_Plus/LegacyToggle.jsx';
 
 function NavBar() { 
   const [showPopup, setShowPopup] = useState(false);
@@ -78,9 +77,9 @@ function NavBar() {
     )}
 
     <div className='loginStateButton'>
-      <a href="#" onClick={togglePopup} style={{ color: 'black' }}>
+      <div onClick={togglePopup} style={{ color: 'black', cursor: 'pointer' }}>
         {loginState}
-      </a>
+      </div>
     </div>
   </div>
 

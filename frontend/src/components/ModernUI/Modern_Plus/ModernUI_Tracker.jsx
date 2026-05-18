@@ -7,7 +7,6 @@ import Modern_NewApplicationPopup from '../Modern_Tracker/Modern_NewApplicationP
 import Modern_ListManagement from '../Modern_Tracker/Modern_ListManagement.jsx';
 import Modern_NewDeleteList from '../Modern_Tracker/Modern_NewDeleteList.jsx';
 import Modern_ApplicationCount from '../Modern_Tracker/Modern_ApplicationCount.jsx';
-import LegacyToggle from '../../LegacyUI/Legacy_Plus/LegacyToggle.jsx';
 import Modern_DeletePopup_v2 from '../Modern_Tracker/Modern_DeletePopup_v2.jsx';
 
 function ModernUI_Tracker() { 

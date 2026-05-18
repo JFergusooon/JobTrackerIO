@@ -1,8 +1,6 @@
 // pages/Home.jsx
 import React from 'react';
 import NavBar from '../components/navBar';
-import LegacyUI_Tracker from '../components/LegacyUI/Legacy_Plus/LegacyUI_Tracker';
-import ModernUI_Tracker from '../components/ModernUI/Modern_Plus/ModernUI_Tracker';
 import ModernFooter from '../components/ModernFooter';
 
 function TermsPage() {
