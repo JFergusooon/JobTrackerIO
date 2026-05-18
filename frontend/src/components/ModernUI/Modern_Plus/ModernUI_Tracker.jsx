@@ -592,28 +592,20 @@ function ModernUI_Tracker() {
                                     }}
                                     className={selectedJob?.companyName === job.companyName ? "modernUnknown" : "modernJobCard"}
                                     style={{backgroundColor: job.rejected ? 'rgba(255, 0, 0, 0.2)' : 'white', border: selectedJob?.companyName === job.companyName ? '2px solid orange' : '0.1px solid black', display: 'grid', gridTemplateColumns: rightColumnGridTemplate, alignItems: 'center'}}>
-                                    <p style={{padding: '0px 0px 0px 2px', margin: '0px', color: job.rejected ? 'red' : 'black', display: 'flex', alignItems: 'center', height: '100%'}}>
-                                    {job.companyName.length > 30
-                                        ? job.companyName.slice(0, 30) + "..."
-                                        : job.companyName}
+                                    <p style={{padding: '0px 0px 0px 2px', margin: '0px', color: job.rejected ? 'red' : 'black', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', minWidth: 0}}>
+                                        {job.companyName.length > 25 ? job.companyName.slice(0, 25) + '...' : job.companyName}
                                     </p>
 
-                                    <p style={{padding: '0px 0px 0px 2px', margin: '0px', color: job.rejected ? 'red' : 'black', display: 'flex', alignItems: 'center', height: '100%'}}>
-                                    {getDisplayPosition(job.position).length > 30
-                                        ? getDisplayPosition(job.position).slice(0, 30) + "..."
-                                        : getDisplayPosition(job.position)}
+                                    <p style={{padding: '0px 0px 0px 2px', margin: '0px', color: job.rejected ? 'red' : 'black', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', minWidth: 0}}>
+                                        {getDisplayPosition(job.position)}
                                     </p>
 
-                                    <p style={{padding: '0px 0px 0px 2px', margin: '0px', color: job.rejected ? 'red' : 'black', display: 'flex', alignItems: 'center', height: '100%'}}>
-                                    {job.location.length > 30
-                                        ? job.location.slice(0, 30) + "..."
-                                        : job.location}
+                                    <p style={{padding: '0px 0px 0px 2px', margin: '0px', color: job.rejected ? 'red' : 'black', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', minWidth: 0}}>
+                                        {job.location}
                                     </p>
 
-                                    <a href={job.jobLink} target="_blank" rel="noreferrer" style={{padding: '0px 0px 0px 2px', margin: '0px', textAlign: 'left', color: job.rejected ? 'red' : '', display: 'flex', alignItems: 'center', height: '100%'}}>
-                                    {job.jobLink.length > 30
-                                        ? job.jobLink.slice(0, 30) + "..."
-                                        : job.jobLink}
+                                    <a href={job.jobLink} target="_blank" rel="noreferrer" style={{padding: '0px 0px 0px 2px', margin: '0px', textAlign: 'left', color: job.rejected ? 'red' : '', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', minWidth: 0}}>
+                                        {job.jobLink}
                                     </a>
 
                                     <input
