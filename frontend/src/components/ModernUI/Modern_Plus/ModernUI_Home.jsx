@@ -9,13 +9,14 @@ import Modern_RecentLists from '../Modern_Home/Modern_RecentLists.jsx';
 import Modern_StatsChart from '../Modern_Home/Modern_StatsChart.jsx';
 import Modern_StatsInfo from '../Modern_Home/Modern_StatsInfo.jsx';
 import Modern_NewListPopup from '../Modern_Tracker/Modern_NewListPopup.jsx';
+import Modern_FeedbackPopup from '../Modern_Tracker/Modern_FeedbackPopup.jsx';
 import ModernFooterComponent from '../../ModernFooter.jsx';
 
 function ModernUI_Home({ onOpenUpdates }) { 
 
   const [allJobs, setAllJobs] = useState([]);
     const [showNewListPopup, setShowNewListPopup] = useState(false);
-
+    const [showFeedbackPopup, setShowFeedbackPopup] = useState(false);
   const [userInfo, setUserInfo] = useState();
 
   const [error, setError] = useState(null);
@@ -85,6 +86,10 @@ function ModernUI_Home({ onOpenUpdates }) {
             setShowNewListPopup(!showNewListPopup);
         };
 
+        const onOpenFeedback = () => {
+            setShowFeedbackPopup(!showFeedbackPopup);
+        };
+
     useEffect(() => {
             let stage_url = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev"
             let url = stage_url + "/Users/getByUsername?username=" + localStorage.getItem('username')
@@ -125,7 +130,7 @@ function ModernUI_Home({ onOpenUpdates }) {
               <div style={{width: '55%'}}>
               </div>
               <div style={{width: '45%', height: '100%'}}>
-                  <Modern_QuickSettings onOpenUpdates={onOpenUpdates} onOpenNewList={toggleNewListPopup} />
+                  <Modern_QuickSettings onOpenUpdates={onOpenUpdates} onOpenNewList={toggleNewListPopup} onOpenFeedback={onOpenFeedback} />
                   <Modern_QuickNotes userData={userInfo} />
               </div>
             </div>
@@ -145,6 +150,7 @@ function ModernUI_Home({ onOpenUpdates }) {
           </div>
 
                     {showNewListPopup ? <Modern_NewListPopup text='NewList' closePopup={toggleNewListPopup} /> : null }
+                    {showFeedbackPopup ? <Modern_FeedbackPopup closePopup={onOpenFeedback} /> : null }
         </div>
     );
 };

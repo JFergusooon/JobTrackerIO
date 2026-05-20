@@ -1,6 +1,7 @@
 // pages/Home.jsx
 import React from 'react';
 import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import NavBar from '../components/navBar.jsx';
 import LegacyUI_Home from '../components/LegacyUI/Legacy_Plus/LegacyUI_Home.jsx';
 import ModernUI_Home from '../components/ModernUI/Modern_Plus/ModernUI_Home.jsx';
@@ -11,12 +12,26 @@ import UpdatesPopup from '../components/UpdatesPopup';
 function HomePage() {
   const [showUpdatesPopup, setShowUpdatesPopup] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem('username') !== '');
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    const handleLogin = () => setIsLoggedIn(localStorage.getItem('username') !== '');
+    const handleLogin = () => {
+      const loggedIn = localStorage.getItem('username') !== '';
+      setIsLoggedIn(loggedIn);
+    };
     window.addEventListener('authChange', handleLogin);
     return () => window.removeEventListener('authChange', handleLogin);
   }, []);
+
+  // Redirect: logged-in users should be on /home, logged-out users on /
+  useEffect(() => {
+    if (isLoggedIn && location.pathname === '/') {
+      navigate('/home', { replace: true });
+    } else if (!isLoggedIn && location.pathname === '/home') {
+      navigate('/', { replace: true });
+    }
+  }, [isLoggedIn, location.pathname, navigate]);
 
   const toggleUpdatePopup = () => {
     setShowUpdatesPopup(!showUpdatesPopup);

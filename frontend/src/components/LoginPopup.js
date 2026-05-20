@@ -107,6 +107,7 @@ const Popup = ({text, closePopup}) => {
             }
 
             closePopup();
+            navigate('/home');
             window.dispatchEvent(new Event('authChange'));
             window.dispatchEvent(new Event('appearanceChange'));
         }

@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
 import '../../../css/Modern_HomePageCSS.css';
 
-const Modern_QuickSettings = ({text, closePopup, onOpenUpdates, onOpenNewList}) => {
+const Modern_QuickSettings = ({text, closePopup, onOpenUpdates, onOpenNewList, onOpenFeedback}) => {
 
 
     return (
@@ -13,7 +13,7 @@ const Modern_QuickSettings = ({text, closePopup, onOpenUpdates, onOpenNewList}) 
                 <div className='modernQuickSettingsButton' onClick={onOpenUpdates}>Updates</div>
                 <div className='modernQuickSettingsButton'>---</div>
                 <div className='modernQuickSettingsButton'>---</div>
-                <div className='modernQuickSettingsButton'>---</div>
+                <div className='modernQuickSettingsButton' onClick={onOpenFeedback}>Feedback</div>
             </div>
         </div>
     );

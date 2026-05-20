@@ -49,8 +49,8 @@ function NavBar() {
   }}>
     {localStorage.getItem("username") !== "" && (
       <>
-        <div className='loggedInNavBarButton' onClick={() => navigate('/')}>
-          <Link to="/">Home</Link>
+        <div className='loggedInNavBarButton' onClick={() => navigate('/home')}>
+          <Link to="/home">Home</Link>
         </div>
         <div className='loggedInNavBarButton' onClick={() => navigate('/tracker')}>
           <Link to="/tracker">Tracker</Link>
