@@ -1,6 +1,11 @@
 import { useState } from 'react';
+import emailjs from '@emailjs/browser';
 
 const Modern_FeedbackPopup = ({ closePopup }) => {
+
+    const EMAILJS_SERVICE_ID = "service_azocgg9";
+    const EMAILJS_TEMPLATE_ID = "template_r6iefxs";
+    const EMAILJS_PUBLIC_KEY = "031phQOO8bcKWzLhr";
 
     const [feedbackType, setFeedbackType] = useState("General");
     const [message, setMessage] = useState("");
@@ -16,23 +21,13 @@ const Modern_FeedbackPopup = ({ closePopup }) => {
         setSubmitting(true);
         setError(null);
 
-        const stage = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev";
-        const url = `${stage}/Feedback/create`;
-
-        const payload = {
-            username: localStorage.getItem('username'),
+        const templateParams = {
             feedbackType,
-            message: message.trim(),
+            feedbackMessage: message.trim(),
         };
 
         try {
-            const res = await fetch(url, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
-            });
-
-            if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+            await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams, EMAILJS_PUBLIC_KEY);
             setSubmitted(true);
         } catch (err) {
             console.error("Feedback submission error:", err);
