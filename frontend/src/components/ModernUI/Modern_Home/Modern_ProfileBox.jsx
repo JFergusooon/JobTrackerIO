@@ -41,15 +41,15 @@ const Modern_ProfileBox = ({userData, closePopup}) => {
     return (
         <div className='modernProfileBoxContainer'>
             {/* Left Column */}
-            <div style={{width: '20%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start'}}>
-                <div style={{ width: '75px', height: '75px', borderRadius: '50%', backgroundColor: 'var(--nav-background)', margin: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '3px solid var(--gradient-top-color)'}}>
+            <div style={{width: '20%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start'}}>
+                <div style={{ width: '90%', aspectRatio: '1 / 1', borderRadius: '50%', backgroundColor: 'var(--nav-background)', margin: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '3px solid var(--gradient-top-color)'}}>
                     {profileImageUrl ? (
-                        <img src={profileImageUrl} alt='profile' style={{width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%'}} />
+                        <img src={profileImageUrl} alt='profile' style={{width: '90%', height: '90%', objectFit: 'cover', borderRadius: '50%'}} />
                     ) : (
                         <img src='person.png' alt='person' style={{width: '100%', height: '100%'}} />
                     )}
                 </div>
-                <p className='modernQuickSettingsButton' onClick={() => navigate('/settings')} style={{textAlign: 'center', margin: '2px 0 0 0', width: 'fit-content', height: 'auto', padding: '1px 6px', cursor: 'pointer', fontSize: '12px'}}>Edit</p>
+                <p className='modernQuickSettingsButton' onClick={() => navigate('/settings')} style={{textAlign: 'center', margin: '2px 0 0 0', width: 'fit-content', padding: '1px 6px', cursor: 'pointer', fontSize: '12px', height: '15px'}}>Edit</p>
             </div>
 
             <div style={{width: '56%', textAlign: 'left', marginLeft: '5px', marginTop: '5px'}}>

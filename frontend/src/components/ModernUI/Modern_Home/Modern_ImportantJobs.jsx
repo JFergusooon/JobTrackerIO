@@ -251,31 +251,30 @@ const Modern_ImportantJobs = ({importantJobsList, onFavoriteChanged, onStageChan
         const companyKey = normalizeCompanyKey(jobInfo.companyName ?? jobInfo.company);
         const currentNotes = editedNotes[companyKey] !== undefined ? editedNotes[companyKey] : jobInfo.notes;
 
+
         return (
         <div key={`${jobInfo.company}-${index}`} style={{ height: '150px', background: 'rgba(255, 255, 255, 0.4)', border: '1px solid black', borderRadius: '20px', margin: '3px 5px', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', flexDirection: 'row', height: '70px', width: '100%'}}>
                 <div style={{ display: 'flex', flexDirection: 'row', gap: '100px', margin: '5px', width: '100%' }}>
-                    <div>
+                    <div style={{ minWidth: 0, width: '100%' }}>
                         <div style={{display: 'flex', flexDirection: 'row'}}>
-                            <p style={{margin: '0px', fontSize: '28px', width: '100%', textAlign: 'left'}}>{jobInfo.company}</p>
                             <FaStar
                                 onClick={() => toggleFavorite(jobInfo, index)}
-                                style={{ color: (jobInfo.favorited ?? jobInfo.favorite) ? "orange" : "gray", marginTop: '10px', marginLeft: '10px', cursor: 'pointer' }}
+                                style={{ color: (jobInfo.favorited ?? jobInfo.favorite) ? "orange" : "gray", marginTop: '10px', marginLeft: '10px', cursor: 'pointer', paddingRight: '10px' }}
                                 title={(jobInfo.favorited ?? jobInfo.favorite) ? 'Unfavorite' : 'Favorite'}
                             />
+                            <p style={{margin: '0px', fontSize: '28px', width: '100%', textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>{jobInfo.company}</p>
+                            
                         </div>
-
-                        <p style={{margin: '0px', fontSize: '20px', textAlign: 'left'}}>{jobInfo.position}</p>
+                        <p style={{margin: '0px', fontSize: '20px', textAlign: 'left', paddingLeft: '32px'}}>{jobInfo.position}</p>
                     </div>
-
-                    <div style={{ marginLeft: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                    {/*<div style={{ marginLeft: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', width: '100%' }}>*/}
                         <div style={{display: 'flex', flexDirection: 'column', gap: '3px', margin: '5px', textAlign: 'right'}}>
                             <div style={{display: 'flex', flexDirection: 'row', gap: '3px', textAlign: 'right'}}>
                                 <p style={{margin: '0px', fontSize: '15px', textAlign: 'right'}}> Interview Date: {formatDateForDisplay(jobInfo.interviewDate)} </p>
                                 <input type="date" value={jobInfo.interviewDate || ""} onChange={(e) => updateDate(jobInfo, e.target.value)}
                                         style={{ width: '18px', height: '20px', padding: 0, border: 'none', color: 'transparent', cursor: 'pointer'}}/>
                             </div>
-
                             <div style={{display: 'flex', flexDirection: 'row', gap: '3px', margin: '5px', width: '100%', justifyContent: 'right'}}>
                                 <p style={{margin: '0px', fontSize: '15px'}}>Stage:</p>
                                 <select 
@@ -291,15 +290,13 @@ const Modern_ImportantJobs = ({importantJobsList, onFavoriteChanged, onStageChan
                                 </select>
                             </div>
                         </div>
-                    </div>
+                    {/*</div>*/}
                 </div>
             </div>
-
             <div style={{ height: '90px', display: 'flex', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '6px' }}>
-                <p style={{width: '10%', margin: '0 5px 0 5px', textAlign: 'right', paddingTop: '2px'}}>Notes: </p>
-                <textarea value={currentNotes} onChange={(e) => handleNotesChange(jobInfo, e.target.value)} style={{height: '90%', width: '95%', borderRadius: '20px', resize: 'none', padding: '4px 8px', boxSizing: 'border-box', verticalAlign: 'top', textAlign: 'left', overflow: 'auto', border: '1px solid var(--nav-background)'}} placeholder="Add notes..." />
+                <p style={{width: '10%', margin: '0 5px 0 5px', textAlign: 'right', paddingTop: '2px', color: 'gray'}}>Notes: </p>
+                <textarea value={currentNotes} onChange={(e) => handleNotesChange(jobInfo, e.target.value)} style={{height: '90%', width: '95%', borderRadius: '20px', marginRight: '5px', resize: 'none', padding: '4px 8px', boxSizing: 'border-box', verticalAlign: 'top', textAlign: 'left', overflow: 'auto', border: '1px solid var(--nav-background)'}} placeholder="Add notes..." />
             </div>
-
         </div>
     )};
 

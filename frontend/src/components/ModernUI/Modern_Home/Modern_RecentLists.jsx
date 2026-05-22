@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import '../../../css/Modern_HomePageCSS.css';
 import { useNavigate } from 'react-router-dom';
@@ -57,7 +57,7 @@ const Modern_RecentLists = ({ text, closePopup }) => {
 
             <div className='modernRecentListsButtonContainer'>
                 {Array.from({ length: 4 }).map((_, colIndex) => (
-                    <div key={colIndex} style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div key={colIndex} style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
                         {Array.from({ length: 3 }).map((_, rowIndex) => {
                             const item = finalLists[rowIndex * 4 + colIndex];
 

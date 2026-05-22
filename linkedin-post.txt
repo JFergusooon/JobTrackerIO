@@ -1,0 +1,57 @@
+🚀 Excited to announce the launch of Job-Tracker.io — the free job application tracker built for serious job seekers.
+
+
+
+From August 2025 to April 2026, I applied to over 1,800 jobs.
+
+Some days I sent out 50+ applications, other days I stared at the screen wondering if any of it was working. I kept losing track of where I applied and had no real sense of progress, which made the whole process feel even more overwhelming. The more time than went by, the more I felt like maybe I wasn't qualified enough, which I knew deep down, simply wasn't true. 
+
+
+
+So I did what any burned-out, overly-organized developer would do:
+
+I opened Python and started building my own tracking tool.
+
+What began as a simple TKinter UI to make sense of my chaotic job search slowly evolved into something bigger. I realized that if I needed this level of organization to stay sane… chances are thousands of others did too.
+
+
+
+That’s how Job-Tracker.io was born — a tool built out of frustration, refined through necessity, and now shared freely with anyone navigating the same journey.
+
+
+
+Here’s what it gives you:
+
+📋 Organized Application Lists
+
+ Create custom lists (industry, company type, location—whatever works for you) so you never lose track of your pipeline again.
+
+📊 Real-Time Stats Dashboard
+
+ See exactly how many jobs you’ve applied to, your rejections, success rate, pending responses, interviews, and even how long your search has been going.
+
+⭐ Favorite & Prioritize
+
+ Star top opportunities and keep them front and center on your home dashboard.
+
+🎯 Interview Stage Tracking
+
+ Move roles from Applied → Initial Screen → Stage 1, 2, 3 → Awaiting Offer with a single click.
+
+📝 Quick Notes
+
+ Add reminders, prep notes, or interview insights directly on your dashboard.
+
+🔗 Full Application Details
+
+ Store everything: company name, position, location, job link, date applied, interview dates, and your personal notes — all in one place.
+
+Whether you're applying to 5 jobs or 500, staying organized can be the difference between a chaotic search and a confident one.
+
+It's completely free. No fluff. Just a tool built by a job seeker, for job seekers.
+
+👉 Try it now: job-tracker.io
+
+If you’re currently job hunting, drop a comment — I’d love to hear your thoughts after using it!
+
+#JobSearch #CareerDevelopment #JobHunting #ProductLaunch #JobTrackerIO #CareerTips #OpenToWork

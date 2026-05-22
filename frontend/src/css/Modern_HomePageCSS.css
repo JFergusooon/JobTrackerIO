@@ -37,13 +37,19 @@
 
 .modernQuickSettingsButton {
     border: solid 1px var(--nav-background);
-    width: 70%;
-    margin: 2%;
+    width: 90%;
+    margin: 4px 4px 4px 4px;
     height: 30px;
     background-color: white;
     text-align: center;
-        justify-content: center;
-        align-items: center;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    box-sizing: border-box;
 }
 
 .modernQuickSettingsButton:hover {
@@ -65,7 +71,7 @@
 .modernQuickNotesContainer {
     border: solid 1px black;
     width: 100%;
-    height: 72%;
+    height: 84%;
     background: rgba(255, 255, 255, 0.4);
     border-radius: 20px;
 
@@ -79,7 +85,7 @@
 
 .modernQuickNotesInput {
     border: solid 1px var(--nav-background);
-    height: calc(70% - 10px);
+    height: calc(75% - 10px);
     margin: 3px;
     width: 80%;
     resize: none;
@@ -95,7 +101,7 @@
     width: 100%;
     border: 1px solid black;
     border-radius: 20px;
-    height: 20%;
+    height: 18%;
     display: flex;
     flex-direction: row;
     background: rgba(255, 255, 255, 0.4);
@@ -119,13 +125,19 @@
 
 .modernRecentListsButton {
     border: solid 1px var(--nav-background);
-    width: 180px;
-    margin: 2%;
+    width: 100%;
+    margin: 4px 0;
     height: 30px;
     background-color: white;
     text-align: center;
     justify-content: center;
     align-items: center;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    box-sizing: border-box;
 }
 
 .modernRecentListsButton:hover {
