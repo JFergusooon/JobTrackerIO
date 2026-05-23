@@ -7,18 +7,18 @@ import LegacyUI_Home from '../components/LegacyUI/Legacy_Plus/LegacyUI_Home.jsx'
 import ModernUI_Home from '../components/ModernUI/Modern_Plus/ModernUI_Home.jsx';
 import ModernFooterComponent from '../components/ModernFooter.jsx'
 import UpdatesPopup from '../components/UpdatesPopup';
+import { isLoggedInUser } from '../appearanceTheme';
 
 
 function HomePage() {
   const [showUpdatesPopup, setShowUpdatesPopup] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem('username') !== '');
+  const [isLoggedIn, setIsLoggedIn] = useState(isLoggedInUser());
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
     const handleLogin = () => {
-      const loggedIn = localStorage.getItem('username') !== '';
-      setIsLoggedIn(loggedIn);
+      setIsLoggedIn(isLoggedInUser());
     };
     window.addEventListener('authChange', handleLogin);
     return () => window.removeEventListener('authChange', handleLogin);

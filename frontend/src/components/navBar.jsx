@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from "react";
 import LoginPopup from '../components/LoginPopup';
+import { isLoggedInUser } from '../appearanceTheme';
 import "../css/navBarCSS.css"
 
 function NavBar() { 
@@ -15,7 +16,7 @@ function NavBar() {
   }, []);
   const togglePopup = () => {
     // If Button is 'Logout':
-    if(loginState === "Logout" && localStorage.getItem('username') !== "" && localStorage.getItem('password') !== "") {
+    if(loginState === "Logout" && isLoggedInUser()) {
             localStorage.setItem('username', '')
             localStorage.setItem('password', '')
             navigate('/')
@@ -27,7 +28,7 @@ function NavBar() {
   }
 
   let loginState = ""
-  loginState = localStorage.getItem('username') !== "" ? "Logout" : "Login";
+  loginState = isLoggedInUser() ? "Logout" : "Login";
 
   return (
     <>
@@ -47,7 +48,7 @@ function NavBar() {
     justifyContent: 'center',
     gap: '20px'
   }}>
-    {localStorage.getItem("username") !== "" && (
+    {isLoggedInUser() && (
       <>
         <div className='loggedInNavBarButton' onClick={() => navigate('/home')}>
           <Link to="/home">Home</Link>
@@ -70,7 +71,7 @@ function NavBar() {
     alignItems: 'center',
     gap: '20px'
   }}>
-    {localStorage.getItem("username") !== "" && (
+    {isLoggedInUser() && (
       <p style={{ color: 'white', margin: 0 }}>
         Hi, {localStorage.getItem("username")}!
       </p>
