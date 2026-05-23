@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import NavBar from '../components/navBar';
 import ModernFooter from '../components/ModernFooter';
+import DonateBox from '../components/DonateBox';
 
 function SettingsPage() {
 	const [activeTab, setActiveTab] = useState('account');
@@ -469,6 +470,9 @@ function SettingsPage() {
 					padding: '30px 20px'
 				}}>
 					<div style={{
+						position: 'relative'
+					}}>
+						<div style={{
 						backgroundColor: 'rgba(255, 255, 255, 0.4)',
 						borderRadius: '16px',
 						padding: '36px 32px 28px',
@@ -806,6 +810,15 @@ function SettingsPage() {
 									</div>
 								</div>
 							)}
+						</div>
+						</div>
+
+						<div style={{
+							position: 'absolute',
+							top: '0',
+							left: 'calc(100% + 20px)'
+						}}>
+							<DonateBox />
 						</div>
 					</div>
 				</div>
