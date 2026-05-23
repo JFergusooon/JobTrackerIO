@@ -3,7 +3,7 @@ import React from 'react';
 function DonateBox() {
 	const handlePayPalDonate = () => {
 		// Replace with your actual PayPal donation link
-		window.open('https://www.paypal.me/bepposir', '_blank');
+		window.open('https://paypal.me/FergusonSoftware?country.x=US&locale.x=en_US', '_blank');
 	};
 
 	const handleVenmoDonate = () => {
