@@ -59,6 +59,7 @@ const Popup = ({text, closePopup}) => {
 
         let match = false;
         let matchedUsername = "";
+        let matchedAppearanceScheme = "";
         const normalizedInputUser = inputUser.trim().toLowerCase();
         let allUsersSize = allUsers.length;
         console.log("Total Number of Users: " + allUsersSize)
@@ -73,6 +74,7 @@ const Popup = ({text, closePopup}) => {
                     console.log("PASSWORD MATCHED!");
                     match = true;
                     matchedUsername = allUsers[i].username;
+                    matchedAppearanceScheme = allUsers[i].curAppearanceScheme;
                     break;
                 }                else {
                     console.log("PASSWORD DID NOT MATCH");
@@ -83,6 +85,13 @@ const Popup = ({text, closePopup}) => {
         if(match) {
             localStorage.setItem('username', matchedUsername)
             localStorage.setItem('password', inputPass)
+
+            const validSchemes = ['Forest', 'Ocean', 'Sunset'];
+            if (validSchemes.includes(matchedAppearanceScheme)) {
+                localStorage.setItem('curAppearanceScheme', matchedAppearanceScheme);
+            } else {
+                localStorage.setItem('curAppearanceScheme', 'Forest');
+            }
 
             // Fetch the user's appearance scheme immediately after login
             try {
@@ -96,7 +105,6 @@ const Popup = ({text, closePopup}) => {
                 if (res.ok) {
                     const userData = await res.json();
                     const sourceUser = userData?.body || userData;
-                    const validSchemes = ['Forest', 'Ocean', 'Sunset'];
                     const backendAppearance = sourceUser?.curAppearanceScheme;
                     if (validSchemes.includes(backendAppearance)) {
                         localStorage.setItem('curAppearanceScheme', backendAppearance);
