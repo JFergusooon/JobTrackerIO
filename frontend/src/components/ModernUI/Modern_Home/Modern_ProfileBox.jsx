@@ -1,21 +1,49 @@
 import React, {useEffect, useState} from 'react';
-import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import '../../../css/Modern_HomePageCSS.css';
 
 const API_BASE = 'https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev';
 
-const Modern_ProfileBox = ({userData, closePopup}) => {
-    const navigate = useNavigate();
-    let username = "JFergusooon"
-    let role = "SDET | Software Engineer"
+const normalizeCareerTitle = (careerTitleValue) => {
+    if (typeof careerTitleValue === 'string') {
+        return careerTitleValue;
+    }
 
-    const formattedCareerTitle = (userData?.careerTitle || '')
+    if (Array.isArray(careerTitleValue)) {
+        return careerTitleValue.join(',');
+    }
+
+    if (careerTitleValue == null) {
+        return '';
+    }
+
+    return String(careerTitleValue);
+};
+
+const formatJoinedDate = (dateCreated) => {
+    if (typeof dateCreated !== 'string' || !dateCreated.includes('/')) {
+        return '';
+    }
+
+    const dateParts = dateCreated.split('/');
+    if (dateParts.length < 3) {
+        return '';
+    }
+
+    return `${dateParts[0]}/${dateParts[2]}`;
+};
+
+const Modern_ProfileBox = ({userData}) => {
+    const navigate = useNavigate();
+
+    const formattedCareerTitle = normalizeCareerTitle(userData?.careerTitle)
         .replace(/[{}"]/g, '')
         .split(',')
         .map((titlePart) => titlePart.trim())
         .filter(Boolean)
         .join(' | ');
+
+    const joinedDate = formatJoinedDate(userData?.dateCreated);
 
     // Profile picture state
     const [profileImageUrl, setProfileImageUrl] = useState('');
@@ -61,7 +89,7 @@ const Modern_ProfileBox = ({userData, closePopup}) => {
             </div>
 
             <div style={{display: 'flex', justifyContent: 'flex-end', width: '24%', paddingRight: '16px'}}>
-                <p style={{marginTop: '5px'}}>Joined {userData?.dateCreated?.split("/")[0] + "/" + userData?.dateCreated?.split("/")[2]}</p>
+                {joinedDate ? <p style={{marginTop: '5px'}}>Joined {joinedDate}</p> : null}
             </div>
             
             

@@ -5,12 +5,12 @@ import DonateBox from '../components/DonateBox';
 
 function SettingsPage() {
 	const [activeTab, setActiveTab] = useState('account');
-	const [careerTitle, setCareerTitle] = useState(localStorage.getItem('profilePosition') || '');
-	const [location, setLocation] = useState(localStorage.getItem('profileLocation') || '');
+	const [careerTitle, setCareerTitle] = useState('');
+	const [location, setLocation] = useState('');
 	const [firstName, setFirstName] = useState('');
 	const [lastName, setLastName] = useState('');
-	const [initialCareerTitle, setInitialCareerTitle] = useState(localStorage.getItem('profilePosition') || '');
-	const [initialLocation, setInitialLocation] = useState(localStorage.getItem('profileLocation') || '');
+	const [initialCareerTitle, setInitialCareerTitle] = useState('');
+	const [initialLocation, setInitialLocation] = useState('');
 	const [initialFirstName, setInitialFirstName] = useState('');
 	const [initialLastName, setInitialLastName] = useState('');
 	const [saveMessage, setSaveMessage] = useState('');
@@ -246,9 +246,9 @@ function SettingsPage() {
 						.filter(Boolean)
 						.join(', ');
 				};
-				const backendLocation = sourceUser?.location || '';
-				const resolvedCareerTitle = normalizeCareerTitleValue(backendCareerTitle) || normalizeCareerTitleValue(localStorage.getItem('profilePosition') || '');
-				const resolvedLocation = backendLocation || localStorage.getItem('profileLocation') || '';
+				const backendLocation = typeof sourceUser?.location === 'string' ? sourceUser.location : '';
+				const resolvedCareerTitle = normalizeCareerTitleValue(backendCareerTitle);
+				const resolvedLocation = backendLocation;
 
 				const backendFirstName = sourceUser?.firstName || '';
 				const backendLastName = sourceUser?.lastName || '';
@@ -341,8 +341,6 @@ function SettingsPage() {
 				throw new Error('Failed to update last name');
 			}
 
-			localStorage.setItem('profilePosition', careerTitle);
-			localStorage.setItem('profileLocation', location);
 			setInitialCareerTitle(careerTitle);
 			setInitialLocation(location);
 			setInitialFirstName(firstName);

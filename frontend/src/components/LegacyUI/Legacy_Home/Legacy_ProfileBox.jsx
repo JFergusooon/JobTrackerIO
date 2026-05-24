@@ -2,6 +2,13 @@ import React, {useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
 import '../../../css/Legacy_HomePageCSS.css';
 
+const normalizeCareerTitle = (careerTitleValue) => {
+    if (typeof careerTitleValue === 'string') return careerTitleValue;
+    if (Array.isArray(careerTitleValue)) return careerTitleValue.join(',');
+    if (careerTitleValue == null) return '';
+    return String(careerTitleValue);
+};
+
 const Legacy_ProfileBox = ({text, closePopup}) => {
     let username = "JFergusooon"
     let role = "SDET | Software Engineer"
@@ -51,7 +58,7 @@ const Legacy_ProfileBox = ({text, closePopup}) => {
 
             <div style={{width: '56%', textAlign: 'left', marginLeft: '5px', marginTop: '5px'}}>
                 <p className='profileBoxTitle'> {userInfo?.username} </p>
-                <p style={{marginTop: '2px', fontSize: '24px', marginBottom: '0px'}}> {userInfo?.careerTitle
+                <p style={{marginTop: '2px', fontSize: '24px', marginBottom: '0px'}}> {normalizeCareerTitle(userInfo?.careerTitle)
                     ?.replace(/[{}"]/g, "")?.split(",")?.map(t => t.trim())?.join(" | ")} 
                 </p>
                 {console.log(userInfo)}

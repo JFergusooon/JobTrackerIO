@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../../../css/Modern_HomePageCSS.css'
 import LegacyToggle from '../../LegacyUI/Legacy_Plus/LegacyToggle.jsx';
 import Modern_ProfileBox from '../Modern_Home/Modern_ProfileBox.jsx';
@@ -11,12 +12,43 @@ import Modern_StatsInfo from '../Modern_Home/Modern_StatsInfo.jsx';
 import Modern_NewListPopup from '../Modern_Tracker/Modern_NewListPopup.jsx';
 import Modern_FeedbackPopup from '../Modern_Tracker/Modern_FeedbackPopup.jsx';
 import ModernFooterComponent from '../../ModernFooter.jsx';
+import ProfileSetupPopup from '../../ProfileSetupPopup.jsx';
+
+const normalizeCareerTitleValue = (careerTitleValue) => {
+    if (typeof careerTitleValue === 'string') {
+        return careerTitleValue;
+    }
+
+    if (Array.isArray(careerTitleValue)) {
+        return careerTitleValue.join(',');
+    }
+
+    if (careerTitleValue == null) {
+        return '';
+    }
+
+    return String(careerTitleValue);
+};
+
+const isMissingRequiredProfileFields = (user) => {
+    const normalizedCareerTitle = normalizeCareerTitleValue(user?.careerTitle)
+        .replace(/[{}"]/g, '')
+        .trim();
+
+    const normalizedLocation = typeof user?.location === 'string'
+        ? user.location.trim()
+        : '';
+
+    return !normalizedCareerTitle || !normalizedLocation;
+};
 
 function ModernUI_Home({ onOpenUpdates }) { 
+    const navigate = useNavigate();
 
   const [allJobs, setAllJobs] = useState([]);
     const [showNewListPopup, setShowNewListPopup] = useState(false);
     const [showFeedbackPopup, setShowFeedbackPopup] = useState(false);
+    const [showProfileSetupPopup, setShowProfileSetupPopup] = useState(false);
   const [userInfo, setUserInfo] = useState();
 
   const [error, setError] = useState(null);
@@ -90,6 +122,19 @@ function ModernUI_Home({ onOpenUpdates }) {
             setShowFeedbackPopup(!showFeedbackPopup);
         };
 
+    const closeProfileSetupPopup = () => {
+        const username = localStorage.getItem('username') || '';
+        if (username) {
+            localStorage.setItem(`profile-setup-prompt-seen:${username}`, 'true');
+        }
+        setShowProfileSetupPopup(false);
+    };
+
+    const onGoToSettingsFromProfilePrompt = () => {
+        closeProfileSetupPopup();
+        navigate('/settings');
+    };
+
     useEffect(() => {
             let stage_url = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev"
             let url = stage_url + "/Users/getByUsername?username=" + localStorage.getItem('username')
@@ -103,8 +148,18 @@ function ModernUI_Home({ onOpenUpdates }) {
                 .then(
                     (result) => {
                         console.log("getting all applications from this month: " + JSON.stringify(result));
+                                                const sourceUser = result?.body || result;
+                                                const username = sourceUser?.username || localStorage.getItem('username') || '';
+                                                const hasSeenPrompt = username
+                                                    ? localStorage.getItem(`profile-setup-prompt-seen:${username}`) === 'true'
+                                                    : false;
+
+                                                if (!hasSeenPrompt && isMissingRequiredProfileFields(sourceUser)) {
+                                                    setShowProfileSetupPopup(true);
+                                                }
+
                         setIsLoaded(true);
-                        setUserInfo(result);
+                                                setUserInfo(sourceUser);
                     },
                     (error) => {
                         setIsLoaded(true);
@@ -151,6 +206,7 @@ function ModernUI_Home({ onOpenUpdates }) {
 
                     {showNewListPopup ? <Modern_NewListPopup text='NewList' closePopup={toggleNewListPopup} /> : null }
                     {showFeedbackPopup ? <Modern_FeedbackPopup closePopup={onOpenFeedback} /> : null }
+                    {showProfileSetupPopup ? <ProfileSetupPopup closePopup={closeProfileSetupPopup} onGoToSettings={onGoToSettingsFromProfilePrompt} /> : null }
         </div>
     );
 };

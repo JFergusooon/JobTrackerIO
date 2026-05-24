@@ -117,7 +117,7 @@ function HomePage() {
                 <h3 style={{height: 'auto', padding: '0px', margin: '0px', fontSize: '13px', fontWeight: '600', color: '#000000'}}>
                   Also enjoy a Windows application version
                 </h3>
-                <a href='/github' style={{padding: '0px', color: '#4a9eff', textDecoration: 'none', fontSize: '13px'}}> Download Link </a>
+                <a href='https://github.com/JFergusooon/JobTrackerIO/tree/main/python-standalone' target='_blank' rel='noreferrer' style={{padding: '0px', color: '#4a9eff', textDecoration: 'none', fontSize: '13px'}}> Download Link </a>
               </div>
             </div>
 

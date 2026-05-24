@@ -53,6 +53,7 @@ function ModernUI_Tracker() {
 
     const [sortField, setSortField] = useState("dateApplied");
     const [sortDirection, setSortDirection] = useState("asc");
+    const hasValidCurrentList = Boolean(listName && curUserListNames.includes(listName));
 
     const fetchAllJobs = async () => {
         const stage = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev";
@@ -368,8 +369,9 @@ function ModernUI_Tracker() {
                         .then(res => res.json())
                         .then(
                             (result) => {
+                                const sourceUser = result?.body || result;
                                 setIsLoaded(true);
-                                setCurUserListNames(result['listNames']);
+                                setCurUserListNames(Array.isArray(sourceUser?.listNames) ? sourceUser.listNames : []);
                             },
                             (error) => {
                                 setIsLoaded(true);
@@ -397,6 +399,9 @@ function ModernUI_Tracker() {
     }
 
     const toggleDeletePopup = () => {
+        if (!hasValidCurrentList) {
+            return;
+        }
         setShowDeletePopup(!showDeletePopup);
     }
 
@@ -519,10 +524,10 @@ function ModernUI_Tracker() {
                     <Modern_ListManagement filledLists={filledLists} listName={listName}/>
                     
                     {/* New and Delete List Buttons */}
-                    <Modern_NewDeleteList toggleDeletePopup={toggleDeletePopup} toggleNewListPopup={toggleNewListPopup}/>
+                    <Modern_NewDeleteList toggleDeletePopup={toggleDeletePopup} toggleNewListPopup={toggleNewListPopup} canDeleteCurrentList={hasValidCurrentList} />
 
                     {/* Popups */}
-                    {showDeletePopup ? <Modern_DeletePopup_v2 func={'list'} companyOrListName={listName} closePopup={toggleDeletePopup} /> : <></>}
+                    {showDeletePopup && hasValidCurrentList ? <Modern_DeletePopup_v2 func={'list'} companyOrListName={listName} closePopup={toggleDeletePopup} /> : <></>}
                     
                 </div>
 

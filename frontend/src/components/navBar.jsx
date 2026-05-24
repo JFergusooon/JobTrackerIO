@@ -17,8 +17,14 @@ function NavBar() {
   const togglePopup = () => {
     // If Button is 'Logout':
     if(loginState === "Logout" && isLoggedInUser()) {
+            const currentUsername = localStorage.getItem('username') || '';
             localStorage.setItem('username', '')
             localStorage.setItem('password', '')
+            localStorage.removeItem('profilePosition')
+            localStorage.removeItem('profileLocation')
+            if (currentUsername) {
+              localStorage.removeItem(`profile-setup-prompt-seen:${currentUsername}`)
+            }
             navigate('/')
             window.dispatchEvent(new Event('authChange'))
     }
