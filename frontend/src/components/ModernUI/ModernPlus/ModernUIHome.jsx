@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../../css/Modern_HomePageCSS.css'
-import LegacyToggle from '../../LegacyUI/Legacy_Plus/LegacyToggle.jsx';
 import ModernProfileBox from '../ModernHome/ModernProfileBox.jsx';
 import ModernQuickSettings from '../ModernHome/ModernQuickSettings.jsx';
 import ModernQuickNotes from '../ModernHome/ModernQuickNotes.jsx';
@@ -11,7 +10,6 @@ import ModernStatsChart from '../ModernHome/ModernStatsChart.jsx';
 import ModernStatsInfo from '../ModernHome/ModernStatsInfo.jsx';
 import ModernNewListPopup from '../ModernTracker/ModernNewListPopup.jsx';
 import ModernFeedbackPopup from '../ModernTracker/ModernFeedbackPopup.jsx';
-import ModernFooterComponent from '../../ModernFooter.jsx';
 import ModernProfileSetupPopup from '../ModernHome/ModernProfileSetupPopup.jsx';
 
 const normalizeCareerTitleValue = (careerTitleValue) => {
@@ -52,9 +50,6 @@ function ModernUIHome({ onOpenUpdates }) {
     const [showProfileSetupPopup, setShowProfileSetupPopup] = useState(false);
   const [missingProfileFields, setMissingProfileFields] = useState([]);
   const [userInfo, setUserInfo] = useState();
-
-  const [error, setError] = useState(null);
-  const [isLoaded, setIsLoaded] = useState(false);
   const normalizeCompanyKey = (name) => (name ?? '').trim().toLowerCase();
 
   const handleFavoriteChanged = (companyName, nextFavorited) => {
@@ -170,12 +165,10 @@ function ModernUIHome({ onOpenUpdates }) {
                                                     setShowProfileSetupPopup(true);
                                                 }
 
-                        setIsLoaded(true);
                                                 setUserInfo(sourceUser);
                     },
                     (error) => {
-                        setIsLoaded(true);
-                        setError(error);
+                        console.error('Failed to load user data:', error);
                     }
                 )
         }, [])

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from "react-router-dom";
 import '../../../css/Modern_TrackerPageCSS.css'
 import ModernEditJobButtons from '../ModernTracker/ModernEditJobButtons.jsx';
@@ -17,7 +17,6 @@ function ModernUITracker() {
     const [companyItem, setCompanyItem] = useState();
     
     const [selectedFromSearch, setSelectedFromSearch] = useState();
-    const [selectedId, setSelectedId] = useState(null);
 
     const [showEditJobButtons, setShowEditJobButtons] = useState(false);
     const [showNewListPopup, setShowNewListPopup] = useState(false);
@@ -27,13 +26,7 @@ function ModernUITracker() {
     const waitingByList = curJobsByListName.filter(job => !job.rejected).length;
     const rejectByList = curJobsByListName.filter(job => job.rejected).length;
 
-    const [selectedSearchIndex, setSelectedSearchIndex] = useState(null);
-
-
     const [selectedJob, setSelectedJob] = useState(null);
-
-    const [error, setError] = useState(null);
-    const [isLoaded, setIsLoaded] = useState(false);
 
     const [curUserListNames, setCurUserListNames] = useState([]);
 
@@ -77,20 +70,7 @@ function ModernUITracker() {
         fetchAllJobs();
     }, []);
 
-    useEffect(() => {
-        if (!searchTerm) {
-            setSearchResults([]);
-            return;
-        }
-
-        const timeout = setTimeout(() => {
-            fetchSearchResults();
-        }, 300); // debounce
-
-        return () => clearTimeout(timeout);
-    }, [searchTerm]);
-    
-    const fetchSearchResults = async () => {
+    const fetchSearchResults = useCallback(async () => {
         setSearchLoading(true);
 
         try {
@@ -114,7 +94,20 @@ function ModernUITracker() {
         }
 
         setSearchLoading(false);
-    };
+    }, [searchTerm]);
+
+    useEffect(() => {
+        if (!searchTerm) {
+            setSearchResults([]);
+            return;
+        }
+
+        const timeout = setTimeout(() => {
+            fetchSearchResults();
+        }, 300); // debounce
+
+        return () => clearTimeout(timeout);
+    }, [searchTerm, fetchSearchResults]);
 
     const getDisplayPosition = (position) => {
         if (position === "SE") {
@@ -338,13 +331,11 @@ function ModernUITracker() {
         .then(res => res.json())
         .then((result) => {
             if (!isCurrentRequest) return;
-            setIsLoaded(true);
             setCurJobsByListName(Array.isArray(result) ? result : []);
         })
         .catch((error) => {
             if (!isCurrentRequest) return;
-            setIsLoaded(true);
-            setError(error);
+            console.error('Failed to fetch jobs by list:', error);
             setCurJobsByListName([]);
         })
         .finally(() => {
@@ -370,12 +361,10 @@ function ModernUITracker() {
                         .then(
                             (result) => {
                                 const sourceUser = result?.body || result;
-                                setIsLoaded(true);
                                 setCurUserListNames(Array.isArray(sourceUser?.listNames) ? sourceUser.listNames : []);
                             },
                             (error) => {
-                                setIsLoaded(true);
-                                setError(error);
+                                console.error('Failed to fetch user list names:', error);
                             }
                         )
                 }, [])
@@ -411,10 +400,6 @@ function ModernUITracker() {
     const filledLists = Array.from({ length: GRID_SIZE }, (_, i) => {
         return curUserListNames[i] || null;
     });
-
-    useEffect(() => {
-        setSelectedId(null);
-    }, [curJobsByListName]);
 
     useEffect(() => {
         if (!actionStatusMessage) return;

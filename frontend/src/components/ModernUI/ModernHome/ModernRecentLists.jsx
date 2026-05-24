@@ -1,9 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
 import '../../../css/Modern_HomePageCSS.css';
 import { useNavigate } from 'react-router-dom';
 
-const ModernRecentLists = ({ text, closePopup }) => {
+const ModernRecentLists = () => {
     const [jobLists, setJobLists] = useState([]);
 
     const fetchAllListNames = async () => {

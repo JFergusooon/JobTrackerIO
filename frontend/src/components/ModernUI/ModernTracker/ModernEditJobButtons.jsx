@@ -1,14 +1,13 @@
-import React, {useEffect, useState} from 'react';
-import PropTypes from 'prop-types';
+import React, {useState} from 'react';
 import '../../../css/Modern_HomePageCSS.css';
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import '../../../css/Modern_TrackerPageCSS.css';
 
 import ModernDeletePopupV2 from './ModernDeletePopupv2';
 import ModernEditApplicationPopup from './ModernEditApplicationPopup';
 
 
-const ModernEditJobButtons = ({text, job, listNames, closePopup, goToListButton, onRejectedToggled}) => {
+const ModernEditJobButtons = ({text, job, listNames, goToListButton, onRejectedToggled}) => {
 
     const [showDeletePopup, setShowDeletePopup] = useState(false);
     const [showEditApplicationPopup, setShowEditApplicationPopup] = useState(false);

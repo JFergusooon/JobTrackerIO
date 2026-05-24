@@ -1,5 +1,4 @@
 import React, {useEffect, useState} from 'react';
-import PropTypes from 'prop-types';
 import '../../../css/Modern_HomePageCSS.css';
 
 const ModernStatsInfo = ({allJobs}) => {
@@ -13,9 +12,6 @@ const ModernStatsInfo = ({allJobs}) => {
     const [successRate, setSuccessRate] = useState("---");
     const [totalRejectionsEver, setTotalRejectionsEver] = useState("---");
     const [totalTimeLookingForJob, setTotalTimeLookingForJob] = useState("---");
-
-    const [error, setError] = useState(null);
-    const [isLoaded, setIsLoaded] = useState(false);
 
     const getStageString = (stageValue) => String(stageValue ?? '').trim();
 
@@ -44,7 +40,6 @@ const ModernStatsInfo = ({allJobs}) => {
                 .then(
                     (result) => {
                         console.log("getting all applications from this month: " + JSON.stringify(result));
-                        setIsLoaded(true);
                         
                         setTotalAppliedThisMonth(jobsThisMonth.length);
                         const rejectedThisMonth = jobsThisMonth.filter((job) => job.status === 'Rejected' || job.rejected === true).length;
@@ -96,8 +91,7 @@ const ModernStatsInfo = ({allJobs}) => {
                         setTotalJobsStageThree(stage3);
                     },
                     (error) => {
-                        setIsLoaded(true);
-                        setError(error);
+                        console.error('Failed to load stats info:', error);
                     }
                 )
         }, [allJobs])

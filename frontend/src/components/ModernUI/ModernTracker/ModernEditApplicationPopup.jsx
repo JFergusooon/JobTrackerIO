@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 const ModernEditApplicationPopup = ({job, listNames, closePopup}) => {
 
-    const [companyName, setCompanyName] = useState(job.companyName);
+    const companyName = job.companyName;
     const [position, setPosition] = useState(job.position);
     const [location, setLocation] = useState(job.location);
     const [jobLink, setJobLink] = useState(job.jobLink);

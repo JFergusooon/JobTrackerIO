@@ -1,8 +1,7 @@
 import React, {useEffect, useState} from 'react';
-import PropTypes from 'prop-types';
 import '../../../css/Modern_HomePageCSS.css';
 
-const ModernQuickNotes = ({userData, closePopup}) => {
+const ModernQuickNotes = ({userData}) => {
 
 const [quickNotes, setQuickNotes] = useState("");
 

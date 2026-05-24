@@ -1,8 +1,7 @@
-import React, {useEffect, useState} from 'react';
-import PropTypes from 'prop-types';
+import React from 'react';
 import '../../../css/Modern_HomePageCSS.css';
 
-const ModernQuickSettings = ({text, closePopup, onOpenUpdates, onOpenNewList, onOpenFeedback}) => {
+const ModernQuickSettings = ({onOpenUpdates, onOpenNewList, onOpenFeedback}) => {
 
 
     return (

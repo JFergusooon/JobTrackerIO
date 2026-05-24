@@ -17,8 +17,6 @@ const Popup = ({text, closePopup}) => {
     const [regError, setRegError] = useState(null);
     const [regStatus, setRegStatus] = useState(null);
 
-    const [error, setError] = useState(null);
-    const [isLoaded, setIsLoaded] = useState(false);
     const [allUsers, setAllUsers] = useState([]);
 
 
@@ -34,12 +32,10 @@ const Popup = ({text, closePopup}) => {
             .then(
                 (result) => {
                     console.log("setting allUsers to api result: " + JSON.stringify(result["body"]));
-                    setIsLoaded(true);
                     setAllUsers(result["body"]);
                 },
                 (error) => {
-                    setIsLoaded(true);
-                    setError(error);
+                    console.error('Failed to fetch users:', error);
                 }
             )
     }, [])
@@ -78,7 +74,6 @@ const Popup = ({text, closePopup}) => {
         let matchedUsername = "";
         let matchedAppearanceScheme = "";
         const normalizedInputUser = inputUser.trim().toLowerCase();
-        let allUsersSize = allUsers.length;
         for (let i = 0; i < allUsers.length; i++) {
 
             const candidateUsername = String(allUsers[i].username || '').trim().toLowerCase();

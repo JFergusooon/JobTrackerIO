@@ -1,5 +1,4 @@
-import React, {useEffect, useState} from 'react';
-import PropTypes from 'prop-types';
+import React from 'react';
 import '../../../css/Modern_HomePageCSS.css';
 import {
   LineChart,
@@ -11,7 +10,7 @@ import {
   ResponsiveContainer
 } from "recharts";
 
-const ModernStatsChart = ({allJobs, text, closePopup}) => {
+const ModernStatsChart = ({allJobs}) => {
 
     function countJobsByMonth(jobs) {
     const result = {};
@@ -32,22 +31,10 @@ const ModernStatsChart = ({allJobs, text, closePopup}) => {
     return result;
 }
 
-    const monthOrder = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     const jobsByMonth = countJobsByMonth(allJobs);
 
 
-    const data = monthOrder.map(month => ({
-        month,
-        jobs: jobsByMonth[month] || 0
-    }));
-
-
-
-
-
-
 const now = new Date();
-const currentMonthIndex = now.getMonth();
 
 const last6Months = Array.from({ length: 6 }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
@@ -63,20 +50,6 @@ const filteredData = last6Months.map(({ key, label }) => ({
     month: label,
     jobs: jobsByMonth[key] || 0
 }));
-
-//Split All Rejected Jobs By Month, ['Jan' of Current Year, 'Feb' of Current Year, ...]
-    function countOfRejectedJobsByMonth(jobs) {
-        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        const currentYear = new Date().getFullYear();
-        const rejectedJobsByMonth = {};
-        monthNames.forEach(month => {
-            rejectedJobsByMonth[month] = jobs.filter(job => {
-                const jobDate = new Date(job.dateApplied);
-                return job.status === "Rejected" && jobDate.getFullYear() === currentYear && jobDate.getMonth() === monthNames.indexOf(month);
-            }).length;
-        });
-        return rejectedJobsByMonth;
-    }
 
     return (
         <div className='modernStatsChartContainer'>
