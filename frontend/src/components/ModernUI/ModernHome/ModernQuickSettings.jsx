@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
 import '../../../css/Modern_HomePageCSS.css';
 
-const Modern_QuickSettings = ({text, closePopup, onOpenUpdates, onOpenNewList, onOpenFeedback}) => {
+const ModernQuickSettings = ({text, closePopup, onOpenUpdates, onOpenNewList, onOpenFeedback}) => {
 
 
     return (
@@ -18,4 +18,4 @@ const Modern_QuickSettings = ({text, closePopup, onOpenUpdates, onOpenNewList, o
         </div>
     );
 };
-export default Modern_QuickSettings;
+export default ModernQuickSettings;

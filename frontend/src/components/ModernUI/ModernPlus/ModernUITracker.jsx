@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from "react-router-dom";
 import '../../../css/Modern_TrackerPageCSS.css'
-import Modern_EditJobButtons from '../Modern_Tracker/Modern_EditJobButtons.jsx';
-import Modern_NewListPopup from '../Modern_Tracker/Modern_NewListPopup.jsx';
-import Modern_NewApplicationPopup from '../Modern_Tracker/Modern_NewApplicationPopup.jsx'
-import Modern_ListManagement from '../Modern_Tracker/Modern_ListManagement.jsx';
-import Modern_NewDeleteList from '../Modern_Tracker/Modern_NewDeleteList.jsx';
-import Modern_ApplicationCount from '../Modern_Tracker/Modern_ApplicationCount.jsx';
-import Modern_DeletePopup_v2 from '../Modern_Tracker/Modern_DeletePopup_v2.jsx';
+import ModernEditJobButtons from '../ModernTracker/ModernEditJobButtons.jsx';
+import ModernNewListPopup from '../ModernTracker/ModernNewListPopup.jsx';
+import ModernNewApplicationPopup from '../ModernTracker/ModernNewApplicationPopup.jsx'
+import ModernListManagement from '../ModernTracker/ModernListManagement.jsx';
+import ModernNewDeleteList from '../ModernTracker/ModernNewDeleteList.jsx';
+import ModernApplicationCount from '../ModernTracker/ModernApplicationCount.jsx';
+import ModernDeletePopupV2 from '../ModernTracker/ModernDeletePopupv2.jsx';
 
-function ModernUI_Tracker() { 
+function ModernUITracker() { 
 
     const [allJobs, setAllJobs] = useState([]);
 
@@ -435,7 +435,7 @@ function ModernUI_Tracker() {
                 <div className='modernLeftColumn'>
             
                     {/* Application Count Box */}
-                    <Modern_ApplicationCount waitingJobs={curWaitingJobs} rejectedJobs={curRejectedJobs}/>
+                    <ModernApplicationCount waitingJobs={curWaitingJobs} rejectedJobs={curRejectedJobs}/>
 
                     {/* New Application Button */}   
                     <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '2px'}}>
@@ -516,18 +516,18 @@ function ModernUI_Tracker() {
 
                     {/* Edit and Delete Job Buttons (conditionally rendered) */}
                     {showEditJobButtons ? 
-                        <Modern_EditJobButtons text={selectedCompanyName} job={companyItem} listNames={curUserListNames} goToListButton={selectedFromSearch} onRejectedToggled={handleRejectedToggled}/> : 
+                        <ModernEditJobButtons text={selectedCompanyName} job={companyItem} listNames={curUserListNames} goToListButton={selectedFromSearch} onRejectedToggled={handleRejectedToggled}/> : 
                         <div className='modernEditJobButtonsContainer'></div>
                     }                
 
                     {/* List Management Box */}
-                    <Modern_ListManagement filledLists={filledLists} listName={listName}/>
+                    <ModernListManagement filledLists={filledLists} listName={listName}/>
                     
                     {/* New and Delete List Buttons */}
-                    <Modern_NewDeleteList toggleDeletePopup={toggleDeletePopup} toggleNewListPopup={toggleNewListPopup} canDeleteCurrentList={hasValidCurrentList} />
+                    <ModernNewDeleteList toggleDeletePopup={toggleDeletePopup} toggleNewListPopup={toggleNewListPopup} canDeleteCurrentList={hasValidCurrentList} />
 
                     {/* Popups */}
-                    {showDeletePopup && hasValidCurrentList ? <Modern_DeletePopup_v2 func={'list'} companyOrListName={listName} closePopup={toggleDeletePopup} /> : <></>}
+                    {showDeletePopup && hasValidCurrentList ? <ModernDeletePopupV2 func={'list'} companyOrListName={listName} closePopup={toggleDeletePopup} /> : <></>}
                     
                 </div>
 
@@ -632,11 +632,11 @@ function ModernUI_Tracker() {
                         </div>
                 </div>
 
-                {showNewListPopup ? <Modern_NewListPopup text='NewList' closePopup={toggleNewListPopup} /> : null }
-                {showNewApplicationPopup ? <Modern_NewApplicationPopup text='NewApplication' closePopup={toggleNewApplicationPopup} listNames={curUserListNames}/> : null }
+                {showNewListPopup ? <ModernNewListPopup text='NewList' closePopup={toggleNewListPopup} /> : null }
+                {showNewApplicationPopup ? <ModernNewApplicationPopup text='NewApplication' closePopup={toggleNewApplicationPopup} listNames={curUserListNames}/> : null }
             </div>
         </div>
     </>);
 };
 
-export default ModernUI_Tracker;
+export default ModernUITracker;

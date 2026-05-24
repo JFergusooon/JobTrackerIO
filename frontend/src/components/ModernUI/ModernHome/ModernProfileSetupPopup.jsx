@@ -1,6 +1,6 @@
 import React from 'react';
 
-const ProfileSetupPopup = ({ closePopup, onGoToSettings, missingFields = [] }) => {
+const ModernProfileSetupPopup = ({ closePopup, onGoToSettings, missingFields = [] }) => {
     const handleGoToSettings = () => {
         if (typeof onGoToSettings === 'function') {
             onGoToSettings();
@@ -79,4 +79,4 @@ const ProfileSetupPopup = ({ closePopup, onGoToSettings, missingFields = [] }) =
     );
 };
 
-export default ProfileSetupPopup;
+export default ModernProfileSetupPopup;

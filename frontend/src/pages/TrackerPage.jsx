@@ -1,8 +1,8 @@
 // pages/Home.jsx
 import React from 'react';
 import NavBar from '../components/navBar';
-import LegacyUI_Tracker from '../components/LegacyUI/Legacy_Plus/LegacyUI_Tracker';
-import ModernUI_Tracker from '../components/ModernUI/Modern_Plus/ModernUI_Tracker';
+import LegacyUITracker from '../components/LegacyUI/Legacy_Plus/LegacyUI_Tracker';
+import ModernUITracker from '../components/ModernUI/ModernPlus/ModernUITracker';
 import ModernFooter from '../components/ModernFooter';
 
 function TrackerPage() {
@@ -11,7 +11,7 @@ function TrackerPage() {
   
     {/* Background Gradient */}
     <div className='modernTrackerPageBackground'>
-      {localStorage.getItem("legacyMode") === "true" ? <LegacyUI_Tracker /> : <ModernUI_Tracker />}
+      {localStorage.getItem("legacyMode") === "true" ? <LegacyUITracker /> : <ModernUITracker />}
     </div>
     <ModernFooter />
   </>

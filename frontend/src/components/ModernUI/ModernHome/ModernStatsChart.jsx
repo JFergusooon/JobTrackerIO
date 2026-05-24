@@ -11,7 +11,7 @@ import {
   ResponsiveContainer
 } from "recharts";
 
-const Modern_StatsChart = ({allJobs, text, closePopup}) => {
+const ModernStatsChart = ({allJobs, text, closePopup}) => {
 
     function countJobsByMonth(jobs) {
     const result = {};
@@ -107,4 +107,4 @@ const filteredData = last6Months.map(({ key, label }) => ({
         </div>
     );
 };
-export default Modern_StatsChart;
+export default ModernStatsChart;

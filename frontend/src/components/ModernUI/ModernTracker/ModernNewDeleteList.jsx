@@ -1,7 +1,7 @@
 import '../../../css/Modern_TrackerPageCSS.css';
 import { useNavigate } from 'react-router-dom';
 
-const Modern_NewDeleteList = ({toggleDeletePopup, toggleNewListPopup, canDeleteCurrentList = false}) => {
+const ModernNewDeleteList = ({toggleDeletePopup, toggleNewListPopup, canDeleteCurrentList = false}) => {
 
     
 
@@ -25,4 +25,4 @@ const Modern_NewDeleteList = ({toggleDeletePopup, toggleNewListPopup, canDeleteC
         </div>
     );
 };
-export default Modern_NewDeleteList;
+export default ModernNewDeleteList;

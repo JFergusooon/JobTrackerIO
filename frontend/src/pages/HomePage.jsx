@@ -3,8 +3,8 @@ import React from 'react';
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import NavBar from '../components/navBar.jsx';
-import LegacyUI_Home from '../components/LegacyUI/Legacy_Plus/LegacyUI_Home.jsx';
-import ModernUI_Home from '../components/ModernUI/Modern_Plus/ModernUI_Home.jsx';
+import LegacyUIHome from '../components/LegacyUI/Legacy_Plus/LegacyUI_Home.jsx';
+import ModernUIHome from '../components/ModernUI/ModernPlus/ModernUIHome.jsx';
 import ModernFooterComponent from '../components/ModernFooter.jsx'
 import UpdatesPopup from '../components/UpdatesPopup';
 import { isLoggedInUser } from '../appearanceTheme';
@@ -82,9 +82,9 @@ function HomePage() {
       {isLoggedIn ? 
         <>
           {localStorage.getItem('legacyMode') === "true" ? (
-            <LegacyUI_Home onOpenUpdates={toggleUpdatePopup} />
+            <LegacyUIHome onOpenUpdates={toggleUpdatePopup} />
           ) : (
-            <ModernUI_Home onOpenUpdates={toggleUpdatePopup} />
+            <ModernUIHome onOpenUpdates={toggleUpdatePopup} />
           )}
         </>
             : 

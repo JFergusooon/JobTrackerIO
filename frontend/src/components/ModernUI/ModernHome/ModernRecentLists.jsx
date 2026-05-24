@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import '../../../css/Modern_HomePageCSS.css';
 import { useNavigate } from 'react-router-dom';
 
-const Modern_RecentLists = ({ text, closePopup }) => {
+const ModernRecentLists = ({ text, closePopup }) => {
     const [jobLists, setJobLists] = useState([]);
 
     const fetchAllListNames = async () => {
@@ -77,4 +77,4 @@ const Modern_RecentLists = ({ text, closePopup }) => {
     );
 };
 
-export default Modern_RecentLists;
+export default ModernRecentLists;

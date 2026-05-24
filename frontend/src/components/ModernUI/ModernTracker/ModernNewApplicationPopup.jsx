@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
-const Modern_EditApplicationPopup = ({job, listNames, closePopup}) => {
+const ModernNewApplicationPopup = ({text, closePopup, listNames }) => {
 
-    const [companyName, setCompanyName] = useState(job.companyName);
-    const [position, setPosition] = useState(job.position);
-    const [location, setLocation] = useState(job.location);
-    const [jobLink, setJobLink] = useState(job.jobLink);
-    const [list, setList] = useState(job.list);
+    const location = useLocation();
+    const [newCompanyName, setNewCompanyName] = useState("");
+    const [newJobLink, setNewJobLink] = useState("");
+    const [newList, setNewList] = useState("");
+    const [newLocation, setNewLocation] = useState("");
+    const [newPosition, setNewPosition] = useState("");
     const [locationValidationError, setLocationValidationError] = useState("");
     const [isSaving, setIsSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState("");
@@ -20,7 +22,7 @@ const Modern_EditApplicationPopup = ({job, listNames, closePopup}) => {
     };
 
     const handleLocationChange = (newLoc) => {
-        setLocation(newLoc);
+        setNewLocation(newLoc);
         if (newLoc.trim() === '') {
             setLocationValidationError('Location is required');
         } else if (!validateLocationFormat(newLoc)) {
@@ -30,35 +32,55 @@ const Modern_EditApplicationPopup = ({job, listNames, closePopup}) => {
         }
     };
 
-    const isLocationValid = validateLocationFormat(location);
-    const hasChanges =
-        (position !== job.position ||
-        location !== job.location ||
-        jobLink !== job.jobLink ||
-        list !== job.list) && isLocationValid;
+    useEffect(() => {
+        const listName = new URLSearchParams(location.search).get("listName");
+        if (listName) {
+            setNewList(listName);
+        }
+    }, [location.search]);
 
-    const buildPatchBody = () => {
-        const body = {};
+    const isLocationValid = validateLocationFormat(newLocation);
+    const isFormValid = newCompanyName && newPosition && newJobLink && isLocationValid && newList;
 
-        if (position !== job.position) body.position = position;
-        if (location !== job.location) body.location = location;
-        if (jobLink !== job.jobLink) body.jobLink = jobLink;
-        if (list !== job.list) body.list = list;
+    const buildDateAppliedValue = () => {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        const microseconds = `${String(now.getMilliseconds()).padStart(3, '0')}000`;
 
-        return body;
+        return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${microseconds}`;
     };
 
-    async function editApplication() {
+    async function addNewApplication() {
         setIsSaving(true);
         setSaveStatus('Saving...');
-        const stage = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev";
-        const url = stage + "/Jobs/update?username=" + localStorage.getItem('username') + "&companyName=" + companyName;
+        console.log('Adding new application' + text)
 
-        const params = buildPatchBody();
+        const stage = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev";
+        const url = stage + "/Jobs/create" 
+
+        const params = {
+            username: localStorage.getItem('username'),
+            dateApplied: buildDateAppliedValue(),
+            companyName: newCompanyName,
+            jobLink: newJobLink || "N/A",
+            list: newList,
+            location: newLocation || "N/A",
+            position: newPosition || "N/A", 
+            nextInterviewDate: "",
+            notes: "No Notes...",
+            rejected: false,
+            favorited: false,
+            stage: "0"
+        };
 
         try {
             const res = await fetch(url, {
-                method: "PATCH",
+                method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
@@ -106,12 +128,12 @@ const Modern_EditApplicationPopup = ({job, listNames, closePopup}) => {
             >
                 {/* Title */}
                 <h2 style={{ margin: "0 0 12px", fontSize: "26px", fontWeight: "700", color: "#ffffff" }}>
-                    Edit Application
+                    Add Job Application
                 </h2>
 
                 {/* Subtitle */}
                 <p style={{ margin: "0 0 20px", fontSize: "14px", color: "#a0a0a0" }}>
-                    Update the details for {companyName}
+                    Enter the details for the new job application
                 </p>
 
                 {/* Divider */}
@@ -119,25 +141,25 @@ const Modern_EditApplicationPopup = ({job, listNames, closePopup}) => {
 
                 {/* Form Fields */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "20px", marginBottom: "20px" }}>
-                    {/* Company Name (Read-only) */}
+                    {/* Company Name */}
                     <div>
                         <label style={{ fontSize: "14px", fontWeight: "600", color: "#f0f0f0", display: "block", marginBottom: "8px" }}>
-                            Company Name
+                            Company Name *
                         </label>
                         <input
-                            value={companyName}
-                            readOnly
+                            placeholder="Enter company name..."
+                            value={newCompanyName}
+                            onChange={({ target }) => setNewCompanyName(target.value)}
                             style={{
                                 width: "100%",
                                 padding: "12px 14px",
                                 borderRadius: "8px",
                                 border: "1px solid #3a3a3c",
                                 backgroundColor: "#2c2c2e",
-                                color: "#888",
+                                color: "#f0f0f0",
                                 fontSize: "14px",
                                 outline: "none",
                                 boxSizing: "border-box",
-                                cursor: "not-allowed",
                             }}
                         />
                     </div>
@@ -145,12 +167,12 @@ const Modern_EditApplicationPopup = ({job, listNames, closePopup}) => {
                     {/* Position */}
                     <div>
                         <label style={{ fontSize: "14px", fontWeight: "600", color: "#f0f0f0", display: "block", marginBottom: "8px" }}>
-                            Position
+                            Position *
                         </label>
                         <input
                             placeholder="Enter position..."
-                            value={position}
-                            onChange={(e) => setPosition(e.target.value)}
+                            value={newPosition}
+                            onChange={({ target }) => setNewPosition(target.value)}
                             style={{
                                 width: "100%",
                                 padding: "12px 14px",
@@ -168,12 +190,12 @@ const Modern_EditApplicationPopup = ({job, listNames, closePopup}) => {
                     {/* Location */}
                     <div>
                         <label style={{ fontSize: "14px", fontWeight: "600", color: "#f0f0f0", display: "block", marginBottom: "8px" }}>
-                            Location / Remote
+                            Location / Remote *
                         </label>
                         <input
                             placeholder="Enter location or 'Remote'..."
-                            value={location}
-                            onChange={(e) => handleLocationChange(e.target.value)}
+                            value={newLocation}
+                            onChange={({ target }) => handleLocationChange(target.value)}
                             style={{
                                 width: "100%",
                                 padding: "12px 14px",
@@ -205,12 +227,12 @@ const Modern_EditApplicationPopup = ({job, listNames, closePopup}) => {
                     {/* Job Link */}
                     <div>
                         <label style={{ fontSize: "14px", fontWeight: "600", color: "#f0f0f0", display: "block", marginBottom: "8px" }}>
-                            Job Link
+                            Job Link *
                         </label>
                         <input
                             placeholder="Enter job link..."
-                            value={jobLink}
-                            onChange={(e) => setJobLink(e.target.value)}
+                            value={newJobLink}
+                            onChange={({ target }) => setNewJobLink(target.value)}
                             style={{
                                 width: "100%",
                                 padding: "12px 14px",
@@ -228,11 +250,11 @@ const Modern_EditApplicationPopup = ({job, listNames, closePopup}) => {
                     {/* List Dropdown */}
                     <div>
                         <label style={{ fontSize: "14px", fontWeight: "600", color: "#f0f0f0", display: "block", marginBottom: "8px" }}>
-                            List
+                            List *
                         </label>
                         <select
-                            value={list}
-                            onChange={(e) => setList(e.target.value)}
+                            value={newList}
+                            onChange={(e) => setNewList(e.target.value)}
                             style={{
                                 width: "100%",
                                 padding: "12px 14px",
@@ -247,8 +269,8 @@ const Modern_EditApplicationPopup = ({job, listNames, closePopup}) => {
                             }}
                         >
                             <option value="" disabled> Select a list... </option>
-                            {listNames?.map((listName, index) => (
-                                <option key={index} value={listName}> {listName} </option>
+                            {listNames?.map((list, index) => (
+                                <option key={index} value={list}> {list} </option>
                             ))}
                         </select>
                     </div>
@@ -296,27 +318,27 @@ const Modern_EditApplicationPopup = ({job, listNames, closePopup}) => {
                         Cancel
                     </button>
                     <button
-                        onClick={editApplication}
-                        disabled={!hasChanges || isSaving}
+                        onClick={addNewApplication}
+                        disabled={!isFormValid || isSaving}
                         style={{
                             padding: "10px 22px",
                             borderRadius: "8px",
                             border: "none",
-                            backgroundColor: hasChanges && !isSaving ? "#4a9eff" : "#3a5080",
-                            color: hasChanges && !isSaving ? "#ffffff" : "#7a9aaa",
+                            backgroundColor: isFormValid && !isSaving ? "#4a9eff" : "#3a5080",
+                            color: isFormValid && !isSaving ? "#ffffff" : "#7a9aaa",
                             fontSize: "14px",
                             fontWeight: "600",
-                            cursor: hasChanges && !isSaving ? "pointer" : "not-allowed",
+                            cursor: isFormValid && !isSaving ? "pointer" : "not-allowed",
                             transition: "background-color 0.2s"
                         }}
                         onMouseEnter={(e) => {
-                            if (hasChanges && !isSaving) e.target.style.backgroundColor = "#3a8eef";
+                            if (isFormValid && !isSaving) e.target.style.backgroundColor = "#3a8eef";
                         }}
                         onMouseLeave={(e) => {
-                            if (hasChanges && !isSaving) e.target.style.backgroundColor = "#4a9eff";
+                            if (isFormValid && !isSaving) e.target.style.backgroundColor = "#4a9eff";
                         }}
                     >
-                        {isSaving ? 'Saving...' : 'Save Changes'}
+                        {isSaving ? 'Saving...' : 'Add Application'}
                     </button>
                 </div>
             </div>
@@ -324,5 +346,4 @@ const Modern_EditApplicationPopup = ({job, listNames, closePopup}) => {
     );
 };
 
-export default Modern_EditApplicationPopup;
-
+export default ModernNewApplicationPopup;

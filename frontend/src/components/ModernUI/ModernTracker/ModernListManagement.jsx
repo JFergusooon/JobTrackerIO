@@ -1,7 +1,7 @@
 import '../../../css/Modern_TrackerPageCSS.css';
 import { useNavigate } from 'react-router-dom';
 
-const Modern_ListManagement = ({filledLists, listName}) => {
+const ModernListManagement = ({filledLists, listName}) => {
 
     const navigate = useNavigate();
 
@@ -60,4 +60,4 @@ const Modern_ListManagement = ({filledLists, listName}) => {
         </div>
     );
 };
-export default Modern_ListManagement;
+export default ModernListManagement;

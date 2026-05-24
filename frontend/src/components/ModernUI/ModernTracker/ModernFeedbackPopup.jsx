@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import emailjs from '@emailjs/browser';
 
-const Modern_FeedbackPopup = ({ closePopup }) => {
+const ModernFeedbackPopup = ({ closePopup }) => {
 
     const EMAILJS_SERVICE_ID = "service_azocgg9";
     const EMAILJS_TEMPLATE_ID = "template_r6iefxs";
@@ -192,4 +192,4 @@ const Modern_FeedbackPopup = ({ closePopup }) => {
     );
 };
 
-export default Modern_FeedbackPopup;
+export default ModernFeedbackPopup;

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const Modern_NewListPopup = ({text, closePopup}) => {
+const ModernNewListPopup = ({text, closePopup}) => {
 
     const [newListName, setNewListName] = useState("");
     const canCreateList = newListName.trim() !== "";
@@ -135,4 +135,4 @@ const Modern_NewListPopup = ({text, closePopup}) => {
         </div>
     );
 };
-export default Modern_NewListPopup;
+export default ModernNewListPopup;

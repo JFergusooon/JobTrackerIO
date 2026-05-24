@@ -4,11 +4,11 @@ import '../../../css/Modern_HomePageCSS.css';
 import { useNavigate, useLocation } from "react-router-dom";
 import '../../../css/Modern_TrackerPageCSS.css';
 
-import Modern_DeletePopup_v2 from './Modern_DeletePopup_v2';
-import Modern_EditApplicationPopup from './Modern_EditApplicationPopup';
+import ModernDeletePopupV2 from './ModernDeletePopupv2';
+import ModernEditApplicationPopup from './ModernEditApplicationPopup';
 
 
-const Modern_EditJobButtons = ({text, job, listNames, closePopup, goToListButton, onRejectedToggled}) => {
+const ModernEditJobButtons = ({text, job, listNames, closePopup, goToListButton, onRejectedToggled}) => {
 
     const [showDeletePopup, setShowDeletePopup] = useState(false);
     const [showEditApplicationPopup, setShowEditApplicationPopup] = useState(false);
@@ -78,11 +78,11 @@ const Modern_EditJobButtons = ({text, job, listNames, closePopup, goToListButton
             </div>
             {goToListButton === true ? <button onClick={goToList}>Go To List</button> : <></>}
             
-        {showDeletePopup ? <Modern_DeletePopup_v2 func={'company'} companyOrListName={text} closePopup={toggleDeletePopup} /> : null}
-        {showEditApplicationPopup ? <Modern_EditApplicationPopup job={job} listNames={listNames} closePopup={toggleEditPopup}/> : null}
+        {showDeletePopup ? <ModernDeletePopupV2 func={'company'} companyOrListName={text} closePopup={toggleDeletePopup} /> : null}
+        {showEditApplicationPopup ? <ModernEditApplicationPopup job={job} listNames={listNames} closePopup={toggleEditPopup}/> : null}
         </div>
 
         
     );
 };
-export default Modern_EditJobButtons;
+export default ModernEditJobButtons;

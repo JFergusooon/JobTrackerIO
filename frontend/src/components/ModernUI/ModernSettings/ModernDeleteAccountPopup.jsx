@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const DeleteAccountPopup = ({ closePopup }) => {
+const ModernDeleteAccountPopup = ({ closePopup }) => {
     const [enteredPassword, setEnteredPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -225,4 +225,4 @@ const DeleteAccountPopup = ({ closePopup }) => {
     );
 };
 
-export default DeleteAccountPopup;
+export default ModernDeleteAccountPopup;

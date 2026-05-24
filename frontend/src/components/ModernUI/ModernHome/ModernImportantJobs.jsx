@@ -3,7 +3,7 @@ import '../../../css/Modern_HomePageCSS.css';
 import '../../../css/Modern_TrackerPageCSS.css';
 import { FaStar } from "react-icons/fa";
 
-const Modern_ImportantJobs = ({importantJobsList, importantJobsLoading = false, onFavoriteChanged, onStageChanged}) => {
+const ModernImportantJobs = ({importantJobsList, importantJobsLoading = false, onFavoriteChanged, onStageChanged}) => {
     const [favoritedJobs, setFavoritedJobs] = useState([]);
     const [editedNotes, setEditedNotes] = useState({});
     const timerRef = useRef({});
@@ -323,4 +323,4 @@ const Modern_ImportantJobs = ({importantJobsList, importantJobsLoading = false, 
         </div>
     );
 };
-export default Modern_ImportantJobs;
+export default ModernImportantJobs;

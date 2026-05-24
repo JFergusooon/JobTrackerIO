@@ -1,6 +1,6 @@
 import React from 'react';
 
-function DonateBox() {
+function ModernDonateBox() {
 	const handlePayPalDonate = () => {
 		// Replace with your actual PayPal donation link
 		window.open('https://paypal.me/FergusonSoftware?country.x=US&locale.x=en_US', '_blank');
@@ -101,4 +101,4 @@ function DonateBox() {
 	);
 }
 
-export default DonateBox;
+export default ModernDonateBox;

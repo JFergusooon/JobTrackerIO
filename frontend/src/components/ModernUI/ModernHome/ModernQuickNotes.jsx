@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
 import '../../../css/Modern_HomePageCSS.css';
 
-const Modern_QuickNotes = ({userData, closePopup}) => {
+const ModernQuickNotes = ({userData, closePopup}) => {
 
 const [quickNotes, setQuickNotes] = useState("");
 
@@ -50,4 +50,4 @@ const [quickNotes, setQuickNotes] = useState("");
         </div>
     );
 };
-export default Modern_QuickNotes;
+export default ModernQuickNotes;

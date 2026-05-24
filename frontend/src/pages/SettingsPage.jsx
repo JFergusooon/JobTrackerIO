@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import NavBar from '../components/navBar';
 import ModernFooter from '../components/ModernFooter';
-import DonateBox from '../components/DonateBox';
-import DeleteAccountPopup from '../components/DeleteAccountPopup';
+import ModernDonateBox from '../components/ModernUI/ModernSettings/ModernDonateBox';
+import ModernDeleteAccountPopup from '../components/ModernUI/ModernSettings/ModernDeleteAccountPopup';
 
 function SettingsPage() {
 	const [activeTab, setActiveTab] = useState('account');
@@ -835,7 +835,7 @@ function SettingsPage() {
 							top: '0',
 							left: 'calc(100% + 20px)'
 						}}>
-							<DonateBox />
+							<ModernDonateBox />
 						</div>
 					</div>
 				</div>
@@ -843,7 +843,7 @@ function SettingsPage() {
 
 			<ModernFooter />
 			{showDeleteAccountPopup && (
-				<DeleteAccountPopup closePopup={() => setShowDeleteAccountPopup(false)} />
+				<ModernDeleteAccountPopup closePopup={() => setShowDeleteAccountPopup(false)} />
 			)}
 		</>
 	);

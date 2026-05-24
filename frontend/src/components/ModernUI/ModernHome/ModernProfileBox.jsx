@@ -33,7 +33,7 @@ const formatJoinedDate = (dateCreated) => {
     return `${dateParts[0]}/${dateParts[2]}`;
 };
 
-const Modern_ProfileBox = ({userData}) => {
+const ModernProfileBox = ({userData}) => {
     const navigate = useNavigate();
 
     const formattedCareerTitle = normalizeCareerTitle(userData?.careerTitle)
@@ -96,4 +96,4 @@ const Modern_ProfileBox = ({userData}) => {
         </div>
     );
 };
-export default Modern_ProfileBox;
+export default ModernProfileBox;

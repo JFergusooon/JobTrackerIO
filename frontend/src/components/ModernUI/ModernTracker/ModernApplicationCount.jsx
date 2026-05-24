@@ -1,7 +1,7 @@
 import '../../../css/Modern_TrackerPageCSS.css';
 import { useNavigate } from 'react-router-dom';
 
-const Modern_ApplicationCount = ({waitingJobs, rejectedJobs}) => {
+const ModernApplicationCount = ({waitingJobs, rejectedJobs}) => {
 
     
 
@@ -24,4 +24,4 @@ const Modern_ApplicationCount = ({waitingJobs, rejectedJobs}) => {
         </div>
     );
 };
-export default Modern_ApplicationCount;
+export default ModernApplicationCount;

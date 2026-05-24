@@ -2,17 +2,17 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../../css/Modern_HomePageCSS.css'
 import LegacyToggle from '../../LegacyUI/Legacy_Plus/LegacyToggle.jsx';
-import Modern_ProfileBox from '../Modern_Home/Modern_ProfileBox.jsx';
-import Modern_QuickSettings from '../Modern_Home/Modern_QuickSettings.jsx';
-import Modern_QuickNotes from '../Modern_Home/Modern_QuickNotes.jsx';
-import Modern_ImportantJobs from '../Modern_Home/Modern_ImportantJobs.jsx';
-import Modern_RecentLists from '../Modern_Home/Modern_RecentLists.jsx';
-import Modern_StatsChart from '../Modern_Home/Modern_StatsChart.jsx';
-import Modern_StatsInfo from '../Modern_Home/Modern_StatsInfo.jsx';
-import Modern_NewListPopup from '../Modern_Tracker/Modern_NewListPopup.jsx';
-import Modern_FeedbackPopup from '../Modern_Tracker/Modern_FeedbackPopup.jsx';
+import ModernProfileBox from '../ModernHome/ModernProfileBox.jsx';
+import ModernQuickSettings from '../ModernHome/ModernQuickSettings.jsx';
+import ModernQuickNotes from '../ModernHome/ModernQuickNotes.jsx';
+import ModernImportantJobs from '../ModernHome/ModernImportantJobs.jsx';
+import ModernRecentLists from '../ModernHome/ModernRecentLists.jsx';
+import ModernStatsChart from '../ModernHome/ModernStatsChart.jsx';
+import ModernStatsInfo from '../ModernHome/ModernStatsInfo.jsx';
+import ModernNewListPopup from '../ModernTracker/ModernNewListPopup.jsx';
+import ModernFeedbackPopup from '../ModernTracker/ModernFeedbackPopup.jsx';
 import ModernFooterComponent from '../../ModernFooter.jsx';
-import ProfileSetupPopup from '../../ProfileSetupPopup.jsx';
+import ModernProfileSetupPopup from '../ModernHome/ModernProfileSetupPopup.jsx';
 
 const normalizeCareerTitleValue = (careerTitleValue) => {
     if (typeof careerTitleValue === 'string') {
@@ -42,7 +42,7 @@ const isMissingRequiredProfileFields = (user) => {
     return !normalizedCareerTitle || !normalizedLocation;
 };
 
-function ModernUI_Home({ onOpenUpdates }) { 
+function ModernUIHome({ onOpenUpdates }) { 
     const navigate = useNavigate();
 
   const [allJobs, setAllJobs] = useState([]);
@@ -191,14 +191,14 @@ function ModernUI_Home({ onOpenUpdates }) {
                     gap: '10px'
                     , padding: '5px'
           }}>
-            <Modern_ProfileBox userData={userInfo} />
+            <ModernProfileBox userData={userInfo} />
             
             <div style={{display: 'flex', flexDirection: 'row'}}>
               <div style={{width: '55%'}}>
               </div>
               <div style={{width: '45%', height: '100%'}}>
-                  <Modern_QuickSettings onOpenUpdates={onOpenUpdates} onOpenNewList={toggleNewListPopup} onOpenFeedback={onOpenFeedback} />
-                  <Modern_QuickNotes userData={userInfo} />
+                  <ModernQuickSettings onOpenUpdates={onOpenUpdates} onOpenNewList={toggleNewListPopup} onOpenFeedback={onOpenFeedback} />
+                  <ModernQuickNotes userData={userInfo} />
               </div>
             </div>
             
@@ -206,21 +206,21 @@ function ModernUI_Home({ onOpenUpdates }) {
           
           {/* Middle Column */}
           <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
-                                                <Modern_ImportantJobs importantJobsList={allJobs} importantJobsLoading={isJobsLoading} onFavoriteChanged={handleFavoriteChanged} onStageChanged={handleStageChanged} />
-            <Modern_RecentLists />
+                                                <ModernImportantJobs importantJobsList={allJobs} importantJobsLoading={isJobsLoading} onFavoriteChanged={handleFavoriteChanged} onStageChanged={handleStageChanged} />
+            <ModernRecentLists />
           </div>
 
           {/* Right Column */} 
           <div style={{display: 'flex', flexDirection: 'column', width: '100%'}}>
-            <Modern_StatsChart allJobs={allJobs} />
-            <Modern_StatsInfo allJobs={allJobs} />
+            <ModernStatsChart allJobs={allJobs} />
+            <ModernStatsInfo allJobs={allJobs} />
           </div>
 
-                    {showNewListPopup ? <Modern_NewListPopup text='NewList' closePopup={toggleNewListPopup} /> : null }
-                    {showFeedbackPopup ? <Modern_FeedbackPopup closePopup={onOpenFeedback} /> : null }
-                    {showProfileSetupPopup ? <ProfileSetupPopup closePopup={closeProfileSetupPopup} onGoToSettings={onGoToSettingsFromProfilePrompt} missingFields={missingProfileFields} /> : null }
+                    {showNewListPopup ? <ModernNewListPopup text='NewList' closePopup={toggleNewListPopup} /> : null }
+                    {showFeedbackPopup ? <ModernFeedbackPopup closePopup={onOpenFeedback} /> : null }
+                    {showProfileSetupPopup ? <ModernProfileSetupPopup closePopup={closeProfileSetupPopup} onGoToSettings={onGoToSettingsFromProfilePrompt} missingFields={missingProfileFields} /> : null }
         </div>
     );
 };
 
-export default ModernUI_Home;
+export default ModernUIHome;

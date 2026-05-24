@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
 import '../../../css/Modern_HomePageCSS.css';
 
-const Modern_StatsInfo = ({allJobs}) => {
+const ModernStatsInfo = ({allJobs}) => {
     const [totalAppliedThisMonth, setTotalAppliedThisMonth] = useState("---");
     const [totalRejectedThisMonth, setTotalRejectedThisMonth] = useState("---");
     const [totalJobsStageTwo, setTotalJobsStageTwo] = useState("---");
@@ -150,4 +150,4 @@ const Modern_StatsInfo = ({allJobs}) => {
         </div>
     );
 };
-export default Modern_StatsInfo;
+export default ModernStatsInfo;
