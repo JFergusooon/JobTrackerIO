@@ -1,8 +1,9 @@
 import React, {useEffect, useState, useRef} from 'react';
 import '../../../css/Modern_HomePageCSS.css';
+import '../../../css/Modern_TrackerPageCSS.css';
 import { FaStar } from "react-icons/fa";
 
-const Modern_ImportantJobs = ({importantJobsList, onFavoriteChanged, onStageChanged}) => {
+const Modern_ImportantJobs = ({importantJobsList, importantJobsLoading = false, onFavoriteChanged, onStageChanged}) => {
     const [favoritedJobs, setFavoritedJobs] = useState([]);
     const [editedNotes, setEditedNotes] = useState({});
     const timerRef = useRef({});
@@ -306,10 +307,17 @@ const Modern_ImportantJobs = ({importantJobsList, onFavoriteChanged, onStageChan
         <div className='modernImportantJobsContainer'>
             <p className='modernImportantJobsTitle'> Important Interviews </p>
             <div className='modernImportantJobsScroll' style={{display: 'flex', flexDirection: 'column', gap: '3px', maxHeight: '480px', overflowY: 'auto', paddingRight: '4px'}}>
-                {favoritedJobs.length > 0 ? (
+                {importantJobsLoading ? (
+                    <div className='modernSearchLoadingContainer' style={{marginTop: '20px'}}>
+                        <div className='modernListLoadingBadge'>
+                            <span className='modernListLoadingSpinner'></span>
+                            <span>Loading...</span>
+                        </div>
+                    </div>
+                ) : favoritedJobs.length > 0 ? (
                     favoritedJobs.map((jobInfo, index) => buildImportantJobBox(jobInfo, index))
                 ) : (
-                    <p style={{textAlign: 'center', color: '#999', padding: '20px'}}>No Important Jobs Currently...</p>
+                    <p style={{textAlign: 'center', color: '#999', padding: '20px'}}>You have no favorited jobs. Favorite a job in the tracker page.</p>
                 )}
             </div>
         </div>

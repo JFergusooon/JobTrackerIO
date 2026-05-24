@@ -46,6 +46,7 @@ function ModernUI_Home({ onOpenUpdates }) {
     const navigate = useNavigate();
 
   const [allJobs, setAllJobs] = useState([]);
+    const [isJobsLoading, setIsJobsLoading] = useState(true);
     const [showNewListPopup, setShowNewListPopup] = useState(false);
     const [showFeedbackPopup, setShowFeedbackPopup] = useState(false);
     const [showProfileSetupPopup, setShowProfileSetupPopup] = useState(false);
@@ -94,6 +95,7 @@ function ModernUI_Home({ onOpenUpdates }) {
   };
 
   const fetchAllJobs = async () => {
+      setIsJobsLoading(true);
         const stage = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev";
         const url = `${stage}/Jobs/getByUsername?username=${localStorage.getItem("username")}`;
         const encode = window.btoa("admin:admin");
@@ -105,9 +107,12 @@ function ModernUI_Home({ onOpenUpdates }) {
             });
 
             const data = await res.json();
-            setAllJobs(data);
+            setAllJobs(Array.isArray(data) ? data : []);
         } catch (err) {
             console.error(err);
+            setAllJobs([]);
+        } finally {
+            setIsJobsLoading(false);
         }
     };
 
@@ -201,7 +206,7 @@ function ModernUI_Home({ onOpenUpdates }) {
           
           {/* Middle Column */}
           <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
-                                                <Modern_ImportantJobs importantJobsList={allJobs} onFavoriteChanged={handleFavoriteChanged} onStageChanged={handleStageChanged} />
+                                                <Modern_ImportantJobs importantJobsList={allJobs} importantJobsLoading={isJobsLoading} onFavoriteChanged={handleFavoriteChanged} onStageChanged={handleStageChanged} />
             <Modern_RecentLists />
           </div>
 
