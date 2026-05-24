@@ -49,6 +49,7 @@ function ModernUI_Home({ onOpenUpdates }) {
     const [showNewListPopup, setShowNewListPopup] = useState(false);
     const [showFeedbackPopup, setShowFeedbackPopup] = useState(false);
     const [showProfileSetupPopup, setShowProfileSetupPopup] = useState(false);
+  const [missingProfileFields, setMissingProfileFields] = useState([]);
   const [userInfo, setUserInfo] = useState();
 
   const [error, setError] = useState(null);
@@ -155,6 +156,12 @@ function ModernUI_Home({ onOpenUpdates }) {
                                                     : false;
 
                                                 if (!hasSeenPrompt && isMissingRequiredProfileFields(sourceUser)) {
+                                                    const missing = [];
+                                                    const normalizedTitle = normalizeCareerTitleValue(sourceUser?.careerTitle).replace(/[{}"]/g, '').trim();
+                                                    const normalizedLocation = typeof sourceUser?.location === 'string' ? sourceUser.location.trim() : '';
+                                                    if (!normalizedTitle) missing.push('career title');
+                                                    if (!normalizedLocation) missing.push('location');
+                                                    setMissingProfileFields(missing);
                                                     setShowProfileSetupPopup(true);
                                                 }
 
@@ -206,7 +213,7 @@ function ModernUI_Home({ onOpenUpdates }) {
 
                     {showNewListPopup ? <Modern_NewListPopup text='NewList' closePopup={toggleNewListPopup} /> : null }
                     {showFeedbackPopup ? <Modern_FeedbackPopup closePopup={onOpenFeedback} /> : null }
-                    {showProfileSetupPopup ? <ProfileSetupPopup closePopup={closeProfileSetupPopup} onGoToSettings={onGoToSettingsFromProfilePrompt} /> : null }
+                    {showProfileSetupPopup ? <ProfileSetupPopup closePopup={closeProfileSetupPopup} onGoToSettings={onGoToSettingsFromProfilePrompt} missingFields={missingProfileFields} /> : null }
         </div>
     );
 };

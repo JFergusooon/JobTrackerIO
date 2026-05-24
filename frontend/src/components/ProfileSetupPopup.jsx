@@ -1,6 +1,6 @@
 import React from 'react';
 
-const ProfileSetupPopup = ({ closePopup, onGoToSettings }) => {
+const ProfileSetupPopup = ({ closePopup, onGoToSettings, missingFields = [] }) => {
     const handleGoToSettings = () => {
         if (typeof onGoToSettings === 'function') {
             onGoToSettings();
@@ -41,7 +41,7 @@ const ProfileSetupPopup = ({ closePopup, onGoToSettings }) => {
                     Finish Your Profile
                 </h2>
                 <p style={{ margin: '0 0 18px 0', color: '#c3c3c3', lineHeight: '1.5' }}>
-                    Welcome to JobTracker. To get started, please add your career title and location in Settings.
+                    Welcome to JobTracker. To get started, please add your {missingFields.join(' and ')} in Settings.
                 </p>
 
                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
