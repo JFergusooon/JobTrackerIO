@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import NavBar from '../components/navBar';
 import ModernFooter from '../components/ModernFooter';
 import DonateBox from '../components/DonateBox';
+import DeleteAccountPopup from '../components/DeleteAccountPopup';
 
 function SettingsPage() {
 	const [activeTab, setActiveTab] = useState('account');
@@ -27,6 +28,7 @@ function SettingsPage() {
 	const [isUploadingProfilePicture, setIsUploadingProfilePicture] = useState(false);
 	const [profilePictureUploadStatus, setProfilePictureUploadStatus] = useState('');
 	const [profilePictureFileNameError, setProfilePictureFileNameError] = useState('');
+	const [showDeleteAccountPopup, setShowDeleteAccountPopup] = useState(false);
 	const [userAccountFields, setUserAccountFields] = useState({
 		firstName: '',
 		lastName: '',
@@ -708,6 +710,23 @@ function SettingsPage() {
 														Current: {userAccountFields.profilePictureFileName}
 													</p>
 												) : null}
+													<button
+														type='button'
+														onClick={() => setShowDeleteAccountPopup(true)}
+														style={{
+															padding: '10px 16px',
+															borderRadius: '8px',
+															border: '1px solid #3a3a3c',
+															backgroundColor: '#2c2c2e',
+															color: '#e05252',
+															fontSize: '14px',
+															fontWeight: '600',
+															cursor: 'pointer',
+															transition: 'background-color 0.2s'
+														}}
+													>
+														Delete Account
+													</button>
 												{profilePictureUploadStatus && (
 													<span style={{
 														fontSize: '12px',
@@ -823,6 +842,9 @@ function SettingsPage() {
 			</div>
 
 			<ModernFooter />
+			{showDeleteAccountPopup && (
+				<DeleteAccountPopup closePopup={() => setShowDeleteAccountPopup(false)} />
+			)}
 		</>
 	);
 }

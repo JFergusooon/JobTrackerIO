@@ -20,6 +20,7 @@ function NavBar() {
             const currentUsername = localStorage.getItem('username') || '';
             localStorage.setItem('username', '')
             localStorage.setItem('password', '')
+            localStorage.setItem('legacyMode', 'false')
             localStorage.removeItem('profilePosition')
             localStorage.removeItem('profileLocation')
             if (currentUsername) {

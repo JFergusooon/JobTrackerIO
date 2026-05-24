@@ -7,6 +7,7 @@ const Popup = ({text, closePopup}) => {
 
     const [inputUser, setInputUser] = useState("");
     const [inputPass, setInputPass] = useState("");
+    const [loginError, setLoginError] = useState(null);
 
     const [regUser, setRegUser] = useState("");
     const [regPass, setRegPass] = useState("");
@@ -48,9 +49,12 @@ const Popup = ({text, closePopup}) => {
             setCurFunc("register");
             setRegError(null);
             setRegStatus(null);
+            setLoginError(null);
         }
-        if(curFunc === "register")
+        if(curFunc === "register") {
             setCurFunc("login")
+            setLoginError(null);
+        }
     }
 
     function handleNoSpaceKeyDown(e) {
@@ -65,22 +69,22 @@ const Popup = ({text, closePopup}) => {
 
         if (!allUsers || allUsers.length === 0) {
             console.log("Users not loaded yet");
+            setLoginError("Users are still loading. Please try again.");
             return;
         }
 
         let match = false;
+        let usernameExists = false;
         let matchedUsername = "";
         let matchedAppearanceScheme = "";
         const normalizedInputUser = inputUser.trim().toLowerCase();
         let allUsersSize = allUsers.length;
-        console.log("Total Number of Users: " + allUsersSize)
-        console.log("Searching for username in system: " + inputUser)
         for (let i = 0; i < allUsers.length; i++) {
-            console.log(i + ": " + allUsers[i].username);
 
             const candidateUsername = String(allUsers[i].username || '').trim().toLowerCase();
             if (normalizedInputUser === candidateUsername) {
                 console.log("USERNAME MATCHED!");
+                usernameExists = true;
                 if(inputPass === allUsers[i].password) {
                     console.log("PASSWORD MATCHED!");
                     match = true;
@@ -94,6 +98,7 @@ const Popup = ({text, closePopup}) => {
         }
 
         if(match) {
+            setLoginError(null);
             localStorage.setItem('username', matchedUsername)
             localStorage.setItem('password', inputPass)
 
@@ -129,6 +134,13 @@ const Popup = ({text, closePopup}) => {
             navigate('/home');
             window.dispatchEvent(new Event('authChange'));
             window.dispatchEvent(new Event('appearanceChange'));
+            return;
+        }
+
+        if (!usernameExists) {
+            setLoginError("Username does not exist.");
+        } else {
+            setLoginError("Password is incorrect.");
         }
 
 
@@ -373,7 +385,10 @@ const Popup = ({text, closePopup}) => {
                                 name="username"
                                 autoComplete="username"
                                 value={inputUser}
-                                onChange={({ target }) => setInputUser(target.value)}
+                                onChange={({ target }) => {
+                                    setInputUser(target.value);
+                                    if (loginError) setLoginError(null);
+                                }}
                                 style={inputStyle}
                             />
                                 <input
@@ -382,9 +397,24 @@ const Popup = ({text, closePopup}) => {
                                     name="password"
                                     autoComplete="current-password"
                                     value={inputPass}
-                                    onChange={({ target }) => setInputPass(target.value)}
+                                    onChange={({ target }) => {
+                                        setInputPass(target.value);
+                                        if (loginError) setLoginError(null);
+                                    }}
                                     style={inputStyle}
                                 />
+
+                                {loginError && (
+                                    <div style={{
+                                        color: "#ff4444",
+                                        fontSize: "13px",
+                                        marginBottom: "12px",
+                                        textAlign: "center",
+                                        fontWeight: "500"
+                                    }}>
+                                        {loginError}
+                                    </div>
+                                )}
 
                                 <div style={{ display: "flex", gap: "12px", flexDirection: "row" }}>
                                     <button

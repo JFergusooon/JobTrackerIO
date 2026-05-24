@@ -4,8 +4,9 @@ const Modern_DeletePopup_v2 = ({ func, companyOrListName, closePopup }) => {
 
     const [enteredPassword, setEnteredPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
+    const storedPassword = localStorage.getItem('password') || '';
 
-    const isCorrect = enteredPassword === "1234";
+    const isCorrect = enteredPassword === storedPassword;
     const hasTyped = enteredPassword.length > 0;
 
     async function deleteCompany() {
