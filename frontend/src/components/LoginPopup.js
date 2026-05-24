@@ -13,6 +13,8 @@ const Popup = ({text, closePopup}) => {
     const [regFirst, setRegFirst] = useState("");
     const [regLast, setRegLast] = useState("");
     const [regEmail, setRegEmail] = useState("");
+    const [regError, setRegError] = useState(null);
+    const [regStatus, setRegStatus] = useState(null);
 
     const [error, setError] = useState(null);
     const [isLoaded, setIsLoaded] = useState(false);
@@ -42,10 +44,19 @@ const Popup = ({text, closePopup}) => {
     }, [])
 
     function changeForm() {
-        if(curFunc === "login")
-            setCurFunc("register")
+        if(curFunc === "login") {
+            setCurFunc("register");
+            setRegError(null);
+            setRegStatus(null);
+        }
         if(curFunc === "register")
             setCurFunc("login")
+    }
+
+    function handleNoSpaceKeyDown(e) {
+        if (e.key === ' ') {
+            e.preventDefault();
+        }
     }
 
         
@@ -124,9 +135,68 @@ const Popup = ({text, closePopup}) => {
 
     }
 
+    /* Validate register form fields */
+    function validateEmail() {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+        return emailRegex.test(regEmail);
+    }
+
+    function validatePassword() {
+        if (!regPass) return { valid: false, errors: [] };
+        
+        const errors = [];
+        
+        if (regPass.length < 8) errors.push("At least 8 characters");
+        if (!/\d/.test(regPass)) errors.push("At least 1 number");
+        if (!/[!?]/.test(regPass)) errors.push("At least 1 symbol (! or ?)");
+        if (!/^[a-zA-Z0-9!?]+$/.test(regPass)) errors.push("Only letters, numbers, ! and ? are allowed");
+        
+        return { valid: errors.length === 0, errors };
+    }
+
+    function validateRegisterForm() {
+        const missingFields = [];
+        
+        if (!regFirst.trim()) missingFields.push("First Name");
+        if (!regLast.trim()) missingFields.push("Last Name");
+        if (!regUser.trim()) missingFields.push("Username");
+        if (!regEmail.trim()) missingFields.push("Email");
+        if (!regPass.trim()) missingFields.push("Password");
+
+        if (missingFields.length > 0) {
+            if (missingFields.length === 1) {
+                setRegError(`${missingFields[0]} is required`);
+            } else {
+                setRegError("Please fill out all fields");
+            }
+            return false;
+        }
+
+        if (!validateEmail()) {
+            setRegError("Email must look like: name@domain.com");
+            return false;
+        }
+
+        const passwordValidation = validatePassword();
+        if (!passwordValidation.valid) {
+            setRegError(`Password must have: ${passwordValidation.errors.join(", ")}`);
+            return false;
+        }
+
+        setRegError(null);
+        return true;
+    }
+
     /* Working with AWS-DynamoDB & Python Lambda (Table: JobTracker-Users) */
     async function registerUser() {
         console.log("CLICKED REGISTER");
+
+        if (!validateRegisterForm()) {
+            return;
+        }
+
+        setRegStatus("Registering...");
+        setRegError(null);
 
         const url = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev/Users/create";
 
@@ -159,13 +229,16 @@ const Popup = ({text, closePopup}) => {
 
             const data = await res.json();
             console.log("SUCCESS:", data);
+            
+            setRegStatus("Register Successful");
+            setTimeout(() => {
+                closePopup();
+            }, 1500);
         } catch (err) {
             console.error("ERROR:", err);
+            setRegStatus(null);
+            setRegError("An error occurred. Please try again.");
         }
-
-        closePopup();
-
-
     }
 
 
@@ -359,7 +432,8 @@ const Popup = ({text, closePopup}) => {
                                 placeholder="First Name"
                                 name="firstName"
                                 value={regFirst}
-                                onChange={({ target }) => setRegFirst(target.value)}
+                                    onKeyDown={handleNoSpaceKeyDown}
+                                    onChange={({ target }) => setRegFirst(target.value.replace(/\s/g, ''))}
                                 style={inputStyle}
                             />
                             <input
@@ -367,7 +441,8 @@ const Popup = ({text, closePopup}) => {
                                 placeholder="Last Name"
                                 name="lastName"
                                 value={regLast}
-                                onChange={({ target }) => setRegLast(target.value)}
+                                    onKeyDown={handleNoSpaceKeyDown}
+                                    onChange={({ target }) => setRegLast(target.value.replace(/\s/g, ''))}
                                 style={inputStyle}
                             />
                             <input
@@ -376,7 +451,8 @@ const Popup = ({text, closePopup}) => {
                                 name="username"
                                 autoComplete="username"
                                 value={regUser}
-                                onChange={({ target }) => setRegUser(target.value)}
+                                    onKeyDown={handleNoSpaceKeyDown}
+                                    onChange={({ target }) => setRegUser(target.value.replace(/\s/g, ''))}
                                 style={inputStyle}
                             />
                             <input
@@ -385,33 +461,115 @@ const Popup = ({text, closePopup}) => {
                                 name="email"
                                 autoComplete="email"
                                 value={regEmail}
-                                onChange={({ target }) => setRegEmail(target.value)}
+                                    onKeyDown={handleNoSpaceKeyDown}
+                                    onChange={({ target }) => setRegEmail(target.value.replace(/\s/g, ''))}
                                 style={inputStyle}
                             />
+
                                 <input
                                     type="password"
                                     placeholder="Password"
                                     name="password"
                                     autoComplete="new-password"
                                     value={regPass}
-                                    onChange={({ target }) => setRegPass(target.value)}
+                                        onKeyDown={handleNoSpaceKeyDown}
+                                    onChange={({ target }) => setRegPass(target.value.replace(/[^a-zA-Z0-9!?]/g, ''))}
                                     style={inputStyle}
                                 />
+
+                                {regPass && (
+                                    <div style={{
+                                        fontSize: "12px",
+                                        marginBottom: "12px",
+                                        color: "#a0a0a0",
+                                        display: "flex",
+                                        gap: "16px",
+                                        flexWrap: "wrap"
+                                    }}>
+                                        <div style={{
+                                            color: regPass.length >= 8 ? "#44ff44" : "#ff4444"
+                                        }}>
+                                            {regPass.length >= 8 ? "✓" : "✗"} 8 chars
+                                        </div>
+                                        <div style={{
+                                            color: /\d/.test(regPass) ? "#44ff44" : "#ff4444"
+                                        }}>
+                                            {/\d/.test(regPass) ? "✓" : "✗"} 1 number
+                                        </div>
+                                        <div style={{
+                                            color: /[!?]/.test(regPass) ? "#44ff44" : "#ff4444"
+                                        }}>
+                                            {/[!?]/.test(regPass) ? "✓" : "✗"} ! or ?
+                                        </div>
+                                        <div style={{
+                                            color: /^[a-zA-Z0-9!?]+$/.test(regPass) ? "#44ff44" : "#ff4444"
+                                        }}>
+                                            {/^[a-zA-Z0-9!?]+$/.test(regPass) ? "✓" : "✗"} only letters/numbers/!/?
+                                        </div>
+                                    </div>
+                                )}
+
+                                {regError && (
+                                    <div style={{
+                                        color: "#ff4444",
+                                        fontSize: "13px",
+                                        marginBottom: "12px",
+                                        textAlign: "center",
+                                        fontWeight: "500"
+                                    }}>
+                                        {regError}
+                                    </div>
+                                )}
+
+                                {regStatus && (
+                                    <div style={{
+                                        color: "#44ff44",
+                                        fontSize: "13px",
+                                        marginBottom: "12px",
+                                        textAlign: "center",
+                                        fontWeight: "500"
+                                    }}>
+                                        {regStatus}
+                                    </div>
+                                )}
 
                                 <div style={{ display: "flex", gap: "12px", flexDirection: "row" }}>
                                     <button
                                         onClick={registerUser}
-                                        style={{...buttonStyle, flex: 1}}
-                                        onMouseEnter={(e) => e.target.style.backgroundColor = "#3a8eef"}
-                                        onMouseLeave={(e) => e.target.style.backgroundColor = "#4a9eff"}
+                                        disabled={regStatus !== null}
+                                        style={{
+                                            ...buttonStyle, 
+                                            flex: 1,
+                                            opacity: regStatus !== null ? 0.6 : 1,
+                                            cursor: regStatus !== null ? "not-allowed" : "pointer"
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            if (regStatus === null) {
+                                                e.target.style.backgroundColor = "#3a8eef";
+                                            }
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            if (regStatus === null) {
+                                                e.target.style.backgroundColor = "#4a9eff";
+                                            }
+                                        }}
                                     >
                                         Create Account
                                     </button>
                                     <button
                                         onClick={closePopup}
-                                        style={{...cancelButtonStyle, flex: 1, marginBottom: "0px"}}
-                                        onMouseEnter={(e) => e.target.style.backgroundColor = "#3a3a3c"}
-                                        onMouseLeave={(e) => e.target.style.backgroundColor = "#2c2c2e"}
+                                        disabled={regStatus !== null}
+                                        style={{...cancelButtonStyle, flex: 1, marginBottom: "0px", opacity: regStatus !== null ? 0.6 : 1, cursor: regStatus !== null ? "not-allowed" : "pointer"}}
+                                        onMouseEnter={(e) => {
+                                            if (regStatus === null) {
+                                                e.target.style.backgroundColor = "#3a3a3c";
+                                            }
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            if (regStatus === null) {
+                                                e.target.style.backgroundColor = "#2c2c2e";
+                                            }
+                                        }}
                                     >
                                         Cancel
                                     </button>
