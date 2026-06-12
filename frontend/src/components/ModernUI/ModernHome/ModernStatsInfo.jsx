@@ -15,7 +15,6 @@ const ModernStatsInfo = ({allJobs}) => {
 
     const getStageString = (stageValue) => String(stageValue ?? '').trim();
 
-
     useEffect(() => {
             const now = new Date();
             const currentMonth = now.getMonth();

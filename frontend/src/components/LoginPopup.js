@@ -248,7 +248,6 @@ const Popup = ({text, closePopup}) => {
         }
     }
 
-
     /* Performs the Switching of the Login & Register Forms */
     function performSwitch() {
         const overlayStyle = {
