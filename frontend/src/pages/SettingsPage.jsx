@@ -33,7 +33,7 @@ function SettingsPage() {
 		firstName: '',
 		lastName: '',
 		email: '',
-		dateCreated: ''
+		profilePictureFileName: ''
 	});
 
 	const getPresignedUrl = async (file) => {
@@ -266,7 +266,6 @@ function SettingsPage() {
 					firstName: sourceUser?.firstName || '',
 					lastName: sourceUser?.lastName || '',
 					email: sourceUser?.email || '',
-					dateCreated: sourceUser?.dateCreated || '',
 					profilePictureFileName: sourceUser?.profilePictureFileName || ''
 				});
 
@@ -444,11 +443,6 @@ function SettingsPage() {
 		textTransform: 'capitalize'
 	};
 
-	const readOnlyFieldStyle = {
-		...inputStyle,
-		color: '#888'
-	};
-
 	const jsonEditorStyle = {
 		...inputStyle,
 		fontFamily: 'Consolas, monospace',
@@ -517,18 +511,6 @@ function SettingsPage() {
 								<div style={{ display: 'flex', flexDirection: 'column', gap: '12px', height: '100%', minHeight: 0 }}>
 									<div className='settingsScrollableSection' style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: 1, minHeight: 0, overflowY: activeSettingsCount > 3 ? 'auto' : 'hidden', paddingRight: '4px' }}>
 										<h3 style={{ margin: 0, fontSize: '18px', color: '#000000' }}>Account Settings</h3>
-
-										<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-											<label style={{ fontSize: '14px', fontWeight: '600', color: 'black'  }}>Username</label>
-											<input
-												value={localStorage.getItem('username') || ''}
-												readOnly
-												style={{
-													...inputStyle,
-													color: '#888',
-												}}
-											/>
-										</div>
 
 										<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
 											<label style={{ fontSize: '14px', fontWeight: '600', color: 'black' }}>Career Title</label>
@@ -618,11 +600,6 @@ function SettingsPage() {
 												</span>
 													)}
 												</div>
-
-										<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-											<label style={{ fontSize: '14px', fontWeight: '600', color: 'black' }}>Date Created</label>
-											<input value={userAccountFields.dateCreated} readOnly style={readOnlyFieldStyle} />
-										</div>
 
 										<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
 											<label style={{ fontSize: '14px', fontWeight: '600', color: 'black' }}>Profile Picture</label>
