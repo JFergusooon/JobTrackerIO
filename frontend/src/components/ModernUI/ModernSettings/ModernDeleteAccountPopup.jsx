@@ -49,10 +49,8 @@ const ModernDeleteAccountPopup = ({ closePopup }) => {
                 display: 'flex', justifyContent: 'center', alignItems: 'center',
                 zIndex: 9999,
             }}
-            onClick={closePopup}
         >
             <div
-                onClick={(e) => e.stopPropagation()}
                 style={{
                     backgroundColor: 'rgba(0, 0, 0, 0.8)',
                     borderRadius: '16px',

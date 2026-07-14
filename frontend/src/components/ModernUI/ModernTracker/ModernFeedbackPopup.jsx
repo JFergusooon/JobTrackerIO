@@ -48,10 +48,8 @@ const ModernFeedbackPopup = ({ closePopup }) => {
                 alignItems: "center",
                 zIndex: 9999,
             }}
-            onClick={closePopup}
         >
             <div
-                onClick={(e) => e.stopPropagation()}
                 style={{
                     backgroundColor: "rgba(0, 0, 0, 0.85)",
                     borderRadius: "16px",

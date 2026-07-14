@@ -21,10 +21,8 @@ const ModernProfileSetupPopup = ({ closePopup, onGoToSettings, missingFields = [
                 alignItems: 'center',
                 zIndex: 10000,
             }}
-            onClick={closePopup}
         >
             <div
-                onClick={(e) => e.stopPropagation()}
                 style={{
                     backgroundColor: 'rgba(0, 0, 0, 0.88)',
                     borderRadius: '16px',

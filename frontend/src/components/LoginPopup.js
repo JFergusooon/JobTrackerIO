@@ -352,8 +352,8 @@ const Popup = ({text, closePopup}) => {
         switch(curFunc) {
             case 'login':
                 return (
-                    <div style={overlayStyle} onClick={closePopup}>
-                        <div onClick={(e) => e.stopPropagation()} style={cardStyle}>
+                    <div style={overlayStyle}>
+                        <div style={cardStyle}>
                             <div style={tabContainerStyle}>
                                 <button style={tabButtonStyle(true)} disabled>
                                     Login
@@ -435,8 +435,8 @@ const Popup = ({text, closePopup}) => {
                 );
             case 'register':
                 return (
-                    <div style={overlayStyle} onClick={closePopup}>
-                        <div onClick={(e) => e.stopPropagation()} style={cardStyle}>
+                    <div style={overlayStyle}>
+                        <div style={cardStyle}>
                             <div style={tabContainerStyle}>
                                 <button
                                     style={tabButtonStyle(false)}
