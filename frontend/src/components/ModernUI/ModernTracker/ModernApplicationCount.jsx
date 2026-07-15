@@ -5,7 +5,7 @@ const ModernApplicationCount = ({waitingJobs, rejectedJobs}) => {
     
 
     return (
-        <div style={{border: '0.1px solid black', display: 'flex', justifyContent: 'center', gap: '30px', width: '80%'}}>
+        <div style={{border: '0.1px solid black', display: 'flex', justifyContent: 'center', gap: '30px', width: '80%', flexShrink: 0}}>
             <div style={{alignItems: 'center', display: 'flex', flexDirection: 'column'}}>
                 <p style={{color: 'black', padding: '0px', marginTop: '5px', marginBottom: '0px'}}>Waiting: </p>
                 <div style={{background: 'white', borderRadius: '5px', padding: '0px 5px', width: '60%', height: '45%'}}>

@@ -5,7 +5,6 @@ import ModernEditJobButtons from '../ModernTracker/ModernEditJobButtons.jsx';
 import ModernNewListPopup from '../ModernTracker/ModernNewListPopup.jsx';
 import ModernNewApplicationPopup from '../ModernTracker/ModernNewApplicationPopup.jsx'
 import ModernListManagement from '../ModernTracker/ModernListManagement.jsx';
-import ModernNewDeleteList from '../ModernTracker/ModernNewDeleteList.jsx';
 import ModernApplicationCount from '../ModernTracker/ModernApplicationCount.jsx';
 import ModernDeletePopupV2 from '../ModernTracker/ModernDeletePopupv2.jsx';
 
@@ -44,9 +43,10 @@ function ModernUITracker() {
     const [listLoading, setListLoading] = useState(false);
     const [actionStatusMessage, setActionStatusMessage] = useState("");
 
-    const [sortField, setSortField] = useState("dateApplied");
+    const [sortField, setSortField] = useState(null);
     const [sortDirection, setSortDirection] = useState("asc");
     const hasValidCurrentList = Boolean(listName && curUserListNames.includes(listName));
+    const isHeaderSortActive = ['companyName', 'position', 'location', 'jobLink', 'rejected', 'favorite'].includes(sortField);
 
     const fetchAllJobs = async () => {
         const stage = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev";
@@ -230,8 +230,17 @@ function ModernUITracker() {
         }
     };
 
+    const handleResetSort = () => {
+        setSortField(null);
+        setSortDirection("asc");
+    };
+
     const getSortedJobs = () => {
         const jobsCopy = [...curJobsByListName];
+
+        if (!sortField) {
+            return jobsCopy;
+        }
         
         jobsCopy.sort((a, b) => {
             let aVal, bVal;
@@ -395,12 +404,6 @@ function ModernUITracker() {
     }
 
     
-    const GRID_SIZE = 9; // 3 columns x 3 rows
-
-    const filledLists = Array.from({ length: GRID_SIZE }, (_, i) => {
-        return curUserListNames[i] || null;
-    });
-
     useEffect(() => {
         if (!actionStatusMessage) return;
 
@@ -411,10 +414,10 @@ function ModernUITracker() {
         return () => clearTimeout(timer);
     }, [actionStatusMessage]);
 
-    const rightColumnGridTemplate = '1.5fr 1.5fr 1.5fr 1.7fr 0.8fr 0.8fr';
+    const rightColumnGridTemplate = '1.5fr 1.5fr 1.5fr 6.5rem 5.5rem 6.25rem';
 
     return (<>
-        <div style={{width: '100%', height: '100%', overflow: 'hidden', marginTop: '30px'}}>
+        <div style={{width: '100%', height: '100%', overflow: 'hidden', minHeight: 0}}>
             <div className='modernTrackerContainer'>
                 {/*Left Column*/}
                 <div className='modernLeftColumn'>
@@ -423,18 +426,19 @@ function ModernUITracker() {
                     <ModernApplicationCount waitingJobs={curWaitingJobs} rejectedJobs={curRejectedJobs}/>
 
                     {/* New Application Button */}   
-                    <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '2px'}}>
+                    <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '2px', flexShrink: 0}}>
                         <button style={{height: '40px', width: '150px', borderRadius: '20px'}} onClick={toggleNewApplicationPopup}>New Application</button>
                     </div>      
                     
 
                     {/* Search Box */}
-                    <div style={{height: '35%', maxHeight: '35%', width: '100%', background: 'rgba(255, 255, 255, 0.4)', borderRadius: '20px', border: '0.1px solid black', display: 'flex', flexDirection: 'column', alignItems: 'center', overflow: 'hidden', boxSizing: 'border-box', paddingBottom: '6px'}}>
-                        <p style={{margin: '0px', fontSize: '20px'}}>Search for Company:</p>
-                        <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="" style={{ width: "65%", marginBottom: '10px' }}/>
-                        {/* ALWAYS mounted dropdown */}
-                        <div className='modernSearchResultsContainer' style={{left: 0, width: "80%", maxHeight: '140px', minHeight: '140px', overflowY: "auto", overflowX: 'hidden', background: "white",
-                                    border: "1px solid black", zIndex: 1000, marginBottom: '6px'  }}>
+                    <div style={{width: '100%', background: 'rgba(255, 255, 255, 0.4)', borderRadius: '20px', border: '0.1px solid black', display: 'flex', flexDirection: 'column', alignItems: 'center', overflow: 'hidden', boxSizing: 'border-box', padding: '8px', gap: '6px', flexShrink: 0}}>
+                        <p style={{margin: '0px', fontSize: '20px', color: 'black', fontWeight: '600', flexShrink: 0}}>Search for Company</p>
+                        <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="" style={{ width: "65%", marginBottom: '0px', flexShrink: 0 }}/>
+                        {/* ALWAYS mounted dropdown — exactly 4 rows (32px each); extra height becomes top/bottom padding */}
+                        <div style={{width: '80%', height: '140px', flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', boxSizing: 'border-box'}}>
+                        <div className='modernSearchResultsContainer' style={{left: 0, width: "100%", height: '128px', flexShrink: 0, overflowY: "auto", overflowX: 'hidden', background: "white",
+                                    border: "1px solid black", zIndex: 1000, marginBottom: '0px', boxSizing: 'content-box'  }}>
 
                             {searchLoading && (
                                 <div className='modernSearchLoadingContainer'>
@@ -447,10 +451,32 @@ function ModernUITracker() {
                             {!searchLoading && searchTerm && searchResults.length === 0 && (
                                 <div style={{ padding: "8px", color: "gray" }}> No results </div>
                             )}
-                            {searchResults.map((job, index) => (
-                                <button key={index} style={{ backgroundColor: selectedJob?.companyName === job.companyName ? "green" : "transparent",
-                                                            color: job.rejected === true ? "red" : "black"}} 
-                                                    className="modernSearchResultsDiv" onClick={() => {
+                            {searchResults.map((job, index) => {
+                                const isSelected = selectedJob?.companyName === job.companyName;
+                                return (
+                                <button
+                                    key={index}
+                                    type="button"
+                                    title={job.companyName}
+                                    style={{
+                                        width: '100%',
+                                        height: '32px',
+                                        display: 'block',
+                                        textAlign: 'left',
+                                        padding: '0 10px',
+                                        border: 'none',
+                                        borderBottom: 'solid 0.5px black',
+                                        cursor: 'pointer',
+                                        backgroundColor: isSelected ? 'green' : 'transparent',
+                                        color: isSelected ? 'white' : (job.rejected === true ? 'red' : 'black'),
+                                        fontSize: '14px',
+                                        lineHeight: '32px',
+                                        whiteSpace: 'nowrap',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        boxSizing: 'border-box'
+                                    }}
+                                    onClick={() => {
                                                         const isSame = selectedJob?.companyName === job.companyName;
 
                                                         if (isSame) {
@@ -467,36 +493,56 @@ function ModernUITracker() {
 
                                                         setSelectedFromSearch(true);
     }}>
-                                            {job.companyName.length > 25
-                                                ? job.companyName.slice(0, 25) + "..."
-                                                : job.companyName}
+                                            {job.companyName}
                                         </button>
-                                    ))}
+                                    );
+                                    })}
                                     
                         </div>
-                        {selectedCompanyName !== "" ? <p style={{alignItems: 'center', height: '18px', padding: '2px', margin: '0px', marginBottom: '2px', color: selectedCompanyName !== "" ? 'green' : "", fontSize: '13px'}}>Selected: {selectedCompanyName}</p> : 
-                                                      <p style={{alignItems: 'center', height: '18px', padding: '2px', margin: '0px', marginBottom: '2px'}}></p>}
-                        {actionStatusMessage !== "" ? (
-                            <p style={{
-                                width: '80%',
-                                margin: '0',
-                                padding: '0 8px',
-                                lineHeight: '22px',
-                                height: '22px',
-                                borderRadius: '8px',
-                                backgroundColor: 'rgba(0, 153, 72, 0.18)',
-                                border: '1px solid rgba(0, 153, 72, 0.45)',
-                                color: '#0f5f34',
-                                fontWeight: '600',
-                                fontSize: '12px',
-                                textAlign: 'center',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis'
-                            }}>
-                                {actionStatusMessage}
-                            </p>
-                        ) : null}
+                        </div>
+                        <p style={{
+                            alignItems: 'center',
+                            height: '18px',
+                            padding: '0px',
+                            margin: '0px',
+                            color: selectedCompanyName !== "" ? 'green' : 'transparent',
+                            fontSize: '13px',
+                            flexShrink: 0,
+                            textAlign: 'center',
+                            width: '90%',
+                            overflow: 'hidden',
+                            whiteSpace: 'nowrap',
+                            textOverflow: 'ellipsis'
+                        }}>
+                            {selectedCompanyName !== "" ? `Selected: ${selectedCompanyName}` : '\u00A0'}
+                        </p>
+                        <p style={{
+                            width: '90%',
+                            margin: '0',
+                            padding: '4px 6px',
+                            lineHeight: '16px',
+                            minHeight: '40px',
+                            height: '40px',
+                            borderRadius: '8px',
+                            backgroundColor: actionStatusMessage !== "" ? 'rgba(0, 153, 72, 0.18)' : 'transparent',
+                            border: actionStatusMessage !== "" ? '1px solid rgba(0, 153, 72, 0.45)' : '1px solid transparent',
+                            color: '#0f5f34',
+                            fontWeight: '600',
+                            fontSize: '12px',
+                            textAlign: 'center',
+                            whiteSpace: 'normal',
+                            overflowWrap: 'anywhere',
+                            wordBreak: 'break-word',
+                            overflow: 'hidden',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                            visibility: actionStatusMessage !== "" ? 'visible' : 'hidden',
+                            boxSizing: 'border-box'
+                        }}>
+                            {actionStatusMessage || '\u00A0'}
+                        </p>
                     </div>          
 
                     {/* Edit and Delete Job Buttons (conditionally rendered) */}
@@ -506,10 +552,13 @@ function ModernUITracker() {
                     }                
 
                     {/* List Management Box */}
-                    <ModernListManagement filledLists={filledLists} listName={listName}/>
-                    
-                    {/* New and Delete List Buttons */}
-                    <ModernNewDeleteList toggleDeletePopup={toggleDeletePopup} toggleNewListPopup={toggleNewListPopup} canDeleteCurrentList={hasValidCurrentList} />
+                    <ModernListManagement
+                        listNames={curUserListNames}
+                        listName={listName}
+                        toggleNewListPopup={toggleNewListPopup}
+                        toggleDeletePopup={toggleDeletePopup}
+                        canDeleteCurrentList={hasValidCurrentList}
+                    />
 
                     {/* Popups */}
                     {showDeletePopup && hasValidCurrentList ? <ModernDeletePopupV2 func={'list'} companyOrListName={listName} closePopup={toggleDeletePopup} /> : <></>}
@@ -520,14 +569,39 @@ function ModernUITracker() {
 
                 {/* Right Column */}
                 <div className='modernRightColumn'>
-                    <div style={{width: '100%', background: 'rgba(255, 255, 255, 0.4)', height: '100%', borderRadius: '20px'}}>
-                        <p style={{fontWeight: 'bold', marginBottom: '0px', fontSize: '24px', margin: '0px', textAlign: 'center', width: '100%', transform: 'translateX(calc(-10.5% + 5px))'}}> {listName} </p>
-                        <div style={{display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '10px', marginTop: '0px', textAlign: 'left', padding: '0 10px'}}>
+                    <div style={{width: '100%', background: 'rgba(255, 255, 255, 0.4)', height: '100%', minHeight: 0, borderRadius: '20px', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxSizing: 'border-box'}}>
+                        <p style={{fontWeight: 'bold', marginBottom: '0px', fontSize: '24px', margin: '0px', textAlign: 'center', width: '100%', transform: 'translateX(calc(-10.5% + 5px))', flexShrink: 0}}> {listName} </p>
+                        <div style={{display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '6px', marginTop: '0px', textAlign: 'left', padding: '0 10px', flexShrink: 0}}>
                             <p style={{color: 'green', margin: '0px'}}>Active Applications: {waitingByList}</p>
-                            <p style={{color: 'red', margin: '0px'}}>Rejected Applications: {rejectByList}</p>
-                            <header style={{display: 'grid', gridTemplateColumns: rightColumnGridTemplate, position: 'sticky', top: 0, zIndex: 10, width: '100%'}}> 
+                            <div style={{display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: '8px', minHeight: '30px'}}>
+                                <p style={{color: 'red', margin: '0px'}}>Rejected Applications: {rejectByList}</p>
+                                {isHeaderSortActive ? (
+                                    <button
+                                        type="button"
+                                        className="modernEditJobButton"
+                                        onClick={handleResetSort}
+                                        style={{
+                                            height: '30px',
+                                            width: 'fit-content',
+                                            minWidth: 0,
+                                            padding: '3px 7px',
+                                            borderRadius: '20px',
+                                            boxSizing: 'border-box',
+                                            whiteSpace: 'nowrap',
+                                            flexShrink: 0
+                                        }}
+                                    >
+                                        Reset Sort
+                                    </button>
+                                ) : null}
+                            </div>
+                        </div>
+
+                        <div style={{textAlign: 'left', marginLeft: '0px', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '0 10px', boxSizing: 'border-box'}}>
+                            <div className="modernJobContainer" style={{padding: '0'}}>
+                                <header style={{display: 'grid', gridTemplateColumns: rightColumnGridTemplate, position: 'sticky', top: 0, zIndex: 10, width: '100%', marginBottom: '6px', background: '#e8e8e8'}}>
                                     <p className='modernRightColumnHeaders' onClick={() => handleSortChange("companyName")} style={{cursor: 'pointer', backgroundColor: sortField === 'companyName' ? 'rgba(0, 0, 0, 0.1)' : 'transparent', width: 'auto'}}>
-                                        CompanyName {sortField === 'companyName' && (sortDirection === 'asc' ? '▲' : '▼')}
+                                        Company Name {sortField === 'companyName' && (sortDirection === 'asc' ? '▲' : '▼')}
                                     </p>
                                     <p className='modernRightColumnHeaders' onClick={() => handleSortChange("position")} style={{cursor: 'pointer', backgroundColor: sortField === 'position' ? 'rgba(0, 0, 0, 0.1)' : 'transparent', width: 'auto'}}>
                                         Position {sortField === 'position' && (sortDirection === 'asc' ? '▲' : '▼')}
@@ -535,20 +609,16 @@ function ModernUITracker() {
                                     <p className='modernRightColumnHeaders' onClick={() => handleSortChange("location")} style={{cursor: 'pointer', backgroundColor: sortField === 'location' ? 'rgba(0, 0, 0, 0.1)' : 'transparent', width: 'auto'}}>
                                         Location {sortField === 'location' && (sortDirection === 'asc' ? '▲' : '▼')}
                                     </p>
-                                    <p className='modernRightColumnHeaders' onClick={() => handleSortChange("jobLink")} style={{cursor: 'pointer', backgroundColor: sortField === 'jobLink' ? 'rgba(0, 0, 0, 0.1)' : 'transparent', width: 'auto'}}>
+                                    <p className='modernRightColumnHeaders' onClick={() => handleSortChange("jobLink")} style={{cursor: 'pointer', backgroundColor: sortField === 'jobLink' ? 'rgba(0, 0, 0, 0.1)' : 'transparent', width: '100%', whiteSpace: 'nowrap', justifyContent: 'center', paddingLeft: '2px', paddingRight: '2px', boxSizing: 'border-box'}}>
                                         Job Link {sortField === 'jobLink' && (sortDirection === 'asc' ? '▲' : '▼')}
                                     </p>
-                                    <p className='modernRightColumnHeaders' onClick={() => handleSortChange("rejected")} style={{cursor: 'pointer', backgroundColor: sortField === 'rejected' ? 'rgba(0, 0, 0, 0.1)' : 'transparent', width: 'auto'}}>
+                                    <p className='modernRightColumnHeaders' onClick={() => handleSortChange("rejected")} style={{cursor: 'pointer', backgroundColor: sortField === 'rejected' ? 'rgba(0, 0, 0, 0.1)' : 'transparent', width: '100%', whiteSpace: 'nowrap', justifyContent: 'center', paddingLeft: '2px', paddingRight: '2px', boxSizing: 'border-box'}}>
                                         Rejected {sortField === 'rejected' && (sortDirection === 'asc' ? '▲' : '▼')}
                                     </p>
-                                    <p className='modernRightColumnHeaders' onClick={() => handleSortChange("favorite")} style={{cursor: 'pointer', backgroundColor: sortField === 'favorite' ? 'rgba(0, 0, 0, 0.1)' : 'transparent', width: 'auto'}}>
+                                    <p className='modernRightColumnHeaders' onClick={() => handleSortChange("favorite")} style={{cursor: 'pointer', backgroundColor: sortField === 'favorite' ? 'rgba(0, 0, 0, 0.1)' : 'transparent', width: '100%', whiteSpace: 'nowrap', justifyContent: 'center', paddingLeft: '2px', paddingRight: '2px', boxSizing: 'border-box'}}>
                                         Favorited {sortField === 'favorite' && (sortDirection === 'asc' ? '▲' : '▼')}
                                     </p>
                                 </header>
-                        </div>
-
-                        <div style={{textAlign: 'left', marginLeft: '0px'}}>
-                            <div className="modernJobContainer" style={{padding: '10px'}}>
                                 
                                 {/* Print Out All Jobs From This Month */}
                                 {listLoading ? (
@@ -580,7 +650,7 @@ function ModernUITracker() {
                                         setSelectedFromSearch(false);
                                     }}
                                     className={selectedJob?.companyName === job.companyName ? "modernUnknown" : "modernJobCard"}
-                                    style={{backgroundColor: job.rejected ? 'rgba(255, 0, 0, 0.2)' : 'white', border: selectedJob?.companyName === job.companyName ? '2px solid orange' : '0.1px solid black', display: 'grid', gridTemplateColumns: rightColumnGridTemplate, alignItems: 'center'}}>
+                                    style={{backgroundColor: job.rejected ? 'rgba(255, 0, 0, 0.2)' : 'white', border: selectedJob?.companyName === job.companyName ? '2px solid orange' : '0.1px solid black', display: 'grid', gridTemplateColumns: rightColumnGridTemplate, alignItems: 'center', width: 'calc(100% - 6px)', padding: '10px 0'}}>
                                     <p style={{padding: '0px 0px 0px 2px', margin: '0px', color: job.rejected ? 'red' : 'black', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', minWidth: 0}}>
                                         {job.companyName.length > 25 ? job.companyName.slice(0, 25) + '...' : job.companyName}
                                     </p>
@@ -593,8 +663,8 @@ function ModernUITracker() {
                                         {job.location}
                                     </p>
 
-                                    <a href={job.jobLink} target="_blank" rel="noreferrer" style={{padding: '0px 0px 0px 2px', margin: '0px', textAlign: 'left', color: job.rejected ? 'red' : '', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', minWidth: 0}}>
-                                        {job.jobLink}
+                                    <a href={job.jobLink} target="_blank" rel="noreferrer" style={{padding: '0px 0px 0px 2px', margin: '0px', textAlign: 'center', color: job.rejected ? 'red' : '', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', minWidth: 0}}>
+                                        Link
                                     </a>
 
                                     <input

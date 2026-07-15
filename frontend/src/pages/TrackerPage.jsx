@@ -10,7 +10,7 @@ function TrackerPage() {
     <NavBar/>
   
     {/* Background Gradient */}
-    <div className='modernTrackerPageBackground'>
+    <div className='modernTrackerPageShell'>
       {localStorage.getItem("legacyMode") === "true" ? <LegacyUITracker /> : <ModernUITracker />}
     </div>
     <ModernFooter />

@@ -61,21 +61,45 @@ const ModernEditJobButtons = ({text, job, listNames, goToListButton, onRejectedT
     }
 
 
+    const actionButtonStyle = {
+        height: '30px',
+        width: 'fit-content',
+        minWidth: 0,
+        padding: '3px 7px',
+        borderRadius: '20px',
+        boxSizing: 'border-box',
+        whiteSpace: 'nowrap'
+    };
+
     return (
         <div className='modernEditJobButtonsContainer'>
-            <button onClick={setRejected} disabled={isUpdatingRejected} style={{
-                            height: '30px',
-                            width: '200px',
-                            padding: '3px',
-                            borderRadius: '20px',
-                            cursor: isUpdatingRejected ? 'not-allowed' : 'pointer',
-                            opacity: isUpdatingRejected ? 0.7 : 1
-            }}>{isUpdatingRejected ? 'Updating...' : 'Set Rejected / Not Rejected'}</button>
-            <div style={{display: 'flex', flexDirection: 'row'}}>
-                <button className='editJobButton' onClick={toggleEditPopup}>Edit Application</button>
-                <button className='editJobButton' onClick={toggleDeletePopup}>Delete Company</button>
+            <div style={{display: 'flex', flexDirection: 'row', gap: '5px', alignItems: 'center', justifyContent: 'center'}}>
+                <button className='modernEditJobButton' onClick={toggleEditPopup} style={actionButtonStyle}>Edit Application</button>
+                <button className='modernEditJobButton' onClick={toggleDeletePopup} style={actionButtonStyle}>Delete Application</button>
             </div>
-            {goToListButton === true ? <button onClick={goToList}>Go To List</button> : <></>}
+            <div style={{display: 'flex', flexDirection: 'row', gap: '5px', alignItems: 'center', justifyContent: 'center'}}>
+                <button
+                    onClick={setRejected}
+                    disabled={isUpdatingRejected}
+                    className='modernEditJobButton'
+                    style={{
+                        ...actionButtonStyle,
+                        cursor: isUpdatingRejected ? 'not-allowed' : 'pointer',
+                        opacity: isUpdatingRejected ? 0.7 : 1
+                    }}
+                >
+                    {isUpdatingRejected ? 'Updating...' : 'Set Rejected Status'}
+                </button>
+                {goToListButton === true ? (
+                    <button
+                        className='modernEditJobButton'
+                        onClick={goToList}
+                        style={actionButtonStyle}
+                    >
+                        Go To List
+                    </button>
+                ) : null}
+            </div>
             
         {showDeletePopup ? <ModernDeletePopupV2 func={'company'} companyOrListName={text} closePopup={toggleDeletePopup} /> : null}
         {showEditApplicationPopup ? <ModernEditApplicationPopup job={job} listNames={listNames} closePopup={toggleEditPopup}/> : null}
