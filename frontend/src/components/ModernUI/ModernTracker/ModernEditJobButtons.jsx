@@ -7,7 +7,7 @@ import ModernDeletePopupV2 from './ModernDeletePopupv2';
 import ModernEditApplicationPopup from './ModernEditApplicationPopup';
 
 
-const ModernEditJobButtons = ({text, job, listNames, goToListButton, onRejectedToggled}) => {
+const ModernEditJobButtons = ({text, job, listNames, goToListButton, onRejectedToggled, onApplicationUpdated, onApplicationDeleted}) => {
 
     const [showDeletePopup, setShowDeletePopup] = useState(false);
     const [showEditApplicationPopup, setShowEditApplicationPopup] = useState(false);
@@ -101,8 +101,22 @@ const ModernEditJobButtons = ({text, job, listNames, goToListButton, onRejectedT
                 ) : null}
             </div>
             
-        {showDeletePopup ? <ModernDeletePopupV2 func={'company'} companyOrListName={text} closePopup={toggleDeletePopup} /> : null}
-        {showEditApplicationPopup ? <ModernEditApplicationPopup job={job} listNames={listNames} closePopup={toggleEditPopup}/> : null}
+        {showDeletePopup ? (
+            <ModernDeletePopupV2
+                func={'company'}
+                companyOrListName={text}
+                closePopup={toggleDeletePopup}
+                onApplicationDeleted={onApplicationDeleted}
+            />
+        ) : null}
+        {showEditApplicationPopup ? (
+            <ModernEditApplicationPopup
+                job={job}
+                listNames={listNames}
+                closePopup={toggleEditPopup}
+                onApplicationUpdated={onApplicationUpdated}
+            />
+        ) : null}
         </div>
 
         

@@ -434,7 +434,7 @@ const parseLinkedInJobPayload = (payload) => {
     return parseLinkedInJobMarkdown(payload);
 };
 
-const ModernNewApplicationPopup = ({text, closePopup, listNames }) => {
+const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCreated }) => {
 
     const location = useLocation();
     const [viewMode, setViewMode] = useState('form');
@@ -615,13 +615,19 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames }) => {
                 body: JSON.stringify(params)
             });
 
-            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(`Create failed (${res.status})`);
+            }
+
+            const data = await res.json().catch(() => ({}));
             console.log("SUCCESS:", data);
             setSaveStatus('Success!');
             setTimeout(() => {
+                if (typeof onApplicationCreated === 'function') {
+                    onApplicationCreated(params);
+                }
                 closePopup();
-                window.location.reload();
-            }, 1500);
+            }, 800);
             return;
         } catch (err) {
             console.error("ERROR:", err);

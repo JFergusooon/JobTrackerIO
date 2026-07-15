@@ -36,6 +36,11 @@ function NavBar() {
   let loginState = ""
   loginState = isLoggedInUser() ? "Logout" : "Login";
 
+  const lastTrackerList = localStorage.getItem('lastTrackerList');
+  const trackerPath = lastTrackerList
+    ? `/tracker?listName=${encodeURIComponent(lastTrackerList)}`
+    : '/tracker';
+
   return (
     <>
       <nav className="navBarContainer">
@@ -59,8 +64,8 @@ function NavBar() {
         <div className='loggedInNavBarButton' onClick={() => navigate('/home')}>
           <Link to="/home">Home</Link>
         </div>
-        <div className='loggedInNavBarButton' onClick={() => navigate('/tracker')}>
-          <Link to="/tracker">Tracker</Link>
+        <div className='loggedInNavBarButton' onClick={() => navigate(trackerPath)}>
+          <Link to={trackerPath}>Tracker</Link>
         </div>
         <div className='loggedInNavBarButton' onClick={() => navigate('/settings')}>
           <Link to="/settings">Settings</Link>

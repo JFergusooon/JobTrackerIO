@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const ModernEditApplicationPopup = ({job, listNames, closePopup}) => {
+const ModernEditApplicationPopup = ({job, listNames, closePopup, onApplicationUpdated}) => {
 
     const companyName = job.companyName;
     const [position, setPosition] = useState(job.position);
@@ -96,10 +96,13 @@ const ModernEditApplicationPopup = ({job, listNames, closePopup}) => {
             const data = await res.json().catch(() => ({}));
             console.log("SUCCESS:", data);
             setSaveStatus('Success!');
+            const updatedJob = { ...job, ...params };
             setTimeout(() => {
+                if (typeof onApplicationUpdated === 'function') {
+                    onApplicationUpdated(updatedJob);
+                }
                 closePopup();
-                window.location.reload();
-            }, 1500);
+            }, 800);
             return;
         } catch (err) {
             console.error("ERROR:", err);

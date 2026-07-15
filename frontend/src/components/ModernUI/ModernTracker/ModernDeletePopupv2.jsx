@@ -1,27 +1,38 @@
 import { useState } from 'react';
 
-const ModernDeletePopupv2 = ({ func, companyOrListName, closePopup }) => {
+const ModernDeletePopupv2 = ({ func, companyOrListName, closePopup, onApplicationDeleted }) => {
 
     const [enteredPassword, setEnteredPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const storedPassword = localStorage.getItem('password') || '';
 
     const isCorrect = enteredPassword === storedPassword;
     const hasTyped = enteredPassword.length > 0;
 
     async function deleteCompany() {
+        if (isDeleting) return;
+        setIsDeleting(true);
+
         const stage = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev";
         const url = stage + "/Jobs/deleteJob"
             + "?username=" + localStorage.getItem('username')
-            + "&companyName=" + companyOrListName;
+            + "&companyName=" + encodeURIComponent(companyOrListName);
         try {
             const res = await fetch(url, { method: "DELETE" });
-            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(`Delete failed (${res.status})`);
+            }
+            const data = await res.json().catch(() => ({}));
             console.log("SUCCESS:", data);
+            if (typeof onApplicationDeleted === 'function') {
+                onApplicationDeleted(companyOrListName);
+            }
+            closePopup();
         } catch (err) {
             console.error("ERROR:", err);
+            setIsDeleting(false);
         }
-        window.location.reload();
     }
 
     async function removeListFromUser() {
@@ -209,20 +220,22 @@ const ModernDeletePopupv2 = ({ func, companyOrListName, closePopup }) => {
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px" }}>
                         <button
                             onClick={handleDelete}
-                            disabled={!isCorrect}
+                            disabled={!isCorrect || isDeleting}
                             style={{
                                 padding: "10px 22px",
                                 borderRadius: "8px",
                                 border: "none",
-                                backgroundColor: isCorrect ? "#8b1f1f" : "#4a2020",
-                                color: isCorrect ? "#ffffff" : "#7a4a4a",
+                                backgroundColor: isCorrect && !isDeleting ? "#8b1f1f" : "#4a2020",
+                                color: isCorrect && !isDeleting ? "#ffffff" : "#7a4a4a",
                                 fontSize: "14px",
                                 fontWeight: "600",
-                                cursor: isCorrect ? "pointer" : "not-allowed",
+                                cursor: isCorrect && !isDeleting ? "pointer" : "not-allowed",
                                 transition: "background-color 0.2s",
                             }}
                         >
-                            Delete {func === "company" ? "Application" : "List"}
+                            {isDeleting
+                                ? 'Deleting...'
+                                : `Delete ${func === "company" ? "Application" : "List"}`}
                         </button>
                         {!isCorrect && (
                             <p style={{ margin: 0, fontSize: "11px", color: "#666", textAlign: "right" }}>

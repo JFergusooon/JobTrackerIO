@@ -154,6 +154,84 @@ function ModernUITracker() {
         );
     };
 
+    const handleApplicationCreated = (job) => {
+        if (!job?.companyName) return;
+
+        setAllJobs((prevJobs) =>
+            Array.isArray(prevJobs) ? [...prevJobs, job] : [job]
+        );
+
+        if (job.list === listName) {
+            setCurJobsByListName((prevJobs) =>
+                Array.isArray(prevJobs) ? [...prevJobs, job] : [job]
+            );
+        }
+
+        setActionStatusMessage(`Added ${job.companyName}`);
+    };
+
+    const handleApplicationUpdated = (updatedJob) => {
+        if (!updatedJob?.companyName) return;
+
+        const patchJobs = (jobs) =>
+            Array.isArray(jobs)
+                ? jobs.map((job) =>
+                      job.companyName === updatedJob.companyName ? { ...job, ...updatedJob } : job
+                  )
+                : jobs;
+
+        setAllJobs(patchJobs);
+        setSearchResults(patchJobs);
+
+        setCurJobsByListName((prevJobs) => {
+            if (!Array.isArray(prevJobs)) return prevJobs;
+            if (updatedJob.list !== listName) {
+                return prevJobs.filter((job) => job.companyName !== updatedJob.companyName);
+            }
+            const exists = prevJobs.some((job) => job.companyName === updatedJob.companyName);
+            if (exists) {
+                return prevJobs.map((job) =>
+                    job.companyName === updatedJob.companyName ? { ...job, ...updatedJob } : job
+                );
+            }
+            return [...prevJobs, updatedJob];
+        });
+
+        setSelectedJob((prevJob) =>
+            prevJob && prevJob.companyName === updatedJob.companyName
+                ? { ...prevJob, ...updatedJob }
+                : prevJob
+        );
+
+        setCompanyItem((prevJob) =>
+            prevJob && prevJob.companyName === updatedJob.companyName
+                ? { ...prevJob, ...updatedJob }
+                : prevJob
+        );
+
+        setActionStatusMessage(`Updated ${updatedJob.companyName}`);
+    };
+
+    const handleApplicationDeleted = (companyName) => {
+        if (!companyName) return;
+
+        const removeJob = (jobs) =>
+            Array.isArray(jobs) ? jobs.filter((job) => job.companyName !== companyName) : jobs;
+
+        setAllJobs(removeJob);
+        setCurJobsByListName(removeJob);
+        setSearchResults(removeJob);
+
+        if (selectedJob?.companyName === companyName || selectedCompanyName === companyName) {
+            setSelectedJob(null);
+            setSelectedCompanyName("");
+            setCompanyItem(null);
+            setShowEditJobButtons(false);
+        }
+
+        setActionStatusMessage(`Deleted ${companyName}`);
+    };
+
     const handleFavoriteToggled = async (companyName, currentFavoriteValue) => {
         const nextFavorited = !currentFavoriteValue;
         const username = localStorage.getItem('username') || 'JFergusooon';
@@ -378,13 +456,23 @@ function ModernUITracker() {
                         )
                 }, [])
 
-    // Auto-navigate to random list when tracker is opened without a listName
+    // Remember last opened list, and restore it when tracker is opened without a listName
     useEffect(() => {
-        if (curUserListNames.length > 0 && !listName) {
-            const randomIndex = Math.floor(Math.random() * curUserListNames.length);
-            const randomList = curUserListNames[randomIndex];
-            navigate(`?listName=${encodeURIComponent(randomList)}`);
+        if (listName && curUserListNames.includes(listName)) {
+            localStorage.setItem('lastTrackerList', listName);
         }
+    }, [listName, curUserListNames]);
+
+    useEffect(() => {
+        if (curUserListNames.length === 0 || listName) return;
+
+        const lastList = localStorage.getItem('lastTrackerList');
+        const targetList =
+            lastList && curUserListNames.includes(lastList)
+                ? lastList
+                : curUserListNames[curUserListNames.length - 1];
+
+        navigate(`?listName=${encodeURIComponent(targetList)}`, { replace: true });
     }, [curUserListNames, listName, navigate]);
 
     const toggleNewListPopup = () => {
@@ -547,7 +635,15 @@ function ModernUITracker() {
 
                     {/* Edit and Delete Job Buttons (conditionally rendered) */}
                     {showEditJobButtons ? 
-                        <ModernEditJobButtons text={selectedCompanyName} job={companyItem} listNames={curUserListNames} goToListButton={selectedFromSearch} onRejectedToggled={handleRejectedToggled}/> : 
+                        <ModernEditJobButtons
+                            text={selectedCompanyName}
+                            job={companyItem}
+                            listNames={curUserListNames}
+                            goToListButton={selectedFromSearch}
+                            onRejectedToggled={handleRejectedToggled}
+                            onApplicationUpdated={handleApplicationUpdated}
+                            onApplicationDeleted={handleApplicationDeleted}
+                        /> : 
                         <div className='modernEditJobButtonsContainer'></div>
                     }                
 
@@ -688,7 +784,14 @@ function ModernUITracker() {
                 </div>
 
                 {showNewListPopup ? <ModernNewListPopup text='NewList' closePopup={toggleNewListPopup} /> : null }
-                {showNewApplicationPopup ? <ModernNewApplicationPopup text='NewApplication' closePopup={toggleNewApplicationPopup} listNames={curUserListNames}/> : null }
+                {showNewApplicationPopup ? (
+                    <ModernNewApplicationPopup
+                        text='NewApplication'
+                        closePopup={toggleNewApplicationPopup}
+                        listNames={curUserListNames}
+                        onApplicationCreated={handleApplicationCreated}
+                    />
+                ) : null }
             </div>
         </div>
     </>);
