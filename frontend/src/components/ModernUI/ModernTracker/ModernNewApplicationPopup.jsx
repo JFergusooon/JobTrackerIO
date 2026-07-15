@@ -138,9 +138,11 @@ const extractHiringTitleFromPayload = (payload) => {
 
     candidates.push(
         payload.match(/^Title:\s*(.+)$/m)?.[1],
-        payload.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1],
+        payload.match(/<title[^>]*>\s*([\s\S]*?)\s*<\/title>/i)?.[1],
         payload.match(/property=["']og:title["'][^>]*content=["']([^"']+)["']/i)?.[1],
         payload.match(/content=["']([^"']+)["'][^>]*property=["']og:title["']/i)?.[1],
+        // Escaped title tags inside truncated JSON proxy wrappers
+        payload.match(/&lt;title[^&]*&gt;\s*([\s\S]*?)\s*&lt;\/title&gt;/i)?.[1],
     );
 
     for (const candidate of candidates) {
@@ -483,6 +485,7 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames }) => {
         }
         if (/remove photo|not you\?/i.test(payload)) score -= 50;
         if (/council\s+bluffs/i.test(parsed.location || '')) score -= 20;
+        if (/AbuseAlleviationError|Anonymous access to domain/i.test(payload)) score = -1;
         return score;
     };
 
@@ -497,56 +500,86 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames }) => {
         }
     };
 
+    const readProxyPayload = async (res) => {
+        const raw = await res.text();
+        if (!raw || /AbuseAlleviationError|Anonymous access to domain .* blocked/i.test(raw)) {
+            throw new Error('Upstream reader blocked LinkedIn');
+        }
+
+        const trimmed = raw.trim();
+        // Prefer structured allorigins JSON when it parses; otherwise keep raw (often
+        // truncated JSON that still contains <title>…hiring…</title> near the start).
+        if (trimmed.startsWith('{')) {
+            try {
+                const data = JSON.parse(trimmed);
+                const contents = data?.contents || data?.data?.content || '';
+                if (contents && contents.length > 50) return contents;
+                // jina JSON title-only responses
+                if (data?.data?.title || data?.title) return trimmed;
+            } catch {
+                return raw;
+            }
+        }
+        return raw;
+    };
+
     const fetchLinkedInJobPayload = async (jobId) => {
         const guestUrl = `https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/${jobId}`;
         // Strip tracking query params — cleaner public job URL parses more reliably
         const publicUrl = `https://www.linkedin.com/jobs/view/${jobId}/`;
 
-        // Race free sources — jina JSON title is most reliable but often needs 15–30s
+        // Race free sources. Prefer raw HTML over JSON wrappers (large LinkedIn pages
+        // routinely break allorigins /get JSON). Jina is good when not rate-limited.
         const attempts = [
+            async () => {
+                const res = await fetchWithTimeout(
+                    `https://api.allorigins.win/raw?url=${encodeURIComponent(guestUrl)}`,
+                    {},
+                    25000
+                );
+                if (!res.ok) throw new Error(`allorigins-raw-guest ${res.status}`);
+                return readProxyPayload(res);
+            },
+            async () => {
+                const res = await fetchWithTimeout(
+                    `https://api.allorigins.win/raw?url=${encodeURIComponent(publicUrl)}`,
+                    {},
+                    25000
+                );
+                if (!res.ok) throw new Error(`allorigins-raw-view ${res.status}`);
+                return readProxyPayload(res);
+            },
             async () => {
                 const res = await fetchWithTimeout(`https://r.jina.ai/${publicUrl}`, {
                     headers: { Accept: 'application/json' },
                 }, 40000);
                 if (!res.ok) throw new Error(`jina-json ${res.status}`);
-                return res.text();
+                return readProxyPayload(res);
             },
             async () => {
                 const res = await fetchWithTimeout(`https://r.jina.ai/${publicUrl}`, {
                     headers: { Accept: 'text/plain' },
                 }, 40000);
                 if (!res.ok) throw new Error(`jina-md ${res.status}`);
-                return res.text();
-            },
-            async () => {
-                const res = await fetchWithTimeout(
-                    `https://api.allorigins.win/get?url=${encodeURIComponent(publicUrl)}`,
-                    {},
-                    15000
-                );
-                if (!res.ok) throw new Error(`allorigins ${res.status}`);
-                const raw = await res.text();
-                try {
-                    const data = JSON.parse(raw);
-                    return data?.contents || '';
-                } catch {
-                    return raw;
-                }
+                return readProxyPayload(res);
             },
             async () => {
                 const res = await fetchWithTimeout(
                     `https://api.allorigins.win/get?url=${encodeURIComponent(guestUrl)}`,
                     {},
-                    15000
+                    20000
                 );
-                if (!res.ok) throw new Error(`allorigins-guest ${res.status}`);
-                const raw = await res.text();
-                try {
-                    const data = JSON.parse(raw);
-                    return data?.contents || '';
-                } catch {
-                    return raw;
-                }
+                if (!res.ok) throw new Error(`allorigins-get-guest ${res.status}`);
+                return readProxyPayload(res);
+            },
+            async () => {
+                const res = await fetchWithTimeout(
+                    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(guestUrl)}`,
+                    {},
+                    20000
+                );
+                if (!res.ok) throw new Error(`codetabs ${res.status}`);
+                return readProxyPayload(res);
             },
         ];
 
@@ -556,6 +589,7 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames }) => {
             let bestPayload = '';
             let bestScore = -1;
             let lastError = null;
+            let sawRateLimit = false;
 
             const finish = (payload) => {
                 if (settled) return;
@@ -566,6 +600,10 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames }) => {
             attempts.forEach(async (attempt) => {
                 try {
                     const payload = await attempt();
+                    if (/AbuseAlleviationError|Anonymous access to domain .* blocked/i.test(payload)) {
+                        sawRateLimit = true;
+                        throw new Error('LinkedIn reader rate-limited');
+                    }
                     const parsed = parseLinkedInJobPayload(payload);
                     const score = scoreParsedImport(parsed, payload);
                     if (score > bestScore) {
@@ -579,13 +617,20 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames }) => {
                     }
                 } catch (err) {
                     lastError = err;
+                    if (/rate-limited|blocked|403/i.test(String(err?.message || ''))) {
+                        sawRateLimit = true;
+                    }
                 } finally {
                     pending -= 1;
                     if (!settled && pending === 0) {
                         if (bestPayload && bestScore >= 0) {
                             resolve(bestPayload);
                         } else {
-                            reject(lastError || new Error('Unable to fetch LinkedIn job'));
+                            const err = lastError || new Error('Unable to fetch LinkedIn job');
+                            if (sawRateLimit) {
+                                err.message = 'LinkedIn import is temporarily rate-limited. Please try again in a few minutes.';
+                            }
+                            reject(err);
                         }
                     }
                 }
@@ -626,10 +671,13 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames }) => {
         } catch (err) {
             console.error('LinkedIn import failed:', err);
             const timedOut = err?.name === 'AbortError' || /aborted/i.test(String(err?.message || ''));
+            const rateLimited = /rate-limited|temporarily/i.test(String(err?.message || ''));
             setImportError(
-                timedOut
-                    ? 'Import timed out — LinkedIn is slow right now. Please try again.'
-                    : 'Failed to import listing. Check the URL and try again.'
+                rateLimited
+                    ? err.message
+                    : timedOut
+                      ? 'Import timed out — LinkedIn is slow right now. Please try again.'
+                      : 'Failed to import listing. Check the URL and try again.'
             );
         } finally {
             setIsImporting(false);
