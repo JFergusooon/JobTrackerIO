@@ -73,6 +73,14 @@ const normalizeImportedLocation = (raw) => {
     return value;
 };
 
+const decodeHtmlEntities = (value) =>
+    (value || '')
+        .replace(/&amp;/g, '&')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>');
+
 /**
  * LinkedIn page titles are almost always:
  *   "{Company} hiring {Position} in {Location} | LinkedIn"
@@ -81,11 +89,10 @@ const normalizeImportedLocation = (raw) => {
 const parseLinkedInDocumentTitle = (titleLine) => {
     if (!titleLine) return null;
 
-    let title = titleLine.replace(/\s+/g, ' ').trim();
+    let title = decodeHtmlEntities(titleLine).replace(/\s+/g, ' ').trim();
     title = title.replace(/\s*[|·•]\s*LinkedIn\s*$/i, '').trim();
-    title = title.replace(/\s+jobs?\s+in\s+.+$/i, '').trim();
 
-    // Ignore LinkedIn search/index titles
+    // Ignore LinkedIn search/index titles ("1,000+ ... jobs in ...")
     if (/^\d[\d+,]*\+?\s+.+\s+jobs?\b/i.test(title)) {
         return null;
     }
@@ -111,18 +118,56 @@ const parseLinkedInDocumentTitle = (titleLine) => {
     return null;
 };
 
+const extractHiringTitleFromPayload = (payload) => {
+    if (!payload) return null;
+
+    const candidates = [
+        payload.match(/^Title:\s*(.+)$/m)?.[1],
+        payload.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1],
+        payload.match(/property=["']og:title["'][^>]*content=["']([^"']+)["']/i)?.[1],
+        payload.match(/content=["']([^"']+)["'][^>]*property=["']og:title["']/i)?.[1],
+    ];
+
+    for (const candidate of candidates) {
+        const parsed = parseLinkedInDocumentTitle(candidate || '');
+        if (parsed?.company && parsed?.position) {
+            return parsed;
+        }
+    }
+
+    return null;
+};
+
+const isLinkedInUiJunk = (value) =>
+    /^(remove photo|not you\??|sign in|join now|apply|save|clear text|skip to main content|expand search|agree & join linkedin|report this job|see who you know|show more|show less)$/i.test(
+        (value || '').trim()
+    );
+
 const finalizeParsedJob = ({ position, company, location }) => ({
     position: (position || '').replace(/\s+/g, ' ').trim(),
     company: (company || '').replace(/\s+/g, ' ').trim(),
     location: normalizeImportedLocation(location || ''),
 });
 
+const isUsableImport = (parsed) => {
+    if (!parsed?.company || !parsed?.position) return false;
+    if (isLinkedInUiJunk(parsed.company) || isLinkedInUiJunk(parsed.position)) return false;
+    if (parsed.company.length < 2 || parsed.position.length < 2) return false;
+    return true;
+};
+
 const parseLinkedInJobHtml = (html) => {
+    // Document title / og:title is the most reliable signal on LinkedIn job pages
+    const fromHiringTitle = extractHiringTitleFromPayload(html);
+    if (fromHiringTitle) {
+        return finalizeParsedJob(fromHiringTitle);
+    }
+
     const doc = new DOMParser().parseFromString(html, 'text/html');
     const textOf = (...selectors) => {
         for (const selector of selectors) {
             const value = doc.querySelector(selector)?.textContent?.replace(/\s+/g, ' ').trim();
-            if (value) return value;
+            if (value && !isLinkedInUiJunk(value)) return value;
         }
         return '';
     };
@@ -139,8 +184,12 @@ const parseLinkedInJobHtml = (html) => {
             const jobPosting = candidates.find((item) => item?.['@type'] === 'JobPosting');
             if (!jobPosting) continue;
 
-            position = jobPosting.title || position;
-            company = jobPosting.hiringOrganization?.name || company;
+            if (jobPosting.title && !isLinkedInUiJunk(jobPosting.title)) {
+                position = jobPosting.title;
+            }
+            if (jobPosting.hiringOrganization?.name && !isLinkedInUiJunk(jobPosting.hiringOrganization.name)) {
+                company = jobPosting.hiringOrganization.name;
+            }
 
             const address = jobPosting.jobLocation?.address;
             if (address) {
@@ -154,13 +203,6 @@ const parseLinkedInJobHtml = (html) => {
         } catch {
             // ignore malformed JSON-LD
         }
-    }
-
-    const docTitleParsed = parseLinkedInDocumentTitle(doc.querySelector('title')?.textContent || '');
-    if (docTitleParsed) {
-        position = position || docTitleParsed.position;
-        company = company || docTitleParsed.company;
-        locationValue = locationValue || docTitleParsed.location;
     }
 
     // Only use LinkedIn job-card selectors — never a generic h1 (search pages break that)
@@ -189,7 +231,7 @@ const parseLinkedInJobHtml = (html) => {
         ];
         for (const el of flavors) {
             const value = el.textContent?.replace(/\s+/g, ' ').trim() || '';
-            if (!value || value === company) continue;
+            if (!value || value === company || isLinkedInUiJunk(value)) continue;
             if (/employees|followers|applicants|ago|people/i.test(value)) continue;
             locationValue = value;
             break;
@@ -204,8 +246,11 @@ const parseLinkedInJobHtml = (html) => {
 };
 
 const parseLinkedInJobMarkdown = (text) => {
-    const titleLine = text.match(/^Title:\s*(.+)$/m)?.[1]?.trim() || '';
-    const fromTitle = parseLinkedInDocumentTitle(titleLine);
+    const fromTitle = extractHiringTitleFromPayload(text);
+    // Trust LinkedIn's "Company hiring Position in Location" title completely
+    if (fromTitle) {
+        return finalizeParsedJob(fromTitle);
+    }
 
     const body = text.includes('Markdown Content:')
         ? text.split('Markdown Content:').slice(1).join('Markdown Content:')
@@ -224,14 +269,13 @@ const parseLinkedInJobMarkdown = (text) => {
         )
         .filter(Boolean);
 
-    let position = fromTitle?.position || '';
-    let company = fromTitle?.company || '';
-    let locationValue = fromTitle?.location || '';
+    let position = '';
+    let company = '';
+    let locationValue = '';
 
-    // If title gave us the structured "Company hiring Position in Location" form, trust it.
-    // Only fill missing fields from body lines.
     const skipLine = (line) =>
-        /skip to main|expand search|sign in|join now|linkedin|set alert|get notified|employees|followers|applicants|show more|clear text|any time|job type|experience level|salary|^\d+\+/i.test(
+        isLinkedInUiJunk(line) ||
+        /skip to main|expand search|sign in|join now|linkedin|set alert|get notified|employees|followers|applicants|show more|clear text|any time|job type|experience level|salary|remove photo|not you|agree & join|^\d+\+/i.test(
             line
         );
 
@@ -275,6 +319,12 @@ const parseLinkedInJobPayload = (payload) => {
         return { position: '', company: '', location: '' };
     }
 
+    // Always prefer "{Company} hiring {Position} in {Location}" from Title / <title> / og:title
+    const fromHiringTitle = extractHiringTitleFromPayload(payload);
+    if (fromHiringTitle) {
+        return finalizeParsedJob(fromHiringTitle);
+    }
+
     // Prefer structured HTML / JSON-LD when present
     if (
         payload.includes('<') &&
@@ -284,20 +334,7 @@ const parseLinkedInJobPayload = (payload) => {
             payload.includes('job-details-jobs-unified-top-card'))
     ) {
         const fromHtml = parseLinkedInJobHtml(payload);
-        if (fromHtml.company || fromHtml.position) return fromHtml;
-    }
-
-    // Title: "Company hiring Position in Location" (common from jina reader)
-    const titleLine = payload.match(/^Title:\s*(.+)$/m)?.[1]?.trim() || '';
-    const fromTitle = parseLinkedInDocumentTitle(titleLine);
-    if (fromTitle?.company && fromTitle?.position) {
-        // Still run markdown pass to fill any missing location from body
-        const fromMarkdown = parseLinkedInJobMarkdown(payload);
-        return finalizeParsedJob({
-            position: fromTitle.position,
-            company: fromTitle.company,
-            location: fromTitle.location || fromMarkdown.location,
-        });
+        if (isUsableImport(fromHtml)) return fromHtml;
     }
 
     return parseLinkedInJobMarkdown(payload);
@@ -362,84 +399,106 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames }) => {
         return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${microseconds}`;
     };
 
-    const scoreLinkedInPayload = (payload) => {
-        if (!payload || payload.length < 50) return -1;
-        let score = 0;
-        const titleLine = payload.match(/^Title:\s*(.+)$/m)?.[1] || '';
-        if (/\bhiring\b/i.test(titleLine)) score += 50;
-        if (parseLinkedInDocumentTitle(titleLine)) score += 40;
-        if (payload.includes('JobPosting') || payload.includes('topcard__org-name-link') || payload.includes('top-card-layout__title')) {
-            score += 30;
-        }
-        // Search / expired-redirect pages are useless
-        if (/^\d[\d+,]*\+?\s+.+\s+jobs?\b/i.test(titleLine)) score -= 80;
-        if (/expired_jd_redirect|jobs_registration|public_jobs_nav/i.test(payload) && !/\bhiring\b/i.test(titleLine)) {
-            score -= 40;
-        }
+    const scoreParsedImport = (parsed, payload = '') => {
+        if (!isUsableImport(parsed)) return -1;
+        let score = 40;
+        if (parsed.location) score += 15;
+        if (extractHiringTitleFromPayload(payload)) score += 40;
+        if (/remove photo|not you\?/i.test(payload)) score -= 50;
         return score;
+    };
+
+    const fetchWithTimeout = async (url, options = {}, timeoutMs = 10000) => {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+            const res = await fetch(url, { ...options, signal: controller.signal });
+            return res;
+        } finally {
+            clearTimeout(timer);
+        }
     };
 
     const fetchLinkedInJobPayload = async (jobId, originalUrl) => {
         const guestUrl = `https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/${jobId}`;
-        const viewUrl = `https://www.linkedin.com/jobs/view/${jobId}`;
-        const publicUrl = /linkedin\.com\/jobs\/view/i.test(originalUrl) ? originalUrl.trim() : viewUrl;
+        // Strip tracking query params — cleaner public job URL parses more reliably
+        const publicUrl = `https://www.linkedin.com/jobs/view/${jobId}/`;
 
-        // Free, no API key — try several sources and keep the best parseable payload
+        // Race free sources in parallel — accept only payloads that parse into real job fields
         const attempts = [
             async () => {
-                const res = await fetch(`https://r.jina.ai/${publicUrl}`, {
-                    headers: { Accept: 'text/plain' },
+                const res = await fetchWithTimeout(`https://r.jina.ai/${publicUrl}`, {
+                    headers: { Accept: 'text/plain', 'X-Respond-With': 'markdown' },
                 });
                 if (!res.ok) throw new Error(`jina ${res.status}`);
                 return res.text();
             },
             async () => {
-                const res = await fetch(`https://r.jina.ai/${guestUrl}`, {
-                    headers: { Accept: 'text/plain' },
-                });
-                if (!res.ok) throw new Error(`jina-guest ${res.status}`);
-                return res.text();
-            },
-            async () => {
-                const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(guestUrl)}`);
+                const res = await fetchWithTimeout(
+                    `https://api.allorigins.win/get?url=${encodeURIComponent(guestUrl)}`
+                );
                 if (!res.ok) throw new Error(`allorigins ${res.status}`);
                 const data = await res.json();
                 return data?.contents || '';
             },
             async () => {
-                const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(publicUrl)}`);
+                const res = await fetchWithTimeout(
+                    `https://api.allorigins.win/get?url=${encodeURIComponent(publicUrl)}`
+                );
                 if (!res.ok) throw new Error(`allorigins-view ${res.status}`);
                 const data = await res.json();
                 return data?.contents || '';
             },
+            async () => {
+                const res = await fetchWithTimeout(`https://r.jina.ai/${guestUrl}`, {
+                    headers: { Accept: 'text/plain', 'X-Respond-With': 'markdown' },
+                }, 8000);
+                if (!res.ok) throw new Error(`jina-guest ${res.status}`);
+                return res.text();
+            },
         ];
 
-        let bestPayload = '';
-        let bestScore = -1;
-        let lastError = null;
+        return new Promise((resolve, reject) => {
+            let settled = false;
+            let pending = attempts.length;
+            let bestPayload = '';
+            let bestScore = -1;
+            let lastError = null;
 
-        for (const attempt of attempts) {
-            try {
-                const payload = await attempt();
-                const score = scoreLinkedInPayload(payload);
-                if (score > bestScore) {
-                    bestScore = score;
-                    bestPayload = payload;
+            const finish = (payload) => {
+                if (settled) return;
+                settled = true;
+                resolve(payload);
+            };
+
+            attempts.forEach(async (attempt) => {
+                try {
+                    const payload = await attempt();
+                    const parsed = parseLinkedInJobPayload(payload);
+                    const score = scoreParsedImport(parsed, payload);
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestPayload = payload;
+                    }
+                    // Only stop early when we have a real company + position (not auth UI junk)
+                    if (score >= 40) {
+                        finish(payload);
+                        return;
+                    }
+                } catch (err) {
+                    lastError = err;
+                } finally {
+                    pending -= 1;
+                    if (!settled && pending === 0) {
+                        if (bestPayload && bestScore >= 0) {
+                            resolve(bestPayload);
+                        } else {
+                            reject(lastError || new Error('Unable to fetch LinkedIn job'));
+                        }
+                    }
                 }
-                // Good enough: structured hiring title or HTML job card
-                if (score >= 40) {
-                    return payload;
-                }
-            } catch (err) {
-                lastError = err;
-            }
-        }
-
-        if (bestPayload && bestScore >= 0) {
-            return bestPayload;
-        }
-
-        throw lastError || new Error('Unable to fetch LinkedIn job');
+            });
+        });
     };
 
     const importLinkedInJob = async () => {
@@ -462,7 +521,7 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames }) => {
             const payload = await fetchLinkedInJobPayload(jobId, trimmedUrl);
             const parsed = parseLinkedInJobPayload(payload);
 
-            if (!parsed.company && !parsed.position) {
+            if (!isUsableImport(parsed)) {
                 throw new Error('Could not read job details from LinkedIn.');
             }
 
