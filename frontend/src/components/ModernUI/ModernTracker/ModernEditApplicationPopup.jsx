@@ -60,12 +60,12 @@ const ModernEditApplicationPopup = ({job, listNames, closePopup}) => {
 
         if (position !== job.position) body.position = position;
         if (locationChanged) body.location = location;
-        if (jobLink !== job.jobLink) body.jobLink = jobLink;
-        if (listChanged) {
-            body.list = list;
-            // Moving a job onto another list means re-tracking it now — refresh dateApplied
+        if (jobLink !== job.jobLink) {
+            body.jobLink = jobLink;
+            // New job link means re-applied — refresh dateApplied
             body.dateApplied = buildDateAppliedValue();
         }
+        if (listChanged) body.list = list;
 
         return body;
     };
