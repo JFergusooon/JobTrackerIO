@@ -122,7 +122,6 @@ const extractHiringTitleFromPayload = (payload) => {
     if (!payload) return null;
 
     const candidates = [];
-    let jsonContent = '';
 
     // jina application/json: { data: { title: "Company hiring Role in Location | LinkedIn" } }
     const trimmed = payload.trim();
@@ -130,7 +129,6 @@ const extractHiringTitleFromPayload = (payload) => {
         try {
             const data = JSON.parse(trimmed);
             candidates.push(data?.data?.title, data?.title);
-            jsonContent = data?.data?.content || data?.content || '';
         } catch {
             // not JSON — continue with other extractors
         }
@@ -152,17 +150,31 @@ const extractHiringTitleFromPayload = (payload) => {
         }
     }
 
-    // "Join to apply for the **Software Engineer** role at **Dutch Vet**"
-    const applyText = `${jsonContent}\n${payload}`;
-    const applyMatch = applyText.match(
-        /join to apply for the\s+\*{0,2}(.+?)\*{0,2}\s+role at\s+\*{0,2}(.+?)\*{0,2}/i
-    );
-    if (applyMatch) {
-        return {
-            company: applyMatch[2].replace(/\*+/g, '').trim(),
-            position: applyMatch[1].replace(/\*+/g, '').trim(),
-            location: '',
-        };
+    return null;
+};
+
+/**
+ * Guest job HTML uses: Join to apply for the <strong>Role</strong> role at <strong>Company</strong>
+ * Markdown proxies use: Join to apply for the **Role** role at **Company**
+ * Do not use optional \*{0,2} around .+? — on HTML that captures company as "<".
+ */
+const extractJoinToApply = (payload) => {
+    if (!payload) return null;
+
+    const patterns = [
+        /join to apply for the\s+<strong>([^<]+)<\/strong>\s+role at\s+<strong>([^<]+)<\/strong>/i,
+        /join to apply for the\s+\*\*([^*]+)\*\*\s+role at\s+\*\*([^*]+)\*\*/i,
+        /join to apply for the\s+([^<*\n]+?)\s+role at\s+([^<*\n.|]+)/i,
+    ];
+
+    for (const pattern of patterns) {
+        const match = payload.match(pattern);
+        if (!match?.[1] || !match?.[2]) continue;
+        const position = match[1].replace(/\*+/g, '').replace(/\s+/g, ' ').trim();
+        const company = match[2].replace(/\*+/g, '').replace(/\s+/g, ' ').trim();
+        if (position && company) {
+            return { position, company, location: '' };
+        }
     }
 
     return null;
@@ -183,6 +195,8 @@ const isUsableImport = (parsed) => {
     if (!parsed?.company || !parsed?.position) return false;
     if (isLinkedInUiJunk(parsed.company) || isLinkedInUiJunk(parsed.position)) return false;
     if (parsed.company.length < 2 || parsed.position.length < 2) return false;
+    // Reject HTML leftovers from bad join-to-apply matches
+    if (/[<>]/.test(parsed.company) || /[<>]/.test(parsed.position)) return false;
     return true;
 };
 
@@ -399,7 +413,7 @@ const parseLinkedInJobPayload = (payload) => {
         return finalizeParsedJob(fromHiringTitle);
     }
 
-    // Prefer structured HTML / JSON-LD when present
+    // Prefer structured HTML / JSON-LD when present (includes location from top card)
     if (
         payload.includes('<') &&
         (payload.includes('JobPosting') ||
@@ -409,6 +423,12 @@ const parseLinkedInJobPayload = (payload) => {
     ) {
         const fromHtml = parseLinkedInJobHtml(payload);
         if (isUsableImport(fromHtml)) return fromHtml;
+    }
+
+    const fromJoinToApply = extractJoinToApply(payload);
+    if (fromJoinToApply) {
+        const finalized = finalizeParsedJob(fromJoinToApply);
+        if (isUsableImport(finalized)) return finalized;
     }
 
     return parseLinkedInJobMarkdown(payload);
