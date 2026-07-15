@@ -31,18 +31,21 @@ const ModernEditApplicationPopup = ({job, listNames, closePopup}) => {
         }
     };
 
-    const isLocationValid = validateLocationFormat(location);
+    const locationChanged = location !== job.location;
+    // Only enforce location format when the user edits Location — don't block List-only saves
+    // for older/legacy location values that no longer match the current rules.
+    const isLocationOk = !locationChanged || validateLocationFormat(location);
     const hasChanges =
         (position !== job.position ||
-        location !== job.location ||
+        locationChanged ||
         jobLink !== job.jobLink ||
-        list !== job.list) && isLocationValid;
+        list !== job.list) && isLocationOk;
 
     const buildPatchBody = () => {
         const body = {};
 
         if (position !== job.position) body.position = position;
-        if (location !== job.location) body.location = location;
+        if (locationChanged) body.location = location;
         if (jobLink !== job.jobLink) body.jobLink = jobLink;
         if (list !== job.list) body.list = list;
 
@@ -50,10 +53,12 @@ const ModernEditApplicationPopup = ({job, listNames, closePopup}) => {
     };
 
     async function editApplication() {
+        if (!hasChanges) return;
+
         setIsSaving(true);
         setSaveStatus('Saving...');
         const stage = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev";
-        const url = stage + "/Jobs/update?username=" + localStorage.getItem('username') + "&companyName=" + companyName;
+        const url = `${stage}/Jobs/update?username=${encodeURIComponent(localStorage.getItem('username') || '')}&companyName=${encodeURIComponent(companyName)}`;
 
         const params = buildPatchBody();
 
@@ -66,7 +71,11 @@ const ModernEditApplicationPopup = ({job, listNames, closePopup}) => {
                 body: JSON.stringify(params)
             });
 
-            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(`Update failed (${res.status})`);
+            }
+
+            const data = await res.json().catch(() => ({}));
             console.log("SUCCESS:", data);
             setSaveStatus('Success!');
             setTimeout(() => {
