@@ -44,6 +44,7 @@ const looksLikeLocation = (value) => {
     const v = value.replace(/\s+/g, ' ').trim();
     if (!v || v.length > 120) return false;
     if (/^remote\b/i.test(v)) return true;
+    if (/^united states$/i.test(v)) return true;
     if (/\b(greater|metro(politan)?)\b.+\barea\b/i.test(v)) return true;
     if (/^.+,\s*[A-Za-z]{2}(\s*,|$)/.test(v)) return true;
     if (/,.+\b(United States|USA|Canada|United Kingdom|UK)\b/i.test(v)) return true;
@@ -55,6 +56,7 @@ const normalizeImportedLocation = (raw) => {
     let value = raw.replace(/\s+/g, ' ').trim();
     value = value.replace(/\s*[|·•]\s*LinkedIn\s*$/i, '').trim();
     if (/^remote\b/i.test(value)) return 'Remote';
+    if (/^united states$/i.test(value)) return 'United States';
 
     // "City, ST, United States" -> "City, ST"
     const cityStateCountry = value.match(/^([^,]+),\s*([A-Za-z]{2})\s*,\s*.+$/);
@@ -321,6 +323,7 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames }) => {
         if (!loc || loc.trim() === '') return false;
         const normalized = loc.trim().toLowerCase();
         if (normalized === 'remote') return true;
+        if (normalized === 'united states') return true;
         const locationRegex = /^.+,\s*[a-z]{2}$/i;
         return locationRegex.test(loc);
     };
@@ -330,7 +333,7 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames }) => {
         if (newLoc.trim() === '') {
             setLocationValidationError('Location is required');
         } else if (!validateLocationFormat(newLoc)) {
-            setLocationValidationError('Format: Remote or City, XX (case-insensitive)');
+            setLocationValidationError('Format: Remote, United States, or City, XX (case-insensitive)');
         } else {
             setLocationValidationError('');
         }
@@ -667,7 +670,7 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames }) => {
                                     Location / Remote *
                                 </label>
                                 <input
-                                    placeholder="Enter location or 'Remote'..."
+                                    placeholder="Remote, United States, or City, XX..."
                                     value={newLocation}
                                     onChange={({ target }) => handleLocationChange(target.value)}
                                     style={inputStyle}

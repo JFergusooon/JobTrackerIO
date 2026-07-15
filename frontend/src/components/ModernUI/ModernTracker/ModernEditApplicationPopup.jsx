@@ -15,6 +15,7 @@ const ModernEditApplicationPopup = ({job, listNames, closePopup}) => {
         if (!loc || loc.trim() === '') return false;
         const normalized = loc.trim().toLowerCase();
         if (normalized === 'remote') return true;
+        if (normalized === 'united states') return true;
         const locationRegex = /^.+,\s*[a-z]{2}$/i;
         return locationRegex.test(loc);
     };
@@ -24,7 +25,7 @@ const ModernEditApplicationPopup = ({job, listNames, closePopup}) => {
         if (newLoc.trim() === '') {
             setLocationValidationError('Location is required');
         } else if (!validateLocationFormat(newLoc)) {
-            setLocationValidationError('Format: Remote or City, XX (case-insensitive)');
+            setLocationValidationError('Format: Remote, United States, or City, XX (case-insensitive)');
         } else {
             setLocationValidationError('');
         }
@@ -170,7 +171,7 @@ const ModernEditApplicationPopup = ({job, listNames, closePopup}) => {
                             Location / Remote
                         </label>
                         <input
-                            placeholder="Enter location or 'Remote'..."
+                            placeholder="Remote, United States, or City, XX..."
                             value={location}
                             onChange={(e) => handleLocationChange(e.target.value)}
                             style={{
