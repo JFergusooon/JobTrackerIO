@@ -122,6 +122,7 @@ const extractHiringTitleFromPayload = (payload) => {
     if (!payload) return null;
 
     const candidates = [];
+    let jsonContent = '';
 
     // jina application/json: { data: { title: "Company hiring Role in Location | LinkedIn" } }
     const trimmed = payload.trim();
@@ -129,6 +130,7 @@ const extractHiringTitleFromPayload = (payload) => {
         try {
             const data = JSON.parse(trimmed);
             candidates.push(data?.data?.title, data?.title);
+            jsonContent = data?.data?.content || data?.content || '';
         } catch {
             // not JSON — continue with other extractors
         }
@@ -146,6 +148,19 @@ const extractHiringTitleFromPayload = (payload) => {
         if (parsed?.company && parsed?.position) {
             return parsed;
         }
+    }
+
+    // "Join to apply for the **Software Engineer** role at **Dutch Vet**"
+    const applyText = `${jsonContent}\n${payload}`;
+    const applyMatch = applyText.match(
+        /join to apply for the\s+\*{0,2}(.+?)\*{0,2}\s+role at\s+\*{0,2}(.+?)\*{0,2}/i
+    );
+    if (applyMatch) {
+        return {
+            company: applyMatch[2].replace(/\*+/g, '').trim(),
+            position: applyMatch[1].replace(/\*+/g, '').trim(),
+            location: '',
+        };
     }
 
     return null;
@@ -258,16 +273,48 @@ const parseLinkedInJobHtml = (html) => {
     });
 };
 
+const splitTrailingLocation = (raw) => {
+    if (!raw) return { company: '', location: '' };
+    const value = raw.replace(/\s+/g, ' ').trim();
+
+    // "Dutch Vet United States" / "NetDocuments Lehi, UT"
+    const withUnitedStates = value.match(/^(.*?)\s+(United States)$/i);
+    if (withUnitedStates?.[1]) {
+        return { company: withUnitedStates[1].trim(), location: 'United States' };
+    }
+
+    const withCityState = value.match(/^(.*?)\s+([^,]+,\s*[A-Za-z]{2})$/);
+    if (withCityState?.[1] && looksLikeLocation(withCityState[2])) {
+        return { company: withCityState[1].trim(), location: withCityState[2].trim() };
+    }
+
+    if (looksLikeLocation(value)) {
+        return { company: '', location: value };
+    }
+
+    return { company: value, location: '' };
+};
+
 const parseLinkedInJobMarkdown = (text) => {
     const fromTitle = extractHiringTitleFromPayload(text);
     // Trust LinkedIn's "Company hiring Position in Location" title completely
-    if (fromTitle) {
+    if (fromTitle?.company && fromTitle?.position) {
         return finalizeParsedJob(fromTitle);
     }
 
-    const body = text.includes('Markdown Content:')
+    let body = text.includes('Markdown Content:')
         ? text.split('Markdown Content:').slice(1).join('Markdown Content:')
         : text;
+
+    // jina JSON body may live in data.content
+    if (body.trim().startsWith('{')) {
+        try {
+            const data = JSON.parse(body);
+            body = data?.data?.content || data?.content || body;
+        } catch {
+            // keep original
+        }
+    }
 
     // Keep link labels: [Company](url) -> Company
     const lines = body
@@ -282,21 +329,27 @@ const parseLinkedInJobMarkdown = (text) => {
         )
         .filter(Boolean);
 
-    let position = '';
-    let company = '';
-    let locationValue = '';
+    let position = fromTitle?.position || '';
+    let company = fromTitle?.company || '';
+    let locationValue = fromTitle?.location || '';
 
     const skipLine = (line) =>
         isLinkedInUiJunk(line) ||
-        /skip to main|expand search|sign in|join now|linkedin|set alert|get notified|employees|followers|applicants|show more|clear text|any time|job type|experience level|salary|remove photo|not you|agree & join|^\d+\+/i.test(
+        /skip to main|expand search|sign in|join now|linkedin|set alert|get notified|employees|followers|applicants|show more|clear text|any time|job type|experience level|salary|remove photo|not you|agree & join|jobs$|people$|learning$|^\d+\+/i.test(
             line
         );
 
+    // LinkedIn personalizes the search chrome with the viewer's city (e.g. Council Bluffs) —
+    // never treat that as the job location when it appears as "Role in <viewer city>"
+    const isViewerGeoChrome = (line) =>
+        /^.+\s+in\s+.+$/i.test(line) &&
+        !/hiring/i.test(line) &&
+        /(council\s+bluffs|ashburn|near you)/i.test(line);
+
     for (const line of lines) {
-        if (skipLine(line) || line.length < 2 || line.length > 140) continue;
+        if (skipLine(line) || isViewerGeoChrome(line) || line.length < 2 || line.length > 160) continue;
 
         if (!position && !looksLikeLocation(line)) {
-            // Body often starts with "Position in Location"
             const positionInLoc = line.match(/^(.+?)\s+in\s+(.+)$/i);
             if (positionInLoc && looksLikeLocation(positionInLoc[2])) {
                 position = positionInLoc[1].trim();
@@ -307,8 +360,14 @@ const parseLinkedInJobMarkdown = (text) => {
             continue;
         }
 
-        if (position && !company && line !== position && !looksLikeLocation(line)) {
-            company = line;
+        if (position && !company && line !== position) {
+            const split = splitTrailingLocation(line);
+            if (split.company) {
+                company = split.company;
+                if (split.location && !locationValue) locationValue = split.location;
+            } else if (looksLikeLocation(line)) {
+                locationValue = locationValue || line;
+            }
             continue;
         }
 
@@ -414,10 +473,16 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames }) => {
 
     const scoreParsedImport = (parsed, payload = '') => {
         if (!isUsableImport(parsed)) return -1;
-        let score = 40;
-        if (parsed.location) score += 15;
-        if (extractHiringTitleFromPayload(payload)) score += 40;
+        let score = 20;
+        if (parsed.location) score += 10;
+        const hiringTitle = extractHiringTitleFromPayload(payload);
+        // Only a real "Company hiring Role in Location" (or apply-for) title is trustworthy enough
+        // to stop the parallel race early — weak body scrapes used to win first with wrong fields
+        if (hiringTitle?.company && hiringTitle?.position) {
+            score += 70;
+        }
         if (/remove photo|not you\?/i.test(payload)) score -= 50;
+        if (/council\s+bluffs/i.test(parsed.location || '')) score -= 20;
         return score;
     };
 
@@ -507,8 +572,8 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames }) => {
                         bestScore = score;
                         bestPayload = payload;
                     }
-                    // Only stop early when we have a real company + position (not auth UI junk)
-                    if (score >= 40) {
+                    // Stop early only when we have a hiring-title-quality parse (score ~90+)
+                    if (score >= 80) {
                         finish(payload);
                         return;
                     }
