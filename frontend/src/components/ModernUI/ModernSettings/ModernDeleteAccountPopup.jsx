@@ -30,7 +30,6 @@ const ModernDeleteAccountPopup = ({ closePopup }) => {
 
             setTimeout(() => {
                 localStorage.clear();
-                localStorage.setItem('legacyMode', 'false');
                 window.dispatchEvent(new Event('authChange'));
                 window.location.href = '/';
             }, 1200);
