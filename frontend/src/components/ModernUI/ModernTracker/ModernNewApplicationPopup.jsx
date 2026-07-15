@@ -516,11 +516,22 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames }) => {
         );
         if (!res.ok) {
             const detail = await res.text().catch(() => '');
+            const gateway =
+                res.status === 502 ||
+                res.status === 503 ||
+                /bad gateway|cf-error-details|error code 502/i.test(detail);
+            if (gateway) {
+                throw new Error('PROXY_GATEWAY');
+            }
             throw new Error(`LinkedIn proxy failed (${res.status}) ${detail.slice(0, 120)}`);
         }
         const html = await res.text();
         if (!html || html.length < 80) {
             throw new Error('LinkedIn proxy returned an empty response');
+        }
+        // Cloudflare sometimes returns an HTML error page with a 200 — reject it
+        if (/cf-error-details|error code 502|bad gateway/i.test(html)) {
+            throw new Error('PROXY_GATEWAY');
         }
         return html;
     };
@@ -557,11 +568,15 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames }) => {
             setImportError('');
         } catch (err) {
             console.error('LinkedIn import failed:', err);
-            const timedOut = err?.name === 'AbortError' || /aborted/i.test(String(err?.message || ''));
+            const msg = String(err?.message || '');
+            const timedOut = err?.name === 'AbortError' || /aborted/i.test(msg);
+            const gateway = msg === 'PROXY_GATEWAY' || /bad gateway|502|503/i.test(msg);
             setImportError(
                 timedOut
                     ? 'Import timed out. Please try again.'
-                    : 'Failed to import listing. Check the URL and try again.'
+                    : gateway
+                      ? 'Import service briefly unavailable. Please try again in a moment.'
+                      : 'Failed to import listing. Check the URL and try again.'
             );
         } finally {
             setIsImporting(false);

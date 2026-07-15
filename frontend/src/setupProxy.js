@@ -52,6 +52,6 @@ module.exports = function setupProxy(app) {
             }
         }
 
-        res.status(502).json({ error: 'LinkedIn fetch failed', detail: lastError });
+        res.status(503).json({ error: 'LinkedIn fetch failed', detail: lastError });
     });
 };
