@@ -39,18 +39,81 @@ const extractLinkedInJobId = (rawUrl) => {
     }
 };
 
+const looksLikeLocation = (value) => {
+    if (!value) return false;
+    const v = value.replace(/\s+/g, ' ').trim();
+    if (!v || v.length > 120) return false;
+    if (/^remote\b/i.test(v)) return true;
+    if (/\b(greater|metro(politan)?)\b.+\barea\b/i.test(v)) return true;
+    if (/^.+,\s*[A-Za-z]{2}(\s*,|$)/.test(v)) return true;
+    if (/,.+\b(United States|USA|Canada|United Kingdom|UK)\b/i.test(v)) return true;
+    return false;
+};
+
 const normalizeImportedLocation = (raw) => {
     if (!raw) return '';
-    const value = raw.replace(/\s+/g, ' ').trim();
-    if (/remote/i.test(value)) return 'Remote';
+    let value = raw.replace(/\s+/g, ' ').trim();
+    value = value.replace(/\s*[|·•]\s*LinkedIn\s*$/i, '').trim();
+    if (/^remote\b/i.test(value)) return 'Remote';
+
+    // "City, ST, United States" -> "City, ST"
+    const cityStateCountry = value.match(/^([^,]+),\s*([A-Za-z]{2})\s*,\s*.+$/);
+    if (cityStateCountry) {
+        return `${cityStateCountry[1].trim()}, ${cityStateCountry[2].toUpperCase()}`;
+    }
 
     const cityState = value.match(/^([^,]+),\s*([A-Za-z]{2})(?:\s*,|$)/);
     if (cityState) {
         return `${cityState[1].trim()}, ${cityState[2].toUpperCase()}`;
     }
 
+    // "City, State, United States" keep as-is unless we can simplify
     return value;
 };
+
+/**
+ * LinkedIn page titles are almost always:
+ *   "{Company} hiring {Position} in {Location} | LinkedIn"
+ * Never treat the part before "hiring" as the job title.
+ */
+const parseLinkedInDocumentTitle = (titleLine) => {
+    if (!titleLine) return null;
+
+    let title = titleLine.replace(/\s+/g, ' ').trim();
+    title = title.replace(/\s*[|·•]\s*LinkedIn\s*$/i, '').trim();
+    title = title.replace(/\s+jobs?\s+in\s+.+$/i, '').trim();
+
+    // Ignore LinkedIn search/index titles
+    if (/^\d[\d+,]*\+?\s+.+\s+jobs?\b/i.test(title)) {
+        return null;
+    }
+
+    const hiringIn = title.match(/^(.+?)\s+hiring\s+(.+?)\s+in\s+(.+)$/i);
+    if (hiringIn) {
+        return {
+            company: hiringIn[1].trim(),
+            position: hiringIn[2].trim(),
+            location: hiringIn[3].trim(),
+        };
+    }
+
+    const hiring = title.match(/^(.+?)\s+hiring\s+(.+)$/i);
+    if (hiring) {
+        return {
+            company: hiring[1].trim(),
+            position: hiring[2].trim(),
+            location: '',
+        };
+    }
+
+    return null;
+};
+
+const finalizeParsedJob = ({ position, company, location }) => ({
+    position: (position || '').replace(/\s+/g, ' ').trim(),
+    company: (company || '').replace(/\s+/g, ' ').trim(),
+    location: normalizeImportedLocation(location || ''),
+});
 
 const parseLinkedInJobHtml = (html) => {
     const doc = new DOMParser().parseFromString(html, 'text/html');
@@ -91,12 +154,19 @@ const parseLinkedInJobHtml = (html) => {
         }
     }
 
+    const docTitleParsed = parseLinkedInDocumentTitle(doc.querySelector('title')?.textContent || '');
+    if (docTitleParsed) {
+        position = position || docTitleParsed.position;
+        company = company || docTitleParsed.company;
+        locationValue = locationValue || docTitleParsed.location;
+    }
+
+    // Only use LinkedIn job-card selectors — never a generic h1 (search pages break that)
     if (!position) {
         position = textOf(
             'h1.top-card-layout__title',
             '.top-card-layout__title',
-            'h2.top-card-layout__title',
-            'h1'
+            'h2.top-card-layout__title'
         );
     }
 
@@ -104,13 +174,17 @@ const parseLinkedInJobHtml = (html) => {
         company = textOf(
             'a.topcard__org-name-link',
             '.topcard__org-name-link',
-            '.topcard__flavor--black-link',
-            '.top-card-layout__card .topcard__flavor a'
+            'a.topcard__flavor--black-link',
+            '.topcard__flavor--black-link'
         );
     }
 
     if (!locationValue) {
-        const flavors = [...doc.querySelectorAll('.topcard__flavor--bullet, span.topcard__flavor, .topcard__flavor')];
+        const flavors = [
+            ...doc.querySelectorAll(
+                '.topcard__flavor--bullet, span.topcard__flavor--bullet, .top-card__bullet, .job-details-jobs-unified-top-card__bullet'
+            ),
+        ];
         for (const el of flavors) {
             const value = el.textContent?.replace(/\s+/g, ' ').trim() || '';
             if (!value || value === company) continue;
@@ -120,11 +194,111 @@ const parseLinkedInJobHtml = (html) => {
         }
     }
 
-    return {
-        position: position || '',
-        company: company || '',
-        location: normalizeImportedLocation(locationValue),
-    };
+    return finalizeParsedJob({
+        position,
+        company,
+        location: locationValue,
+    });
+};
+
+const parseLinkedInJobMarkdown = (text) => {
+    const titleLine = text.match(/^Title:\s*(.+)$/m)?.[1]?.trim() || '';
+    const fromTitle = parseLinkedInDocumentTitle(titleLine);
+
+    const body = text.includes('Markdown Content:')
+        ? text.split('Markdown Content:').slice(1).join('Markdown Content:')
+        : text;
+
+    // Keep link labels: [Company](url) -> Company
+    const lines = body
+        .split('\n')
+        .map((line) =>
+            line
+                .replace(/!\[.*?\]\(.*?\)/g, '')
+                .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+                .replace(/^[#>*\-\s]+/, '')
+                .replace(/\s+/g, ' ')
+                .trim()
+        )
+        .filter(Boolean);
+
+    let position = fromTitle?.position || '';
+    let company = fromTitle?.company || '';
+    let locationValue = fromTitle?.location || '';
+
+    // If title gave us the structured "Company hiring Position in Location" form, trust it.
+    // Only fill missing fields from body lines.
+    const skipLine = (line) =>
+        /skip to main|expand search|sign in|join now|linkedin|set alert|get notified|employees|followers|applicants|show more|clear text|any time|job type|experience level|salary|^\d+\+/i.test(
+            line
+        );
+
+    for (const line of lines) {
+        if (skipLine(line) || line.length < 2 || line.length > 140) continue;
+
+        if (!position && !looksLikeLocation(line)) {
+            // Body often starts with "Position in Location"
+            const positionInLoc = line.match(/^(.+?)\s+in\s+(.+)$/i);
+            if (positionInLoc && looksLikeLocation(positionInLoc[2])) {
+                position = positionInLoc[1].trim();
+                locationValue = locationValue || positionInLoc[2].trim();
+            } else {
+                position = line;
+            }
+            continue;
+        }
+
+        if (position && !company && line !== position && !looksLikeLocation(line)) {
+            company = line;
+            continue;
+        }
+
+        if (!locationValue && looksLikeLocation(line)) {
+            locationValue = line;
+            break;
+        }
+
+        if (company && position && locationValue) break;
+    }
+
+    return finalizeParsedJob({
+        position,
+        company,
+        location: locationValue,
+    });
+};
+
+const parseLinkedInJobPayload = (payload) => {
+    if (!payload || payload.length < 20) {
+        return { position: '', company: '', location: '' };
+    }
+
+    // Prefer structured HTML / JSON-LD when present
+    if (
+        payload.includes('<') &&
+        (payload.includes('JobPosting') ||
+            payload.includes('top-card') ||
+            payload.includes('topcard') ||
+            payload.includes('job-details-jobs-unified-top-card'))
+    ) {
+        const fromHtml = parseLinkedInJobHtml(payload);
+        if (fromHtml.company || fromHtml.position) return fromHtml;
+    }
+
+    // Title: "Company hiring Position in Location" (common from jina reader)
+    const titleLine = payload.match(/^Title:\s*(.+)$/m)?.[1]?.trim() || '';
+    const fromTitle = parseLinkedInDocumentTitle(titleLine);
+    if (fromTitle?.company && fromTitle?.position) {
+        // Still run markdown pass to fill any missing location from body
+        const fromMarkdown = parseLinkedInJobMarkdown(payload);
+        return finalizeParsedJob({
+            position: fromTitle.position,
+            company: fromTitle.company,
+            location: fromTitle.location || fromMarkdown.location,
+        });
+    }
+
+    return parseLinkedInJobMarkdown(payload);
 };
 
 const ModernNewApplicationPopup = ({text, closePopup, listNames }) => {
@@ -185,29 +359,81 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames }) => {
         return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${microseconds}`;
     };
 
-    const fetchLinkedInJobHtml = async (jobId) => {
+    const scoreLinkedInPayload = (payload) => {
+        if (!payload || payload.length < 50) return -1;
+        let score = 0;
+        const titleLine = payload.match(/^Title:\s*(.+)$/m)?.[1] || '';
+        if (/\bhiring\b/i.test(titleLine)) score += 50;
+        if (parseLinkedInDocumentTitle(titleLine)) score += 40;
+        if (payload.includes('JobPosting') || payload.includes('topcard__org-name-link') || payload.includes('top-card-layout__title')) {
+            score += 30;
+        }
+        // Search / expired-redirect pages are useless
+        if (/^\d[\d+,]*\+?\s+.+\s+jobs?\b/i.test(titleLine)) score -= 80;
+        if (/expired_jd_redirect|jobs_registration|public_jobs_nav/i.test(payload) && !/\bhiring\b/i.test(titleLine)) {
+            score -= 40;
+        }
+        return score;
+    };
+
+    const fetchLinkedInJobPayload = async (jobId, originalUrl) => {
         const guestUrl = `https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/${jobId}`;
-        const proxyUrls = [
-            `https://corsproxy.io/?${encodeURIComponent(guestUrl)}`,
-            `https://api.allorigins.win/raw?url=${encodeURIComponent(guestUrl)}`,
+        const viewUrl = `https://www.linkedin.com/jobs/view/${jobId}`;
+        const publicUrl = /linkedin\.com\/jobs\/view/i.test(originalUrl) ? originalUrl.trim() : viewUrl;
+
+        // Free, no API key — try several sources and keep the best parseable payload
+        const attempts = [
+            async () => {
+                const res = await fetch(`https://r.jina.ai/${publicUrl}`, {
+                    headers: { Accept: 'text/plain' },
+                });
+                if (!res.ok) throw new Error(`jina ${res.status}`);
+                return res.text();
+            },
+            async () => {
+                const res = await fetch(`https://r.jina.ai/${guestUrl}`, {
+                    headers: { Accept: 'text/plain' },
+                });
+                if (!res.ok) throw new Error(`jina-guest ${res.status}`);
+                return res.text();
+            },
+            async () => {
+                const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(guestUrl)}`);
+                if (!res.ok) throw new Error(`allorigins ${res.status}`);
+                const data = await res.json();
+                return data?.contents || '';
+            },
+            async () => {
+                const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(publicUrl)}`);
+                if (!res.ok) throw new Error(`allorigins-view ${res.status}`);
+                const data = await res.json();
+                return data?.contents || '';
+            },
         ];
 
+        let bestPayload = '';
+        let bestScore = -1;
         let lastError = null;
-        for (const proxyUrl of proxyUrls) {
+
+        for (const attempt of attempts) {
             try {
-                const res = await fetch(proxyUrl);
-                if (!res.ok) {
-                    lastError = new Error(`Proxy request failed (${res.status})`);
-                    continue;
+                const payload = await attempt();
+                const score = scoreLinkedInPayload(payload);
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestPayload = payload;
                 }
-                const html = await res.text();
-                if (html && html.length > 50) {
-                    return html;
+                // Good enough: structured hiring title or HTML job card
+                if (score >= 40) {
+                    return payload;
                 }
-                lastError = new Error('Empty response from LinkedIn');
             } catch (err) {
                 lastError = err;
             }
+        }
+
+        if (bestPayload && bestScore >= 0) {
+            return bestPayload;
         }
 
         throw lastError || new Error('Unable to fetch LinkedIn job');
@@ -230,8 +456,8 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames }) => {
 
         setIsImporting(true);
         try {
-            const html = await fetchLinkedInJobHtml(jobId);
-            const parsed = parseLinkedInJobHtml(html);
+            const payload = await fetchLinkedInJobPayload(jobId, trimmedUrl);
+            const parsed = parseLinkedInJobPayload(payload);
 
             if (!parsed.company && !parsed.position) {
                 throw new Error('Could not read job details from LinkedIn.');
