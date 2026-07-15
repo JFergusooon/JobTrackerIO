@@ -97,7 +97,7 @@ const ModernStatsInfo = ({allJobs}) => {
 
     return (
         <div className='modernStatsInfoContainer'>
-            <p style={{fontSize: '20px', marginTop: '5px', marginBottom: '15px', textAlign: 'center'}}> Stats </p>
+            <p style={{fontSize: '20px', fontWeight: '600', color: 'black', marginTop: '5px', marginBottom: '15px', textAlign: 'center'}}> Stats </p>
             <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', padding: '0 14px 8px 14px', height: 'calc(100% - 44px)', alignContent: 'start'}}>
                 <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingLeft: '10px'}}>
                     <p style={{margin: '0', fontSize: '13px', color: '#666'}}>Total Applied This Month</p>
