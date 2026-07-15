@@ -121,12 +121,25 @@ const parseLinkedInDocumentTitle = (titleLine) => {
 const extractHiringTitleFromPayload = (payload) => {
     if (!payload) return null;
 
-    const candidates = [
+    const candidates = [];
+
+    // jina application/json: { data: { title: "Company hiring Role in Location | LinkedIn" } }
+    const trimmed = payload.trim();
+    if (trimmed.startsWith('{')) {
+        try {
+            const data = JSON.parse(trimmed);
+            candidates.push(data?.data?.title, data?.title);
+        } catch {
+            // not JSON — continue with other extractors
+        }
+    }
+
+    candidates.push(
         payload.match(/^Title:\s*(.+)$/m)?.[1],
         payload.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1],
         payload.match(/property=["']og:title["'][^>]*content=["']([^"']+)["']/i)?.[1],
         payload.match(/content=["']([^"']+)["'][^>]*property=["']og:title["']/i)?.[1],
-    ];
+    );
 
     for (const candidate of candidates) {
         const parsed = parseLinkedInDocumentTitle(candidate || '');
@@ -408,7 +421,7 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames }) => {
         return score;
     };
 
-    const fetchWithTimeout = async (url, options = {}, timeoutMs = 10000) => {
+    const fetchWithTimeout = async (url, options = {}, timeoutMs = 35000) => {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), timeoutMs);
         try {
@@ -419,42 +432,56 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames }) => {
         }
     };
 
-    const fetchLinkedInJobPayload = async (jobId, originalUrl) => {
+    const fetchLinkedInJobPayload = async (jobId) => {
         const guestUrl = `https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/${jobId}`;
         // Strip tracking query params — cleaner public job URL parses more reliably
         const publicUrl = `https://www.linkedin.com/jobs/view/${jobId}/`;
 
-        // Race free sources in parallel — accept only payloads that parse into real job fields
+        // Race free sources — jina JSON title is most reliable but often needs 15–30s
         const attempts = [
             async () => {
                 const res = await fetchWithTimeout(`https://r.jina.ai/${publicUrl}`, {
-                    headers: { Accept: 'text/plain', 'X-Respond-With': 'markdown' },
-                });
-                if (!res.ok) throw new Error(`jina ${res.status}`);
+                    headers: { Accept: 'application/json' },
+                }, 40000);
+                if (!res.ok) throw new Error(`jina-json ${res.status}`);
+                return res.text();
+            },
+            async () => {
+                const res = await fetchWithTimeout(`https://r.jina.ai/${publicUrl}`, {
+                    headers: { Accept: 'text/plain' },
+                }, 40000);
+                if (!res.ok) throw new Error(`jina-md ${res.status}`);
                 return res.text();
             },
             async () => {
                 const res = await fetchWithTimeout(
-                    `https://api.allorigins.win/get?url=${encodeURIComponent(guestUrl)}`
+                    `https://api.allorigins.win/get?url=${encodeURIComponent(publicUrl)}`,
+                    {},
+                    15000
                 );
                 if (!res.ok) throw new Error(`allorigins ${res.status}`);
-                const data = await res.json();
-                return data?.contents || '';
+                const raw = await res.text();
+                try {
+                    const data = JSON.parse(raw);
+                    return data?.contents || '';
+                } catch {
+                    return raw;
+                }
             },
             async () => {
                 const res = await fetchWithTimeout(
-                    `https://api.allorigins.win/get?url=${encodeURIComponent(publicUrl)}`
+                    `https://api.allorigins.win/get?url=${encodeURIComponent(guestUrl)}`,
+                    {},
+                    15000
                 );
-                if (!res.ok) throw new Error(`allorigins-view ${res.status}`);
-                const data = await res.json();
-                return data?.contents || '';
-            },
-            async () => {
-                const res = await fetchWithTimeout(`https://r.jina.ai/${guestUrl}`, {
-                    headers: { Accept: 'text/plain', 'X-Respond-With': 'markdown' },
-                }, 8000);
-                if (!res.ok) throw new Error(`jina-guest ${res.status}`);
-                return res.text();
+                if (!res.ok) throw new Error(`allorigins-guest ${res.status}`);
+                const raw = await res.text();
+                try {
+                    const data = JSON.parse(raw);
+                    return data?.contents || '';
+                } catch {
+                    return raw;
+                }
             },
         ];
 
@@ -518,7 +545,7 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames }) => {
 
         setIsImporting(true);
         try {
-            const payload = await fetchLinkedInJobPayload(jobId, trimmedUrl);
+            const payload = await fetchLinkedInJobPayload(jobId);
             const parsed = parseLinkedInJobPayload(payload);
 
             if (!isUsableImport(parsed)) {
@@ -533,7 +560,12 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames }) => {
             setImportError('');
         } catch (err) {
             console.error('LinkedIn import failed:', err);
-            setImportError('Failed to import listing. Check the URL and try again.');
+            const timedOut = err?.name === 'AbortError' || /aborted/i.test(String(err?.message || ''));
+            setImportError(
+                timedOut
+                    ? 'Import timed out — LinkedIn is slow right now. Please try again.'
+                    : 'Failed to import listing. Check the URL and try again.'
+            );
         } finally {
             setIsImporting(false);
         }
