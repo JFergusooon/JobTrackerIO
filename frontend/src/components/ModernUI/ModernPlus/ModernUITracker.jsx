@@ -533,16 +533,24 @@ function ModernUITracker() {
                                 type="button"
                                 aria-label="Clear company search"
                                 title="Clear search"
-                                onClick={() => setSearchTerm('')}
-                                disabled={!searchTerm}
+                                onClick={() => {
+                                    setSearchTerm('');
+                                    setSearchResults([]);
+                                    setSelectedJob(null);
+                                    setSelectedCompanyName('');
+                                    setCompanyItem(null);
+                                    setShowEditJobButtons(false);
+                                    setSelectedFromSearch(false);
+                                }}
+                                disabled={!searchTerm && !selectedCompanyName}
                                 style={{
                                     width: '24px',
                                     height: '24px',
                                     padding: 0,
                                     borderRadius: '50%',
                                     border: '1px solid #555',
-                                    cursor: searchTerm ? 'pointer' : 'default',
-                                    opacity: searchTerm ? 1 : 0.45,
+                                    cursor: (searchTerm || selectedCompanyName) ? 'pointer' : 'default',
+                                    opacity: (searchTerm || selectedCompanyName) ? 1 : 0.45,
                                     flexShrink: 0
                                 }}
                             >
