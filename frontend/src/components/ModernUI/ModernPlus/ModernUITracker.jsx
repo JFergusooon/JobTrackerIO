@@ -522,7 +522,33 @@ function ModernUITracker() {
                     {/* Search Box */}
                     <div style={{width: '100%', background: 'rgba(255, 255, 255, 0.4)', borderRadius: '20px', border: '0.1px solid black', display: 'flex', flexDirection: 'column', alignItems: 'center', overflow: 'hidden', boxSizing: 'border-box', padding: '8px', gap: '6px', flexShrink: 0}}>
                         <p style={{margin: '0px', fontSize: '20px', color: 'black', fontWeight: '600', flexShrink: 0}}>Search for Company</p>
-                        <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="" style={{ width: "65%", marginBottom: '0px', flexShrink: 0 }}/>
+                        <div style={{width: '65%', display: 'flex', alignItems: 'center', gap: '5px', flexShrink: 0}}>
+                            <input
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                placeholder=""
+                                style={{width: '100%', minWidth: 0, marginBottom: '0px'}}
+                            />
+                            <button
+                                type="button"
+                                aria-label="Clear company search"
+                                title="Clear search"
+                                onClick={() => setSearchTerm('')}
+                                disabled={!searchTerm}
+                                style={{
+                                    width: '24px',
+                                    height: '24px',
+                                    padding: 0,
+                                    borderRadius: '50%',
+                                    border: '1px solid #555',
+                                    cursor: searchTerm ? 'pointer' : 'default',
+                                    opacity: searchTerm ? 1 : 0.45,
+                                    flexShrink: 0
+                                }}
+                            >
+                                ×
+                            </button>
+                        </div>
                         {/* ALWAYS mounted dropdown — exactly 4 rows (32px each); extra height becomes top/bottom padding */}
                         <div style={{width: '80%', height: '140px', flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', boxSizing: 'border-box'}}>
                         <div className='modernSearchResultsContainer' style={{left: 0, width: "100%", height: '128px', flexShrink: 0, overflowY: "auto", overflowX: 'hidden', background: "white",
