@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from "react-router-dom";
 import '../../../css/Modern_TrackerPageCSS.css'
 import ModernEditJobButtons from '../ModernTracker/ModernEditJobButtons.jsx';
@@ -38,8 +38,6 @@ function ModernUITracker() {
     const listName = new URLSearchParams(location.search).get("listName");
 
     const [searchTerm, setSearchTerm] = useState("");
-    const [searchResults, setSearchResults] = useState([]);
-    const [searchLoading, setSearchLoading] = useState(false);
     const [listLoading, setListLoading] = useState(false);
     const [actionStatusMessage, setActionStatusMessage] = useState("");
 
@@ -70,44 +68,15 @@ function ModernUITracker() {
         fetchAllJobs();
     }, []);
 
-    const fetchSearchResults = useCallback(async () => {
-        setSearchLoading(true);
+    // Filter the already-loaded jobs so results appear instantly on each keystroke
+    const searchResults = useMemo(() => {
+        const term = searchTerm.trim().toLowerCase();
+        if (!term) return [];
 
-        try {
-            const stage = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev";
-            const url = `${stage}/Jobs/getByUsername?username=${localStorage.getItem("username")}`;
-
-            const res = await fetch(url);
-            const data = await res.json();
-
-            if (Array.isArray(data)) {
-                const filtered = data.filter(job =>
-                    job.companyName.toLowerCase().includes(searchTerm.toLowerCase())
-                );
-                setSearchResults(filtered);
-            } else {
-                setSearchResults([]);
-            }
-        } catch (err) {
-            console.error(err);
-            setSearchResults([]);
-        }
-
-        setSearchLoading(false);
-    }, [searchTerm]);
-
-    useEffect(() => {
-        if (!searchTerm) {
-            setSearchResults([]);
-            return;
-        }
-
-        const timeout = setTimeout(() => {
-            fetchSearchResults();
-        }, 300); // debounce
-
-        return () => clearTimeout(timeout);
-    }, [searchTerm, fetchSearchResults]);
+        return (Array.isArray(allJobs) ? allJobs : []).filter((job) =>
+            (job.companyName || '').toLowerCase().includes(term)
+        );
+    }, [allJobs, searchTerm]);
 
     const getDisplayPosition = (position) => {
         if (position === "SE") {
@@ -131,12 +100,6 @@ function ModernUITracker() {
             ) : prevJobs
         );
 
-        setSearchResults((prevResults) =>
-            Array.isArray(prevResults) ? prevResults.map((job) =>
-                job.companyName === companyName ? { ...job, rejected: isRejected } : job
-            ) : prevResults
-        );
-
         setSelectedJob((prevJob) =>
             prevJob && prevJob.companyName === companyName
                 ? { ...prevJob, rejected: isRejected }
@@ -154,6 +117,15 @@ function ModernUITracker() {
         );
     };
 
+    const clearSearchSelection = () => {
+        setSearchTerm('');
+        setSelectedJob(null);
+        setSelectedCompanyName('');
+        setCompanyItem(null);
+        setShowEditJobButtons(false);
+        setSelectedFromSearch(false);
+    };
+
     const handleApplicationCreated = (job) => {
         if (!job?.companyName) return;
 
@@ -167,6 +139,7 @@ function ModernUITracker() {
             );
         }
 
+        clearSearchSelection();
         setActionStatusMessage(`Added ${job.companyName}`);
     };
 
@@ -181,7 +154,6 @@ function ModernUITracker() {
                 : jobs;
 
         setAllJobs(patchJobs);
-        setSearchResults(patchJobs);
 
         setCurJobsByListName((prevJobs) => {
             if (!Array.isArray(prevJobs)) return prevJobs;
@@ -197,18 +169,7 @@ function ModernUITracker() {
             return [...prevJobs, updatedJob];
         });
 
-        setSelectedJob((prevJob) =>
-            prevJob && prevJob.companyName === updatedJob.companyName
-                ? { ...prevJob, ...updatedJob }
-                : prevJob
-        );
-
-        setCompanyItem((prevJob) =>
-            prevJob && prevJob.companyName === updatedJob.companyName
-                ? { ...prevJob, ...updatedJob }
-                : prevJob
-        );
-
+        clearSearchSelection();
         setActionStatusMessage(`Updated ${updatedJob.companyName}`);
     };
 
@@ -220,7 +181,6 @@ function ModernUITracker() {
 
         setAllJobs(removeJob);
         setCurJobsByListName(removeJob);
-        setSearchResults(removeJob);
 
         if (selectedJob?.companyName === companyName || selectedCompanyName === companyName) {
             setSelectedJob(null);
@@ -253,14 +213,6 @@ function ModernUITracker() {
                         ? { ...job, favorite: favoritedValue, favorited: favoritedValue }
                         : job
                 ) : prevJobs
-            );
-
-            setSearchResults((prevResults) =>
-                Array.isArray(prevResults) ? prevResults.map((job) =>
-                    job.companyName === companyName
-                        ? { ...job, favorite: favoritedValue, favorited: favoritedValue }
-                        : job
-                ) : prevResults
             );
 
             setSelectedJob((prevJob) =>
@@ -533,15 +485,7 @@ function ModernUITracker() {
                                 type="button"
                                 aria-label="Clear company search"
                                 title="Clear search"
-                                onClick={() => {
-                                    setSearchTerm('');
-                                    setSearchResults([]);
-                                    setSelectedJob(null);
-                                    setSelectedCompanyName('');
-                                    setCompanyItem(null);
-                                    setShowEditJobButtons(false);
-                                    setSelectedFromSearch(false);
-                                }}
+                                onClick={clearSearchSelection}
                                 disabled={!searchTerm && !selectedCompanyName}
                                 style={{
                                     width: '24px',
@@ -562,15 +506,7 @@ function ModernUITracker() {
                         <div className='modernSearchResultsContainer' style={{left: 0, width: "100%", height: '128px', flexShrink: 0, overflowY: "auto", overflowX: 'hidden', background: "white",
                                     border: "1px solid black", zIndex: 1000, marginBottom: '0px', boxSizing: 'content-box'  }}>
 
-                            {searchLoading && (
-                                <div className='modernSearchLoadingContainer'>
-                                    <div className='modernListLoadingBadge'>
-                                        <span className='modernListLoadingSpinner'></span>
-                                        <span>Loading...</span>
-                                    </div>
-                                </div>
-                            )}
-                            {!searchLoading && searchTerm && searchResults.length === 0 && (
+                            {searchTerm && searchResults.length === 0 && (
                                 <div style={{ padding: "8px", color: "gray" }}> No results </div>
                             )}
                             {searchResults.map((job, index) => {
