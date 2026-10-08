@@ -126,21 +126,37 @@ function ModernUITracker() {
         setSelectedFromSearch(false);
     };
 
-    const handleApplicationCreated = (job) => {
+    const handleApplicationCreated = (job, meta) => {
         if (!job?.companyName) return;
 
-        setAllJobs((prevJobs) =>
-            Array.isArray(prevJobs) ? [...prevJobs, job] : [job]
-        );
-
-        if (job.list === listName) {
-            setCurJobsByListName((prevJobs) =>
-                Array.isArray(prevJobs) ? [...prevJobs, job] : [job]
-            );
+        const removeNames = new Set([job.companyName]);
+        if (meta?.replacedCompanyName) {
+            removeNames.add(meta.replacedCompanyName);
         }
 
+        const companyKey = (existing) => existing?.companyName ?? existing?.company;
+        const alreadyExists = (Array.isArray(allJobs) ? allJobs : []).some(
+            (existing) => removeNames.has(companyKey(existing))
+        );
+
+        const replaceJobs = (prevJobs, includeNew) => {
+            const list = Array.isArray(prevJobs) ? prevJobs : [];
+            const index = list.findIndex((existing) => removeNames.has(companyKey(existing)));
+            const remaining = list.filter((existing) => !removeNames.has(companyKey(existing)));
+            if (!includeNew) return remaining;
+            if (index === -1) return [...remaining, job];
+            const next = [...remaining];
+            next.splice(Math.min(index, next.length), 0, job);
+            return next;
+        };
+
+        setAllJobs((prevJobs) => replaceJobs(prevJobs, true));
+        setCurJobsByListName((prevJobs) => replaceJobs(prevJobs, job.list === listName));
+
         clearSearchSelection();
-        setActionStatusMessage(`Added ${job.companyName}`);
+        setActionStatusMessage(
+            alreadyExists ? `Replaced ${job.companyName}` : `Added ${job.companyName}`
+        );
     };
 
     const handleApplicationUpdated = (updatedJob) => {
@@ -759,6 +775,7 @@ function ModernUITracker() {
                         text='NewApplication'
                         closePopup={toggleNewApplicationPopup}
                         listNames={curUserListNames}
+                        existingJobs={Array.isArray(allJobs) ? allJobs : []}
                         onApplicationCreated={handleApplicationCreated}
                     />
                 ) : null }

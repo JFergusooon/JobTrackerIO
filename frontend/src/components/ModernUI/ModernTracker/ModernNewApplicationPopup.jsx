@@ -434,7 +434,38 @@ const parseLinkedInJobPayload = (payload) => {
     return parseLinkedInJobMarkdown(payload);
 };
 
-const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCreated }) => {
+const API_STAGE = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev";
+
+const readCompanyName = (job) => String(job?.companyName ?? job?.company ?? '');
+
+const findExactCompanyMatches = (jobs, companyName) => {
+    const name = String(companyName ?? '').trim();
+    if (!name || !Array.isArray(jobs)) return [];
+
+    const seen = new Set();
+    const matches = [];
+    for (const job of jobs) {
+        const storedName = readCompanyName(job);
+        const comparable = storedName.trim();
+        if (!comparable || comparable !== name || seen.has(storedName)) continue;
+        seen.add(storedName);
+        matches.push(job);
+    }
+    return matches;
+};
+
+const deleteExistingApplication = async (companyName) => {
+    const url = API_STAGE + "/Jobs/deleteJob"
+        + "?username=" + localStorage.getItem('username')
+        + "&companyName=" + encodeURIComponent(companyName);
+    const res = await fetch(url, { method: "DELETE" });
+    if (!res.ok) {
+        throw new Error(`Delete failed (${res.status})`);
+    }
+    await res.json().catch(() => ({}));
+};
+
+const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCreated, existingJobs = [] }) => {
 
     const location = useLocation();
     const [viewMode, setViewMode] = useState('form');
@@ -479,6 +510,8 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
 
     const isLocationValid = validateLocationFormat(newLocation);
     const isFormValid = newCompanyName && newPosition && newJobLink && isLocationValid && newList;
+    const duplicateApplications = findExactCompanyMatches(existingJobs, newCompanyName);
+    const duplicateApplication = duplicateApplications[0] || null;
 
     const buildDateAppliedValue = () => {
         const now = new Date();
@@ -584,12 +617,29 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
     };
 
     async function addNewApplication() {
+        if (isSaving) return;
+        const matches = findExactCompanyMatches(existingJobs, newCompanyName);
         setIsSaving(true);
-        setSaveStatus('Saving...');
+        setSaveStatus(matches.length > 0 ? 'Removing existing application...' : 'Saving...');
         console.log('Adding new application' + text)
 
-        const stage = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev";
-        const url = stage + "/Jobs/create" 
+        let removedExisting = false;
+        if (matches.length > 0) {
+            try {
+                for (const match of matches) {
+                    await deleteExistingApplication(readCompanyName(match));
+                    removedExisting = true;
+                }
+            } catch (err) {
+                console.error("ERROR:", err);
+                setSaveStatus('Failed to remove the existing application. The new application was not saved.');
+                setIsSaving(false);
+                return;
+            }
+            setSaveStatus('Saving...');
+        }
+
+        const url = API_STAGE + "/Jobs/create"
 
         const params = {
             username: localStorage.getItem('username'),
@@ -624,14 +674,20 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
             setSaveStatus('Success!');
             setTimeout(() => {
                 if (typeof onApplicationCreated === 'function') {
-                    onApplicationCreated(params);
+                    onApplicationCreated(params, {
+                        replacedCompanyName: matches[0] ? readCompanyName(matches[0]) : undefined,
+                    });
                 }
                 closePopup();
             }, 800);
             return;
         } catch (err) {
             console.error("ERROR:", err);
-            setSaveStatus('Failed to save. Please try again.');
+            setSaveStatus(
+                removedExisting
+                    ? 'Failed to save the new application after removing the existing one. Please try again.'
+                    : 'Failed to save. Please try again.'
+            );
             setIsSaving(false);
             return;
         }
@@ -760,6 +816,26 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
                                     onChange={({ target }) => setNewCompanyName(target.value)}
                                     style={inputStyle}
                                 />
+                                {duplicateApplication && (
+                                    <span
+                                        role="status"
+                                        style={{
+                                            fontSize: '12px',
+                                            color: '#ffffff',
+                                            backgroundColor: 'rgba(204, 136, 0, 0.22)',
+                                            border: '1px solid rgba(204, 136, 0, 0.55)',
+                                            padding: '8px 10px',
+                                            borderRadius: '8px',
+                                            marginTop: '8px',
+                                            display: 'block',
+                                            lineHeight: '1.45',
+                                        }}
+                                    >
+                                        An application for "{readCompanyName(duplicateApplication).trim()}"
+                                        {duplicateApplication.list ? ` in "${duplicateApplication.list}"` : ''} already exists.
+                                        Clicking Add Application will delete that application and save only this new one.
+                                    </span>
+                                )}
                             </div>
 
                             <div>
