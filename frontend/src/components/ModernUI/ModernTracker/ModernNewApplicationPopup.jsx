@@ -35,6 +35,20 @@ const linkedInImportErrorMessage = (err) => {
     return 'Failed to import listing. Check the URL and try again.';
 };
 
+const greenhouseImportErrorMessage = (err) => {
+    const msg = String(err?.message || '');
+    if (msg === 'GREENHOUSE_NOT_FOUND') {
+        return 'Could not find that Greenhouse job. Check the URL and try again.';
+    }
+    if (msg === 'GREENHOUSE_UNREADABLE') {
+        return 'Could not read job details from that Greenhouse listing.';
+    }
+    if (err?.name === 'AbortError' || /aborted/i.test(msg)) {
+        return 'Import timed out. Please try again.';
+    }
+    return 'Failed to import listing. Check the URL and try again.';
+};
+
 const secondaryButtonStyle = {
     padding: "10px 22px",
     borderRadius: "8px",
@@ -47,6 +61,27 @@ const secondaryButtonStyle = {
     transition: "background-color 0.2s",
 };
 
+const LINKEDIN_IMPORT_SOURCE = {
+    id: 'linkedin',
+    buttonLabel: 'Import LinkedIn Job Listing',
+    heading: 'Import LinkedIn Job',
+    description: 'Paste a LinkedIn job listing URL to auto-fill the application fields',
+    placeholder: 'https://www.linkedin.com/jobs/view/...',
+};
+
+const GREENHOUSE_IMPORT_SOURCE = {
+    id: 'greenhouse',
+    buttonLabel: 'Import Greenhouse Job Listing',
+    heading: 'Import Greenhouse Job',
+    description: 'Paste a Greenhouse job listing URL to auto-fill the application fields',
+    placeholder: 'https://boards.greenhouse.io/company/jobs/...',
+};
+
+const IMPORT_SOURCES = [LINKEDIN_IMPORT_SOURCE, GREENHOUSE_IMPORT_SOURCE];
+
+const GREENHOUSE_BOARD_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{0,80}$/;
+const GREENHOUSE_JOB_ID_PATTERN = /^\d{3,20}$/;
+
 const extractLinkedInJobId = (rawUrl) => {
     try {
         const url = new URL(rawUrl.trim());
@@ -56,6 +91,40 @@ const extractLinkedInJobId = (rawUrl) => {
         const pathMatch = url.pathname.match(/\/jobs\/view\/(?:[^/?]*?-)?(\d{6,})/i);
         if (pathMatch) return pathMatch[1];
         return url.searchParams.get('currentJobId');
+    } catch {
+        return null;
+    }
+};
+
+const isGreenhouseHost = (hostname) => {
+    const host = String(hostname || '').toLowerCase();
+    return host === 'greenhouse.io' || host.endsWith('.greenhouse.io');
+};
+
+const extractGreenhouseJob = (rawUrl) => {
+    try {
+        const url = new URL(rawUrl.trim());
+        if (!isGreenhouseHost(url.hostname)) return null;
+
+        const region = url.hostname.toLowerCase().includes('.eu.greenhouse.io') ? 'eu' : 'us';
+        let board = '';
+        let jobId = '';
+
+        if (/\/embed\//i.test(url.pathname)) {
+            board = url.searchParams.get('for') || '';
+            jobId = url.searchParams.get('token') || url.searchParams.get('gh_jid') || '';
+        } else {
+            const match = url.pathname.match(/^\/([^/]+)\/jobs\/(\d+)/i);
+            if (!match || match[1].toLowerCase() === 'embed') return null;
+            board = decodeURIComponent(match[1]);
+            jobId = match[2];
+        }
+
+        if (!GREENHOUSE_BOARD_PATTERN.test(board) || !GREENHOUSE_JOB_ID_PATTERN.test(jobId)) {
+            return null;
+        }
+
+        return { board, jobId, region };
     } catch {
         return null;
     }
@@ -456,6 +525,34 @@ const parseLinkedInJobPayload = (payload) => {
     return parseLinkedInJobMarkdown(payload);
 };
 
+const parseGreenhouseJobPayload = (payload) => {
+    let data = payload;
+    if (typeof payload === 'string') {
+        const trimmed = payload.trim();
+        if (!trimmed.startsWith('{')) {
+            return { position: '', company: '', location: '' };
+        }
+        try {
+            data = JSON.parse(trimmed);
+        } catch {
+            return { position: '', company: '', location: '' };
+        }
+    }
+    if (!data || typeof data !== 'object') {
+        return { position: '', company: '', location: '' };
+    }
+
+    const officeLocation = Array.isArray(data.offices)
+        ? data.offices.map((office) => office?.location || office?.name).find(Boolean)
+        : '';
+
+    return {
+        position: String(data.title || '').replace(/\s+/g, ' ').trim(),
+        company: String(data.company_name || data.company || '').replace(/\s+/g, ' ').trim(),
+        location: normalizeImportedLocation(data.location?.name || officeLocation || ''),
+    };
+};
+
 const API_STAGE = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev";
 
 const readCompanyName = (job) => String(job?.companyName ?? job?.company ?? '');
@@ -492,12 +589,17 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
 
     const location = useLocation();
     const [viewMode, setViewMode] = useState('form');
-    const [linkedInUrl, setLinkedInUrl] = useState('');
+    const [importSource, setImportSource] = useState(LINKEDIN_IMPORT_SOURCE.id);
+    const [importMenuOpen, setImportMenuOpen] = useState(false);
+    const [listingUrl, setListingUrl] = useState('');
     const [isImporting, setIsImporting] = useState(false);
     const [importAttempt, setImportAttempt] = useState(0);
     const [importError, setImportError] = useState('');
-    const importRunRef = useRef(0);
-    const importAbortRef = useRef(null);
+    const linkedInImportRunRef = useRef(0);
+    const linkedInImportAbortRef = useRef(null);
+    const greenhouseImportAbortRef = useRef(null);
+    const importMenuRef = useRef(null);
+    const activeImportSource = IMPORT_SOURCES.find((source) => source.id === importSource) || LINKEDIN_IMPORT_SOURCE;
     const [newCompanyName, setNewCompanyName] = useState("");
     const [newJobLink, setNewJobLink] = useState("");
     const [newList, setNewList] = useState("");
@@ -602,18 +704,79 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
         return html;
     };
 
+    const fetchGreenhouseJobPayload = async ({ board, jobId, region }, signal) => {
+        const params = new URLSearchParams({ board, jobId, region });
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 20000);
+        const onExternalAbort = () => controller.abort();
+        if (signal) {
+            if (signal.aborted) controller.abort();
+            else signal.addEventListener('abort', onExternalAbort);
+        }
+        try {
+            const res = await fetch(`/api/greenhouse-job?${params}`, { signal: controller.signal });
+            const raw = await res.text();
+            if (!res.ok) {
+                if (res.status === 404) throw new Error('GREENHOUSE_NOT_FOUND');
+                throw new Error(`Greenhouse proxy failed (${res.status}) ${raw.slice(0, 120)}`);
+            }
+            if (!raw || raw.length < 10) {
+                throw new Error('Greenhouse proxy returned an empty response');
+            }
+            return raw;
+        } finally {
+            clearTimeout(timer);
+            signal?.removeEventListener('abort', onExternalAbort);
+        }
+    };
+
     const stopLinkedInImport = () => {
-        importRunRef.current += 1;
-        importAbortRef.current?.abort();
+        linkedInImportRunRef.current += 1;
+        linkedInImportAbortRef.current?.abort();
+    };
+
+    const stopGreenhouseImport = () => {
+        greenhouseImportAbortRef.current?.abort();
+        greenhouseImportAbortRef.current = null;
     };
 
     useEffect(() => () => {
-        importRunRef.current += 1;
-        importAbortRef.current?.abort();
+        linkedInImportRunRef.current += 1;
+        linkedInImportAbortRef.current?.abort();
+        greenhouseImportAbortRef.current?.abort();
     }, []);
 
+    useEffect(() => {
+        if (!importMenuOpen) return undefined;
+        const onPointerDown = (event) => {
+            if (!importMenuRef.current?.contains(event.target)) {
+                setImportMenuOpen(false);
+            }
+        };
+        const onKeyDown = (event) => {
+            if (event.key === 'Escape') setImportMenuOpen(false);
+        };
+        document.addEventListener('mousedown', onPointerDown);
+        document.addEventListener('keydown', onKeyDown);
+        return () => {
+            document.removeEventListener('mousedown', onPointerDown);
+            document.removeEventListener('keydown', onKeyDown);
+        };
+    }, [importMenuOpen]);
+
+    const chooseImportSource = (sourceId) => {
+        setImportSource(sourceId);
+        setImportMenuOpen(false);
+    };
+
+    const openListingImport = () => {
+        setImportMenuOpen(false);
+        setViewMode('listingImport');
+        setImportError('');
+    };
+
     const importLinkedInJob = async () => {
-        const trimmedUrl = linkedInUrl.trim();
+        const trimmedUrl = listingUrl.trim();
         setImportError('');
 
         if (!trimmedUrl) {
@@ -627,20 +790,20 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
             return;
         }
 
-        importAbortRef.current?.abort();
+        linkedInImportAbortRef.current?.abort();
         const controller = new AbortController();
-        importAbortRef.current = controller;
-        const runId = ++importRunRef.current;
+        linkedInImportAbortRef.current = controller;
+        const runId = ++linkedInImportRunRef.current;
 
         setImportAttempt(1);
         setIsImporting(true);
         try {
             for (let attempt = 1; attempt <= LINKEDIN_IMPORT_MAX_ATTEMPTS; attempt += 1) {
-                if (importRunRef.current !== runId) return;
+                if (linkedInImportRunRef.current !== runId) return;
                 setImportAttempt(attempt);
                 try {
                     const payload = await fetchLinkedInJobPayload(jobId, controller.signal);
-                    if (importRunRef.current !== runId) return;
+                    if (linkedInImportRunRef.current !== runId) return;
                     const parsed = parseLinkedInJobPayload(payload);
 
                     if (!isUsableImport(parsed)) {
@@ -655,7 +818,7 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
                     setImportError('');
                     return;
                 } catch (err) {
-                    if (importRunRef.current !== runId) return;
+                    if (linkedInImportRunRef.current !== runId) return;
                     const lastAttempt = attempt === LINKEDIN_IMPORT_MAX_ATTEMPTS;
                     if (!isRetryableLinkedInImportError(err) || lastAttempt) {
                         console.error('LinkedIn import failed:', err);
@@ -667,9 +830,57 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
                 await wait(LINKEDIN_IMPORT_RETRY_DELAY_MS);
             }
         } finally {
-            if (importRunRef.current === runId) {
+            if (linkedInImportRunRef.current === runId) {
                 setIsImporting(false);
-                importAbortRef.current = null;
+                linkedInImportAbortRef.current = null;
+            }
+        }
+    };
+
+    const importGreenhouseJob = async () => {
+        const trimmedUrl = listingUrl.trim();
+        setImportError('');
+
+        if (!trimmedUrl) {
+            setImportError('Please paste a Greenhouse job URL.');
+            return;
+        }
+
+        const target = extractGreenhouseJob(trimmedUrl);
+        if (!target) {
+            setImportError('That does not look like a valid Greenhouse job URL.');
+            return;
+        }
+
+        stopGreenhouseImport();
+        const controller = new AbortController();
+        greenhouseImportAbortRef.current = controller;
+
+        setIsImporting(true);
+        try {
+            const payload = await fetchGreenhouseJobPayload(target, controller.signal);
+            if (greenhouseImportAbortRef.current !== controller) return;
+            const parsed = parseGreenhouseJobPayload(payload);
+
+            if (!parsed.company || !parsed.position || parsed.company.length < 2 || parsed.position.length < 2) {
+                throw new Error('GREENHOUSE_UNREADABLE');
+            }
+
+            setNewCompanyName(parsed.company);
+            setNewPosition(parsed.position);
+            handleLocationChange(parsed.location || '');
+            setNewJobLink(trimmedUrl);
+            setViewMode('form');
+            setImportError('');
+        } catch (err) {
+            if (greenhouseImportAbortRef.current !== controller) return;
+            if (err?.name === 'AbortError') return;
+            console.error('Greenhouse import failed:', err);
+            setImportError(greenhouseImportErrorMessage(err));
+        } finally {
+            if (greenhouseImportAbortRef.current === controller) {
+                setIsImporting(false);
+                greenhouseImportAbortRef.current = null;
             }
         }
     };
@@ -773,22 +984,22 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
                     fontFamily: "system-ui, -apple-system, sans-serif",
                 }}
             >
-                {viewMode === 'linkedinImport' ? (
+                {viewMode === 'listingImport' ? (
                     <>
                         <h2 style={{ margin: "0 0 12px", fontSize: "26px", fontWeight: "700", color: "#ffffff" }}>
-                            Import LinkedIn Job
+                            {activeImportSource.heading}
                         </h2>
                         <p style={{ margin: "0 0 20px", fontSize: "14px", color: "#a0a0a0" }}>
-                            Paste a LinkedIn job listing URL to auto-fill the application fields
+                            {activeImportSource.description}
                         </p>
                         <hr style={{ border: "none", borderTop: "1px solid #333", margin: "0 0 20px" }} />
 
                         <div style={{ marginBottom: "20px" }}>
                             <textarea
-                                placeholder="https://www.linkedin.com/jobs/view/..."
-                                value={linkedInUrl}
+                                placeholder={activeImportSource.placeholder}
+                                value={listingUrl}
                                 onChange={({ target }) => {
-                                    setLinkedInUrl(target.value);
+                                    setListingUrl(target.value);
                                     if (importError) setImportError('');
                                 }}
                                 rows={4}
@@ -822,7 +1033,8 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
                             <button
                                 type="button"
                                 onClick={() => {
-                                    stopLinkedInImport();
+                                    if (importSource === 'greenhouse') stopGreenhouseImport();
+                                    else stopLinkedInImport();
                                     setIsImporting(false);
                                     setViewMode('form');
                                     setImportError('');
@@ -835,21 +1047,23 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
                             </button>
                             <button
                                 type="button"
-                                onClick={importLinkedInJob}
-                                disabled={isImporting || !linkedInUrl.trim()}
+                                onClick={importSource === 'greenhouse' ? importGreenhouseJob : importLinkedInJob}
+                                disabled={isImporting || !listingUrl.trim()}
                                 style={{
                                     padding: "10px 22px",
                                     borderRadius: "8px",
                                     border: "none",
-                                    backgroundColor: isImporting || !linkedInUrl.trim() ? "#3a5080" : "#4a9eff",
-                                    color: isImporting || !linkedInUrl.trim() ? "#7a9aaa" : "#ffffff",
+                                    backgroundColor: isImporting || !listingUrl.trim() ? "#3a5080" : "#4a9eff",
+                                    color: isImporting || !listingUrl.trim() ? "#7a9aaa" : "#ffffff",
                                     fontSize: "14px",
                                     fontWeight: "600",
-                                    cursor: isImporting || !linkedInUrl.trim() ? "not-allowed" : "pointer",
+                                    cursor: isImporting || !listingUrl.trim() ? "not-allowed" : "pointer",
                                     transition: "background-color 0.2s",
                                 }}
                             >
-                                {isImporting ? `Importing... ${importAttempt}` : 'Import'}
+                                {isImporting
+                                    ? (importSource === 'linkedin' ? `Importing... ${importAttempt}` : 'Importing...')
+                                    : 'Import'}
                             </button>
                         </div>
                     </>
@@ -987,23 +1201,134 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
                             </div>
                         )}
 
-                        <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", alignItems: "flex-start" }}>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setViewMode('linkedinImport');
-                                    setImportError('');
+                        <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", alignItems: "center" }}>
+                            <div
+                                ref={importMenuRef}
+                                style={{
+                                    position: "relative",
+                                    display: "inline-flex",
+                                    alignItems: "stretch",
+                                    flex: "0 0 auto",
+                                    height: "40px",
+                                    boxSizing: "border-box",
+                                    borderRadius: importMenuOpen ? "8px 8px 0 0" : "8px",
+                                    border: "1px solid #444",
+                                    backgroundColor: "#2c2c2e",
+                                    color: "#f0f0f0",
+                                    transition: "background-color 0.2s",
                                 }}
-                                style={secondaryButtonStyle}
-                                onMouseEnter={(e) => e.target.style.backgroundColor = "#3a3a3c"}
-                                onMouseLeave={(e) => e.target.style.backgroundColor = "#2c2c2e"}
+                                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#3a3a3c"; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#2c2c2e"; }}
                             >
-                                Import LinkedIn Job Listing
-                            </button>
-                            <div style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
+                                <button
+                                    type="button"
+                                    onClick={openListingImport}
+                                    style={{
+                                        padding: "0 14px 0 16px",
+                                        border: "none",
+                                        background: "transparent",
+                                        color: "inherit",
+                                        fontSize: "14px",
+                                        fontWeight: "600",
+                                        fontFamily: "inherit",
+                                        lineHeight: "1",
+                                        cursor: "pointer",
+                                        whiteSpace: "nowrap",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        flex: "0 0 auto",
+                                    }}
+                                >
+                                    <span style={{ display: "inline-grid" }}>
+                                        {IMPORT_SOURCES.map((source) => (
+                                            <span
+                                                key={source.id}
+                                                style={{
+                                                    gridArea: "1 / 1",
+                                                    visibility: source.id === importSource ? "visible" : "hidden",
+                                                    whiteSpace: "nowrap",
+                                                }}
+                                            >
+                                                {source.buttonLabel}
+                                            </span>
+                                        ))}
+                                    </span>
+                                </button>
+                                <button
+                                    type="button"
+                                    aria-label="Choose job listing source"
+                                    aria-haspopup="menu"
+                                    aria-expanded={importMenuOpen}
+                                    onClick={() => setImportMenuOpen((open) => !open)}
+                                    style={{
+                                        padding: "0 10px",
+                                        width: "36px",
+                                        flex: "0 0 36px",
+                                        boxSizing: "border-box",
+                                        border: "none",
+                                        borderLeft: "1px solid #555",
+                                        background: "transparent",
+                                        color: "inherit",
+                                        cursor: "pointer",
+                                        display: "flex",
+                                        alignItems: "center",
+                                    }}
+                                >
+                                    <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" style={{ display: "block", transform: importMenuOpen ? "rotate(180deg)" : "none" }}>
+                                        <path d="M2.2 4.3 L6 8 L9.8 4.3" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                </button>
+                                {importMenuOpen && (
+                                    <div
+                                        role="menu"
+                                        aria-label="Job listing sources"
+                                        style={{
+                                            position: "absolute",
+                                            top: "calc(100% + 1px)",
+                                            left: "-1px",
+                                            zIndex: 5,
+                                            width: "calc(100% + 2px)",
+                                            boxSizing: "border-box",
+                                            backgroundColor: "#2c2c2e",
+                                            border: "1px solid #444",
+                                            borderTop: "none",
+                                            borderRadius: "0 0 8px 8px",
+                                            overflow: "hidden",
+                                            display: "flex",
+                                            flexDirection: "column",
+                                        }}
+                                    >
+                                        {IMPORT_SOURCES.filter((source) => source.id !== importSource).map((source) => (
+                                                <button
+                                                    key={source.id}
+                                                    type="button"
+                                                    role="menuitem"
+                                                    onClick={() => chooseImportSource(source.id)}
+                                                    style={{
+                                                        padding: "10px 14px",
+                                                        border: "none",
+                                                        backgroundColor: "transparent",
+                                                        color: "#f0f0f0",
+                                                        fontSize: "14px",
+                                                        fontWeight: "600",
+                                                        fontFamily: "inherit",
+                                                        textAlign: "left",
+                                                        cursor: "pointer",
+                                                        whiteSpace: "nowrap",
+                                                    }}
+                                                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#3a3a3c"; }}
+                                                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
+                                                >
+                                                    {source.buttonLabel}
+                                                </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                            <div style={{ display: "flex", gap: "12px", alignItems: "center", flex: "0 0 auto" }}>
                                 <button
                                     onClick={closePopup}
-                                    style={secondaryButtonStyle}
+                                    style={{ ...secondaryButtonStyle, height: "40px", boxSizing: "border-box" }}
                                     onMouseEnter={(e) => e.target.style.backgroundColor = "#3a3a3c"}
                                     onMouseLeave={(e) => e.target.style.backgroundColor = "#2c2c2e"}
                                 >
@@ -1014,6 +1339,8 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
                                     disabled={!isFormValid || isSaving}
                                     style={{
                                         padding: "10px 22px",
+                                        height: "40px",
+                                        boxSizing: "border-box",
                                         borderRadius: "8px",
                                         border: "none",
                                         backgroundColor: isFormValid && !isSaving ? "#4a9eff" : "#3a5080",

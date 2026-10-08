@@ -145,6 +145,60 @@ describe('ModernNewApplicationPopup duplicate company notice', () => {
         expect(calls).toBe(3);
     });
 
+    test('selects Greenhouse from the import menu and fills the form from that listing', async () => {
+        global.fetch.mockResolvedValue({
+            ok: true,
+            status: 200,
+            text: async () => JSON.stringify({
+                title: 'Software Engineer',
+                company_name: 'Initech',
+                location: { name: 'Austin, TX' },
+            }),
+        });
+
+        renderPopup();
+        await userEvent.click(screen.getByRole('button', { name: 'Choose job listing source' }));
+        expect(screen.getByRole('menu', { name: 'Job listing sources' })).toBeInTheDocument();
+        await userEvent.click(screen.getByRole('menuitem', { name: 'Import Greenhouse Job Listing' }));
+
+        expect(screen.queryByPlaceholderText('https://boards.greenhouse.io/company/jobs/...')).not.toBeInTheDocument();
+        await userEvent.click(screen.getByRole('button', { name: 'Import Greenhouse Job Listing' }));
+        await userEvent.type(
+            screen.getByPlaceholderText('https://boards.greenhouse.io/company/jobs/...'),
+            'https://job-boards.greenhouse.io/initech/jobs/4444444'
+        );
+        await userEvent.click(screen.getByRole('button', { name: 'Import' }));
+
+        expect(await screen.findByRole('status')).toHaveTextContent(
+            'An application for "Initech" in "Other" already exists.'
+        );
+        expect(screen.getByPlaceholderText('Enter company name...')).toHaveValue('Initech');
+        expect(screen.getByPlaceholderText('Enter position...')).toHaveValue('Software Engineer');
+        expect(screen.getByPlaceholderText('Remote, United States, or City, XX...')).toHaveValue('Austin, TX');
+        expect(screen.getByPlaceholderText('Enter job link...')).toHaveValue(
+            'https://job-boards.greenhouse.io/initech/jobs/4444444'
+        );
+        expect(String(global.fetch.mock.calls[0][0])).toContain('/api/greenhouse-job?');
+        expect(String(global.fetch.mock.calls[0][0])).toContain('board=initech');
+        expect(String(global.fetch.mock.calls[0][0])).toContain('jobId=4444444');
+        expect(String(global.fetch.mock.calls[0][0])).toContain('region=us');
+    });
+
+    test('rejects a Greenhouse URL that is not a job listing', async () => {
+        renderPopup();
+        await userEvent.click(screen.getByRole('button', { name: 'Choose job listing source' }));
+        await userEvent.click(screen.getByRole('menuitem', { name: 'Import Greenhouse Job Listing' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Import Greenhouse Job Listing' }));
+        await userEvent.type(
+            screen.getByPlaceholderText('https://boards.greenhouse.io/company/jobs/...'),
+            'https://example.com/careers'
+        );
+        await userEvent.click(screen.getByRole('button', { name: 'Import' }));
+
+        expect(await screen.findByText('That does not look like a valid Greenhouse job URL.')).toBeInTheDocument();
+        expect(global.fetch).not.toHaveBeenCalled();
+    });
+
     test('deletes the existing application and then saves only the new one', async () => {
         const calls = [];
         global.fetch.mockImplementation(async (url, options = {}) => {
