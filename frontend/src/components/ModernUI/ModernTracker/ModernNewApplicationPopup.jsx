@@ -438,16 +438,17 @@ const API_STAGE = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev";
 
 const readCompanyName = (job) => String(job?.companyName ?? job?.company ?? '');
 
+const normalizeCompanyName = (value) => String(value ?? '').trim().toLowerCase();
+
 const findExactCompanyMatches = (jobs, companyName) => {
-    const name = String(companyName ?? '').trim();
+    const name = normalizeCompanyName(companyName);
     if (!name || !Array.isArray(jobs)) return [];
 
     const seen = new Set();
     const matches = [];
     for (const job of jobs) {
         const storedName = readCompanyName(job);
-        const comparable = storedName.trim();
-        if (!comparable || comparable !== name || seen.has(storedName)) continue;
+        if (!normalizeCompanyName(storedName) || normalizeCompanyName(storedName) !== name || seen.has(storedName)) continue;
         seen.add(storedName);
         matches.push(job);
     }

@@ -134,15 +134,16 @@ function ModernUITracker() {
             removeNames.add(meta.replacedCompanyName);
         }
 
-        const companyKey = (existing) => existing?.companyName ?? existing?.company;
+        const companyKey = (existing) => String(existing?.companyName ?? existing?.company ?? '').trim().toLowerCase();
+        const removedKeys = new Set([...removeNames].map((name) => String(name).trim().toLowerCase()));
         const alreadyExists = (Array.isArray(allJobs) ? allJobs : []).some(
-            (existing) => removeNames.has(companyKey(existing))
+            (existing) => removedKeys.has(companyKey(existing))
         );
 
         const replaceJobs = (prevJobs, includeNew) => {
             const list = Array.isArray(prevJobs) ? prevJobs : [];
-            const index = list.findIndex((existing) => removeNames.has(companyKey(existing)));
-            const remaining = list.filter((existing) => !removeNames.has(companyKey(existing)));
+            const index = list.findIndex((existing) => removedKeys.has(companyKey(existing)));
+            const remaining = list.filter((existing) => !removedKeys.has(companyKey(existing)));
             if (!includeNew) return remaining;
             if (index === -1) return [...remaining, job];
             const next = [...remaining];

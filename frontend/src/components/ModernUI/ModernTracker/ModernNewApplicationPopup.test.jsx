@@ -71,7 +71,9 @@ describe('ModernNewApplicationPopup duplicate company notice', () => {
 
         await userEvent.clear(screen.getByPlaceholderText('Enter company name...'));
         await userEvent.type(screen.getByPlaceholderText('Enter company name...'), 'acme');
-        expect(screen.queryByRole('status')).not.toBeInTheDocument();
+        expect(screen.getByRole('status')).toHaveTextContent(
+            'An application for "Acme" in "Spring 2026" already exists.'
+        );
 
         await userEvent.clear(screen.getByPlaceholderText('Enter company name...'));
         await userEvent.type(screen.getByPlaceholderText('Enter company name...'), 'Initech');
@@ -123,6 +125,24 @@ describe('ModernNewApplicationPopup duplicate company notice', () => {
 
         await waitFor(() => expect(props.onApplicationCreated).toHaveBeenCalled(), { timeout: 2000 });
         expect(props.onApplicationCreated.mock.calls[0][1]).toEqual({ replacedCompanyName: 'Acme' });
+    });
+
+    test('matches an existing company even when the capitalization differs', async () => {
+        const calls = [];
+        global.fetch.mockImplementation(async (url, options = {}) => {
+            calls.push({ url: String(url), options });
+            return { ok: true, json: async () => ({}) };
+        });
+
+        renderPopup();
+        await fillRequiredFields({ company: 'acme' });
+        expect(screen.getByRole('status')).toHaveTextContent('An application for "Acme"');
+        await userEvent.click(screen.getByRole('button', { name: 'Add Application' }));
+
+        await waitFor(() => expect(calls).toHaveLength(2));
+        expect(calls[0].url).toContain('companyName=Acme');
+        expect(calls[0].options.method).toBe('DELETE');
+        expect(JSON.parse(calls[1].options.body).companyName).toBe('acme');
     });
 
     test('does not save a new application when removing the existing one fails', async () => {
