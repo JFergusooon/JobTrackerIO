@@ -103,6 +103,48 @@ describe('ModernNewApplicationPopup duplicate company notice', () => {
         expect(screen.getByRole('button', { name: 'Add Application' })).toBeEnabled();
     });
 
+    test('retries an unavailable LinkedIn import and shows the attempt count', async () => {
+        let calls = 0;
+        const pending = [];
+        global.fetch.mockImplementation(() => {
+            calls += 1;
+            const attempt = calls;
+            return new Promise((resolve) => {
+                pending.push(() => resolve(
+                    attempt < 3
+                        ? {
+                            ok: false,
+                            status: 503,
+                            text: async () => JSON.stringify({ error: 'LinkedIn fetch failed' }),
+                        }
+                        : {
+                            ok: true,
+                            status: 200,
+                            text: async () => linkedInHtml,
+                        }
+                ));
+            });
+        });
+
+        renderPopup();
+        await userEvent.click(screen.getByRole('button', { name: 'Import LinkedIn Job Listing' }));
+        await userEvent.type(
+            screen.getByPlaceholderText('https://www.linkedin.com/jobs/view/...'),
+            'https://www.linkedin.com/jobs/view/1234567890'
+        );
+        await userEvent.click(screen.getByRole('button', { name: 'Import' }));
+
+        expect(await screen.findByRole('button', { name: 'Importing... 1' })).toBeDisabled();
+        pending[0]();
+        expect(await screen.findByRole('button', { name: 'Importing... 2' }, { timeout: 3000 })).toBeDisabled();
+        pending[1]();
+        expect(await screen.findByRole('button', { name: 'Importing... 3' }, { timeout: 3000 })).toBeDisabled();
+        pending[2]();
+
+        expect(await screen.findByPlaceholderText('Enter company name...')).toHaveValue('Acme');
+        expect(calls).toBe(3);
+    });
+
     test('deletes the existing application and then saves only the new one', async () => {
         const calls = [];
         global.fetch.mockImplementation(async (url, options = {}) => {

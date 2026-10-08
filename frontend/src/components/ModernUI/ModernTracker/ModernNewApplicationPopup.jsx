@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 
 const inputStyle = {
@@ -11,6 +11,28 @@ const inputStyle = {
     fontSize: "14px",
     outline: "none",
     boxSizing: "border-box",
+};
+
+const LINKEDIN_IMPORT_MAX_ATTEMPTS = 30;
+const LINKEDIN_IMPORT_RETRY_DELAY_MS = 700;
+
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const isRetryableLinkedInImportError = (err) => {
+    const msg = String(err?.message || '');
+    if (err?.name === 'AbortError' || /aborted/i.test(msg)) return true;
+    if (msg === 'PROXY_GATEWAY' || /bad gateway|\b502\b|\b503\b/i.test(msg)) return true;
+    if (/empty response|could not read job details|failed to fetch|networkerror|network request failed/i.test(msg)) return true;
+    return false;
+};
+
+const linkedInImportErrorMessage = (err) => {
+    const msg = String(err?.message || '');
+    const timedOut = err?.name === 'AbortError' || /aborted/i.test(msg);
+    const gateway = msg === 'PROXY_GATEWAY' || /bad gateway|\b502\b|\b503\b/i.test(msg);
+    if (timedOut) return 'Import timed out. Please try again.';
+    if (gateway) return 'Import service briefly unavailable. Please try again in a moment.';
+    return 'Failed to import listing. Check the URL and try again.';
 };
 
 const secondaryButtonStyle = {
@@ -472,7 +494,10 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
     const [viewMode, setViewMode] = useState('form');
     const [linkedInUrl, setLinkedInUrl] = useState('');
     const [isImporting, setIsImporting] = useState(false);
+    const [importAttempt, setImportAttempt] = useState(0);
     const [importError, setImportError] = useState('');
+    const importRunRef = useRef(0);
+    const importAbortRef = useRef(null);
     const [newCompanyName, setNewCompanyName] = useState("");
     const [newJobLink, setNewJobLink] = useState("");
     const [newList, setNewList] = useState("");
@@ -530,11 +555,18 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
     const fetchWithTimeout = async (url, options = {}, timeoutMs = 20000) => {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), timeoutMs);
+        const { signal: externalSignal, ...rest } = options;
+        const onExternalAbort = () => controller.abort();
+        if (externalSignal) {
+            if (externalSignal.aborted) controller.abort();
+            else externalSignal.addEventListener('abort', onExternalAbort);
+        }
         try {
-            const res = await fetch(url, { ...options, signal: controller.signal });
+            const res = await fetch(url, { ...rest, signal: controller.signal });
             return res;
         } finally {
             clearTimeout(timer);
+            externalSignal?.removeEventListener('abort', onExternalAbort);
         }
     };
 
@@ -542,10 +574,10 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
      * Same-origin server proxy only (Cloudflare Pages Function in prod, setupProxy locally).
      * No Jina / allorigins — those rate-limit and break imports.
      */
-    const fetchLinkedInJobPayload = async (jobId) => {
+    const fetchLinkedInJobPayload = async (jobId, signal) => {
         const res = await fetchWithTimeout(
             `/api/linkedin-job?jobId=${encodeURIComponent(jobId)}`,
-            {},
+            { signal },
             20000
         );
         if (!res.ok) {
@@ -570,6 +602,16 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
         return html;
     };
 
+    const stopLinkedInImport = () => {
+        importRunRef.current += 1;
+        importAbortRef.current?.abort();
+    };
+
+    useEffect(() => () => {
+        importRunRef.current += 1;
+        importAbortRef.current?.abort();
+    }, []);
+
     const importLinkedInJob = async () => {
         const trimmedUrl = linkedInUrl.trim();
         setImportError('');
@@ -585,35 +627,50 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
             return;
         }
 
+        importAbortRef.current?.abort();
+        const controller = new AbortController();
+        importAbortRef.current = controller;
+        const runId = ++importRunRef.current;
+
+        setImportAttempt(1);
         setIsImporting(true);
         try {
-            const payload = await fetchLinkedInJobPayload(jobId);
-            const parsed = parseLinkedInJobPayload(payload);
+            for (let attempt = 1; attempt <= LINKEDIN_IMPORT_MAX_ATTEMPTS; attempt += 1) {
+                if (importRunRef.current !== runId) return;
+                setImportAttempt(attempt);
+                try {
+                    const payload = await fetchLinkedInJobPayload(jobId, controller.signal);
+                    if (importRunRef.current !== runId) return;
+                    const parsed = parseLinkedInJobPayload(payload);
 
-            if (!isUsableImport(parsed)) {
-                throw new Error('Could not read job details from LinkedIn.');
+                    if (!isUsableImport(parsed)) {
+                        throw new Error('Could not read job details from LinkedIn.');
+                    }
+
+                    setNewCompanyName(parsed.company);
+                    setNewPosition(parsed.position);
+                    handleLocationChange(parsed.location || '');
+                    setNewJobLink(trimmedUrl);
+                    setViewMode('form');
+                    setImportError('');
+                    return;
+                } catch (err) {
+                    if (importRunRef.current !== runId) return;
+                    const lastAttempt = attempt === LINKEDIN_IMPORT_MAX_ATTEMPTS;
+                    if (!isRetryableLinkedInImportError(err) || lastAttempt) {
+                        console.error('LinkedIn import failed:', err);
+                        setImportError(linkedInImportErrorMessage(err));
+                        return;
+                    }
+                }
+
+                await wait(LINKEDIN_IMPORT_RETRY_DELAY_MS);
             }
-
-            setNewCompanyName(parsed.company);
-            setNewPosition(parsed.position);
-            handleLocationChange(parsed.location || '');
-            setNewJobLink(trimmedUrl);
-            setViewMode('form');
-            setImportError('');
-        } catch (err) {
-            console.error('LinkedIn import failed:', err);
-            const msg = String(err?.message || '');
-            const timedOut = err?.name === 'AbortError' || /aborted/i.test(msg);
-            const gateway = msg === 'PROXY_GATEWAY' || /bad gateway|502|503/i.test(msg);
-            setImportError(
-                timedOut
-                    ? 'Import timed out. Please try again.'
-                    : gateway
-                      ? 'Import service briefly unavailable. Please try again in a moment.'
-                      : 'Failed to import listing. Check the URL and try again.'
-            );
         } finally {
-            setIsImporting(false);
+            if (importRunRef.current === runId) {
+                setIsImporting(false);
+                importAbortRef.current = null;
+            }
         }
     };
 
@@ -765,6 +822,8 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
                             <button
                                 type="button"
                                 onClick={() => {
+                                    stopLinkedInImport();
+                                    setIsImporting(false);
                                     setViewMode('form');
                                     setImportError('');
                                 }}
@@ -790,7 +849,7 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
                                     transition: "background-color 0.2s",
                                 }}
                             >
-                                {isImporting ? 'Importing...' : 'Import'}
+                                {isImporting ? `Importing... ${importAttempt}` : 'Import'}
                             </button>
                         </div>
                     </>
