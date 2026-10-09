@@ -49,6 +49,23 @@ const greenhouseImportErrorMessage = (err) => {
     return 'Failed to import listing. Check the URL and try again.';
 };
 
+const indeedImportErrorMessage = (err) => {
+    const msg = String(err?.message || '');
+    if (msg === 'INDEED_NOT_FOUND') {
+        return 'Could not find that Indeed job. Check the URL and try again.';
+    }
+    if (msg === 'INDEED_BLOCKED') {
+        return 'Indeed blocked this import. Try again in a moment, or enter the job details manually.';
+    }
+    if (msg === 'INDEED_UNREADABLE') {
+        return 'Could not read job details from that Indeed listing.';
+    }
+    if (err?.name === 'AbortError' || /aborted/i.test(msg)) {
+        return 'Import timed out. Please try again.';
+    }
+    return 'Failed to import listing. Check the URL and try again.';
+};
+
 const secondaryButtonStyle = {
     padding: "10px 22px",
     borderRadius: "8px",
@@ -77,7 +94,34 @@ const GREENHOUSE_IMPORT_SOURCE = {
     placeholder: 'https://boards.greenhouse.io/company/jobs/...',
 };
 
-const IMPORT_SOURCES = [LINKEDIN_IMPORT_SOURCE, GREENHOUSE_IMPORT_SOURCE];
+const INDEED_IMPORT_MAX_ATTEMPTS = 30;
+const INDEED_IMPORT_RETRY_DELAY_MS = 700;
+
+const isRetryableIndeedImportError = (err) => {
+    const msg = String(err?.message || '');
+    if (msg === 'INDEED_NOT_FOUND') return false;
+    if (msg === 'INDEED_BLOCKED' || msg === 'INDEED_UNREADABLE') return true;
+    if (err?.name === 'AbortError' || /aborted/i.test(msg)) return true;
+    if (/empty response|failed to fetch|networkerror|network request failed|\b502\b|\b503\b/i.test(msg)) return true;
+    return false;
+};
+
+const INDEED_IMPORT_SOURCE = {
+    id: 'indeed',
+    buttonLabel: 'Import Indeed Job Listing',
+    heading: 'Import Indeed Job',
+    description: 'Paste an Indeed job listing URL to auto-fill the application fields',
+    placeholder: 'https://www.indeed.com/viewjob?jk=...',
+};
+
+// Flip this on to show Indeed in the import menu again.
+const INDEED_IMPORT_ENABLED = false;
+
+const IMPORT_SOURCES = [
+    LINKEDIN_IMPORT_SOURCE,
+    GREENHOUSE_IMPORT_SOURCE,
+    ...(INDEED_IMPORT_ENABLED ? [INDEED_IMPORT_SOURCE] : []),
+];
 
 const GREENHOUSE_BOARD_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{0,80}$/;
 const GREENHOUSE_JOB_ID_PATTERN = /^\d{3,20}$/;
@@ -128,6 +172,108 @@ const extractGreenhouseJob = (rawUrl) => {
     } catch {
         return null;
     }
+};
+
+const INDEED_HOST_PATTERN = /^(?:[a-z0-9-]+\.)?indeed\.(?:com|ca|co\.uk|co\.in|com\.au|de|fr|nl|es|it|ie|sg|com\.br|com\.mx)$/i;
+const INDEED_JOB_KEY_PATTERN = /^[a-f0-9]{10,32}$/i;
+
+const extractIndeedJob = (rawUrl) => {
+    try {
+        const url = new URL(rawUrl.trim());
+        if (!INDEED_HOST_PATTERN.test(url.hostname)) return null;
+        const jobKey = url.searchParams.get('jk') || url.searchParams.get('vjk') || '';
+        if (!INDEED_JOB_KEY_PATTERN.test(jobKey)) return null;
+        return { jobKey: jobKey.toLowerCase(), host: url.hostname.toLowerCase() };
+    } catch {
+        return null;
+    }
+};
+
+const readIndeedJsonString = (html, key) => {
+    const match = String(html || '').match(new RegExp(`"${key}"\\s*:\\s*"((?:\\\\.|[^"\\\\])*)"`));
+    if (!match) return '';
+    try {
+        return JSON.parse(`"${match[1]}"`).replace(/\s+/g, ' ').trim();
+    } catch {
+        return match[1].replace(/\s+/g, ' ').trim();
+    }
+};
+
+const indeedLocationFromAddress = (address) => {
+    if (!address) return '';
+    if (typeof address === 'string') return address.replace(/\s+/g, ' ').trim();
+    const city = String(address.addressLocality || '').replace(/\s+/g, ' ').trim();
+    const region = String(address.addressRegion || '').replace(/\s+/g, ' ').trim();
+    if (city && /^[A-Za-z]{2}$/.test(region)) return `${city}, ${region.toUpperCase()}`;
+    if (city && region) return `${city}, ${region}`;
+    return city || region || String(address.addressCountry || '').trim();
+};
+
+const parseIndeedJobHtml = (html) => {
+    const empty = { position: '', company: '', location: '' };
+    if (!html || typeof html !== 'string') return empty;
+    if (/bot-detection-anonymous|Authenticating\.\.\./i.test(html) && !/JobPosting|jobTitle/i.test(html)) {
+        return empty;
+    }
+
+    let position = '';
+    let company = '';
+    let locationValue = '';
+
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const jsonLdNodes = [...doc.querySelectorAll('script[type="application/ld+json"]')];
+    for (const node of jsonLdNodes) {
+        try {
+            const parsed = JSON.parse(node.textContent);
+            const stack = Array.isArray(parsed) ? [...parsed] : [parsed];
+            while (stack.length) {
+                const item = stack.shift();
+                if (!item || typeof item !== 'object') continue;
+                if (Array.isArray(item['@graph'])) stack.push(...item['@graph']);
+                const type = item['@type'];
+                const isJob = type === 'JobPosting' || (Array.isArray(type) && type.includes('JobPosting'));
+                if (!isJob) continue;
+                if (!position && item.title) position = String(item.title).replace(/\s+/g, ' ').trim();
+                const orgName = item.hiringOrganization?.name;
+                if (!company && orgName) company = String(orgName).replace(/\s+/g, ' ').trim();
+                const locations = Array.isArray(item.jobLocation) ? item.jobLocation : [item.jobLocation];
+                for (const place of locations) {
+                    const fromAddress = indeedLocationFromAddress(place?.address);
+                    if (fromAddress) {
+                        locationValue = fromAddress;
+                        break;
+                    }
+                }
+                if (!locationValue && item.jobLocationType === 'TELECOMMUTE') locationValue = 'Remote';
+            }
+        } catch {
+            // ignore malformed JSON-LD
+        }
+    }
+
+    if (!position) position = readIndeedJsonString(html, 'jobTitle');
+    if (!company) company = readIndeedJsonString(html, 'companyName') || readIndeedJsonString(html, 'company');
+    if (!locationValue) {
+        locationValue = readIndeedJsonString(html, 'formattedLocation') || readIndeedJsonString(html, 'jobLocation');
+    }
+
+    if (!position || !company) {
+        let title = decodeHtmlEntities(doc.querySelector('title')?.textContent || '');
+        title = title.replace(/\s+/g, ' ').trim();
+        title = title.replace(/\s*[|–-]\s*Indeed(?:\.com)?\s*$/i, '').trim();
+        const parts = title.split(/\s+-\s+/).map((part) => part.trim()).filter(Boolean);
+        if (!position && parts[0]) position = parts[0];
+        if (!company && parts[1]) company = parts[1];
+        if (!locationValue && parts[2]) locationValue = parts[2];
+    }
+
+    locationValue = locationValue.replace(/\s+\d{5}(?:-\d{4})?$/, '').trim();
+
+    return {
+        position: position.replace(/\s+/g, ' ').trim(),
+        company: company.replace(/\s+/g, ' ').trim(),
+        location: normalizeImportedLocation(locationValue),
+    };
 };
 
 const looksLikeLocation = (value) => {
@@ -598,6 +744,8 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
     const linkedInImportRunRef = useRef(0);
     const linkedInImportAbortRef = useRef(null);
     const greenhouseImportAbortRef = useRef(null);
+    const indeedImportRunRef = useRef(0);
+    const indeedImportAbortRef = useRef(null);
     const importMenuRef = useRef(null);
     const activeImportSource = IMPORT_SOURCES.find((source) => source.id === importSource) || LINKEDIN_IMPORT_SOURCE;
     const [newCompanyName, setNewCompanyName] = useState("");
@@ -730,6 +878,36 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
         }
     };
 
+    const fetchIndeedJobPayload = async ({ jobKey, host }, signal) => {
+        const params = new URLSearchParams({ jk: jobKey, host });
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 20000);
+        const onExternalAbort = () => controller.abort();
+        if (signal) {
+            if (signal.aborted) controller.abort();
+            else signal.addEventListener('abort', onExternalAbort);
+        }
+        try {
+            const res = await fetch(`/api/indeed-job?${params}`, { signal: controller.signal });
+            const raw = await res.text();
+            if (!res.ok) {
+                if (res.status === 404) throw new Error('INDEED_NOT_FOUND');
+                if (res.status === 503 && /blocked/i.test(raw)) throw new Error('INDEED_BLOCKED');
+                throw new Error(`Indeed proxy failed (${res.status}) ${raw.slice(0, 120)}`);
+            }
+            if (!raw || raw.length < 80) {
+                throw new Error('Indeed proxy returned an empty response');
+            }
+            if (/bot-detection-anonymous|Authenticating\.\.\./i.test(raw) && !/JobPosting|jobTitle/i.test(raw)) {
+                throw new Error('INDEED_BLOCKED');
+            }
+            return raw;
+        } finally {
+            clearTimeout(timer);
+            signal?.removeEventListener('abort', onExternalAbort);
+        }
+    };
+
     const stopLinkedInImport = () => {
         linkedInImportRunRef.current += 1;
         linkedInImportAbortRef.current?.abort();
@@ -740,10 +918,17 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
         greenhouseImportAbortRef.current = null;
     };
 
+    const stopIndeedImport = () => {
+        indeedImportRunRef.current += 1;
+        indeedImportAbortRef.current?.abort();
+    };
+
     useEffect(() => () => {
         linkedInImportRunRef.current += 1;
         linkedInImportAbortRef.current?.abort();
         greenhouseImportAbortRef.current?.abort();
+        indeedImportRunRef.current += 1;
+        indeedImportAbortRef.current?.abort();
     }, []);
 
     useEffect(() => {
@@ -881,6 +1066,68 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
             if (greenhouseImportAbortRef.current === controller) {
                 setIsImporting(false);
                 greenhouseImportAbortRef.current = null;
+            }
+        }
+    };
+
+    const importIndeedJob = async () => {
+        const trimmedUrl = listingUrl.trim();
+        setImportError('');
+
+        if (!trimmedUrl) {
+            setImportError('Please paste an Indeed job URL.');
+            return;
+        }
+
+        const target = extractIndeedJob(trimmedUrl);
+        if (!target) {
+            setImportError('That does not look like a valid Indeed job URL.');
+            return;
+        }
+
+        stopIndeedImport();
+        const controller = new AbortController();
+        indeedImportAbortRef.current = controller;
+        const runId = ++indeedImportRunRef.current;
+
+        setImportAttempt(1);
+        setIsImporting(true);
+        try {
+            for (let attempt = 1; attempt <= INDEED_IMPORT_MAX_ATTEMPTS; attempt += 1) {
+                if (indeedImportRunRef.current !== runId) return;
+                setImportAttempt(attempt);
+                try {
+                    const payload = await fetchIndeedJobPayload(target, controller.signal);
+                    if (indeedImportRunRef.current !== runId) return;
+                    const parsed = parseIndeedJobHtml(payload);
+
+                    if (!parsed.company || !parsed.position || parsed.company.length < 2 || parsed.position.length < 2) {
+                        throw new Error('INDEED_UNREADABLE');
+                    }
+
+                    setNewCompanyName(parsed.company);
+                    setNewPosition(parsed.position);
+                    handleLocationChange(parsed.location || '');
+                    setNewJobLink(trimmedUrl);
+                    setViewMode('form');
+                    setImportError('');
+                    return;
+                } catch (err) {
+                    if (indeedImportRunRef.current !== runId) return;
+                    const lastAttempt = attempt === INDEED_IMPORT_MAX_ATTEMPTS;
+                    if (!isRetryableIndeedImportError(err) || lastAttempt) {
+                        console.error('Indeed import failed:', err);
+                        setImportError(indeedImportErrorMessage(err));
+                        return;
+                    }
+                }
+
+                await wait(INDEED_IMPORT_RETRY_DELAY_MS);
+            }
+        } finally {
+            if (indeedImportRunRef.current === runId) {
+                setIsImporting(false);
+                indeedImportAbortRef.current = null;
             }
         }
     };
@@ -1034,6 +1281,7 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
                                 type="button"
                                 onClick={() => {
                                     if (importSource === 'greenhouse') stopGreenhouseImport();
+                                    else if (importSource === 'indeed') stopIndeedImport();
                                     else stopLinkedInImport();
                                     setIsImporting(false);
                                     setViewMode('form');
@@ -1047,7 +1295,11 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
                             </button>
                             <button
                                 type="button"
-                                onClick={importSource === 'greenhouse' ? importGreenhouseJob : importLinkedInJob}
+                                onClick={() => {
+                                    if (importSource === 'greenhouse') importGreenhouseJob();
+                                    else if (importSource === 'indeed') importIndeedJob();
+                                    else importLinkedInJob();
+                                }}
                                 disabled={isImporting || !listingUrl.trim()}
                                 style={{
                                     padding: "10px 22px",
@@ -1062,7 +1314,7 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
                                 }}
                             >
                                 {isImporting
-                                    ? (importSource === 'linkedin' ? `Importing... ${importAttempt}` : 'Importing...')
+                                    ? (importSource === 'greenhouse' ? 'Importing...' : `Importing... ${importAttempt}`)
                                     : 'Import'}
                             </button>
                         </div>

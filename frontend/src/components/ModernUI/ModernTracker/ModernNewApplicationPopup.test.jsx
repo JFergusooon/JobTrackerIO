@@ -184,6 +184,15 @@ describe('ModernNewApplicationPopup duplicate company notice', () => {
         expect(String(global.fetch.mock.calls[0][0])).toContain('region=us');
     });
 
+    test('does not offer Indeed in the import menu', async () => {
+        renderPopup();
+        await userEvent.click(screen.getByRole('button', { name: 'Choose job listing source' }));
+
+        expect(screen.getByRole('menuitem', { name: 'Import Greenhouse Job Listing' })).toBeInTheDocument();
+        expect(screen.queryByRole('menuitem', { name: 'Import Indeed Job Listing' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Import Indeed Job Listing' })).not.toBeInTheDocument();
+    });
+
     test('rejects a Greenhouse URL that is not a job listing', async () => {
         renderPopup();
         await userEvent.click(screen.getByRole('button', { name: 'Choose job listing source' }));

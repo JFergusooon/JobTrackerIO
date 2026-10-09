@@ -1,5 +1,5 @@
 /**
- * Local CRA proxy for /api/linkedin-job and /api/greenhouse-job
+ * Local CRA proxy for /api/linkedin-job, /api/greenhouse-job, and /api/indeed-job
  * (same contract as the Cloudflare Pages Functions).
  * Requires Node 18+ (global fetch).
  */
@@ -146,5 +146,63 @@ module.exports = function setupProxy(app) {
         }
 
         res.status(503).json({ error: 'Greenhouse fetch failed', detail: lastError });
+    });
+
+    const INDEED_JOB_KEY_PATTERN = /^[a-f0-9]{10,32}$/i;
+    const INDEED_HOST_PATTERN = /^(?:[a-z0-9-]+\.)?indeed\.(?:com|ca|co\.uk|co\.in|com\.au|de|fr|nl|es|it|ie|sg|com\.br|com\.mx)$/i;
+
+    const indeedFetchHost = (host) => {
+        const normalized = String(host || 'www.indeed.com').toLowerCase().replace(/^www\./, '').replace(/^m\./, '');
+        if (normalized.startsWith('indeed.')) return `www.${normalized}`;
+        return normalized;
+    };
+
+    const indeedLooksLikeJobPage = (html) =>
+        /JobPosting|jobTitle|companyName|jobsearch-JobInfoHeader|formattedLocation/i.test(html);
+
+    const indeedLooksLikeBotWall = (html) =>
+        /bot-detection-anonymous|Authenticating\.\.\./i.test(html) && !indeedLooksLikeJobPage(html);
+
+    app.get('/api/indeed-job', async (req, res) => {
+        const jobKey = String(req.query.jk || '');
+        const host = indeedFetchHost(req.query.host || 'www.indeed.com');
+
+        if (!INDEED_JOB_KEY_PATTERN.test(jobKey) || !INDEED_HOST_PATTERN.test(host)) {
+            res.status(400).json({ error: 'Invalid jk or host' });
+            return;
+        }
+
+        try {
+            const upstream = await fetch(`https://${host}/viewjob?jk=${encodeURIComponent(jobKey)}`, {
+                headers: {
+                    'User-Agent':
+                        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                    Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                    'Accept-Language': 'en-US,en;q=0.9',
+                },
+            });
+            const html = await upstream.text();
+            if (upstream.status === 404) {
+                res.status(404).json({ error: 'Indeed job not found' });
+                return;
+            }
+            if (!html || indeedLooksLikeBotWall(html)) {
+                res.status(503).json({ error: 'Indeed blocked the request' });
+                return;
+            }
+            if (!upstream.ok || !indeedLooksLikeJobPage(html)) {
+                res.status(503).json({
+                    error: 'Indeed fetch failed',
+                    detail: upstream.ok ? 'Unusable upstream response' : `Upstream ${upstream.status}`,
+                });
+                return;
+            }
+
+            res.set('Content-Type', 'text/html; charset=utf-8');
+            res.set('Cache-Control', 'public, max-age=120');
+            res.status(200).send(html);
+        } catch (err) {
+            res.status(503).json({ error: 'Indeed proxy error', detail: String(err?.message || err) });
+        }
     });
 };
