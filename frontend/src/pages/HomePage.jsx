@@ -70,12 +70,16 @@ function HomePage() {
     {/* Background Gradient */}
     <div
       style={{
-        minHeight: 'calc(100vh - 75px)',
+        minHeight: isLoggedIn ? undefined : 'calc(100vh - 75px)',
+        height: isLoggedIn ? 'calc(100vh - 45px)' : undefined,
+        overflow: isLoggedIn ? 'hidden' : undefined,
+        boxSizing: 'border-box',
         background: 'var(--page-gradient)',
         display: 'flex',
         justifyContent: 'center',
-        alignItems: 'center', 
-        marginTop: '30px'
+        alignItems: isLoggedIn ? 'stretch' : 'center',
+        marginTop: isLoggedIn ? '45px' : '30px',
+        padding: isLoggedIn ? '12px 16px' : undefined
       }}>
 
       {isLoggedIn ? 

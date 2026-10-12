@@ -1,12 +1,102 @@
 .modernHomeContainer {
-    display: grid;
-    grid-template-columns: 500fr 850fr 530fr; /* left, middle, right */
-    gap: 5px;
+    position: relative;
+    box-sizing: border-box;
     width: 100%;
-    /*height: 100vh;*/
-    height: 750px;
-    margin: 20px;
-    margin-top: 45px;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+}
+
+.homeCell {
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.homeFreeWidget {
+    position: absolute;
+}
+
+.homeCellHole {
+    border: 1px dashed rgba(0, 0, 0, 0.35);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    box-sizing: border-box;
+}
+
+.homeWidgetLifted {
+    position: fixed;
+    z-index: 80;
+    margin: 0;
+    box-sizing: border-box;
+    pointer-events: none;
+    overflow: hidden;
+    opacity: 0.94;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+}
+
+.homeDragHandle {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    z-index: 3;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.92);
+    color: #222;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    touch-action: none;
+}
+
+.homeDragHandle:active {
+    cursor: grabbing;
+}
+
+.homeResizeHandle {
+    position: absolute;
+    right: 4px;
+    bottom: 4px;
+    z-index: 4;
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    border: none;
+    border-right: 2px solid #222;
+    border-bottom: 2px solid #222;
+    background: transparent;
+    cursor: nwse-resize;
+    touch-action: none;
+}
+
+.homeResizeHandleWidth {
+    top: 18px;
+    bottom: 8px;
+    right: 0;
+    width: 12px;
+    height: auto;
+    border-bottom: none;
+    cursor: ew-resize;
+}
+
+.homeWidgetBody {
+    height: 100%;
+    min-height: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.homeWidgetBody > * {
+    height: 100% !important;
+    width: 100% !important;
+    max-width: 100%;
+    margin: 0 !important;
+    box-sizing: border-box;
 }
 
 
@@ -21,6 +111,7 @@
     height: 80%;
     background: rgba(255, 255, 255, 0.4);
     margin-bottom: 10px;
+    overflow: auto;
 }
 
 .modernQuickSettingsTitle {
@@ -75,7 +166,7 @@
     height: calc(84% + 10px);
     background: rgba(255, 255, 255, 0.4);
     border-radius: 20px;
-
+    overflow: auto;
 }
 
 .modernQuickNotesTitle {
@@ -123,7 +214,7 @@
     justify-content: center;
     text-align: center;
     align-items: center;
-    overflow: hidden;
+    overflow: auto;
     padding-bottom: 8px;
     box-sizing: border-box;
 }
