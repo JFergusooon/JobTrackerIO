@@ -95,50 +95,29 @@ const ModernStatsInfo = ({allJobs}) => {
                 )
         }, [allJobs])
 
+    const stats = [
+        { label: 'Total Applied This Month', value: totalAppliedThisMonth, color: '#4a9eff' },
+        { label: 'Total Rejected This Month', value: totalRejectedThisMonth, color: '#ff6b6b' },
+        { label: 'Jobs in Stage 2', value: totalJobsStageTwo, color: '#ffa500' },
+        { label: 'Jobs in Stage 3', value: totalJobsStageThree, color: '#9DBF9E' },
+        { label: 'Total Applications Ever', value: totalApplicationsEver, color: '#c9b6ff' },
+        { label: 'Interviews Scheduled', value: totalInterviewsScheduled, color: '#5bc0de' },
+        { label: 'Pending Responses', value: pendingResponses, color: '#f0ad4e' },
+        { label: 'Interview Rate (%)', value: `${successRate}%`, color: '#5cb85c' },
+        { label: 'Total Rejections Ever', value: totalRejectionsEver, color: '#d9534f' },
+        { label: 'Total Time Looking For Job', value: totalTimeLookingForJob, color: '#333' },
+    ];
+
     return (
         <div className='modernStatsInfoContainer'>
-            <p style={{fontSize: '20px', fontWeight: '600', color: 'black', marginTop: '5px', marginBottom: '15px', textAlign: 'center'}}> Stats </p>
-            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', padding: '0 14px 8px 14px', height: 'calc(100% - 44px)', alignContent: 'start'}}>
-                <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingLeft: '10px'}}>
-                    <p style={{margin: '0', fontSize: '13px', color: '#666'}}>Total Applied This Month</p>
-                    <p style={{margin: '3px 0 0 0', fontSize: '22px', fontWeight: 'bold', color: '#4a9eff'}}>{totalAppliedThisMonth}</p>
-                </div>
-                <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingLeft: '10px'}}>
-                    <p style={{margin: '0', fontSize: '13px', color: '#666'}}>Total Rejected This Month</p>
-                    <p style={{margin: '3px 0 0 0', fontSize: '22px', fontWeight: 'bold', color: '#ff6b6b'}}>{totalRejectedThisMonth}</p>
-                </div>
-                <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingLeft: '10px'}}>
-                    <p style={{margin: '0', fontSize: '13px', color: '#666'}}>Jobs in Stage 2</p>
-                    <p style={{margin: '3px 0 0 0', fontSize: '22px', fontWeight: 'bold', color: '#ffa500'}}>{totalJobsStageTwo}</p>
-                </div>
-                <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingLeft: '10px'}}>
-                    <p style={{margin: '0', fontSize: '13px', color: '#666'}}>Jobs in Stage 3</p>
-                    <p style={{margin: '3px 0 0 0', fontSize: '22px', fontWeight: 'bold', color: '#9DBF9E'}}>{totalJobsStageThree}</p>
-                </div>
-                <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingLeft: '10px'}}>
-                    <p style={{margin: '0', fontSize: '13px', color: '#666'}}>Total Applications Ever</p>
-                    <p style={{margin: '3px 0 0 0', fontSize: '22px', fontWeight: 'bold', color: '#c9b6ff'}}>{totalApplicationsEver}</p>
-                </div>
-                <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingLeft: '10px'}}>
-                    <p style={{margin: '0', fontSize: '13px', color: '#666'}}>Interviews Scheduled</p>
-                    <p style={{margin: '3px 0 0 0', fontSize: '22px', fontWeight: 'bold', color: '#5bc0de'}}>{totalInterviewsScheduled}</p>
-                </div>
-                <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingLeft: '10px'}}>
-                    <p style={{margin: '0', fontSize: '13px', color: '#666'}}>Pending Responses</p>
-                    <p style={{margin: '3px 0 0 0', fontSize: '22px', fontWeight: 'bold', color: '#f0ad4e'}}>{pendingResponses}</p>
-                </div>
-                <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingLeft: '10px'}}>
-                    <p style={{margin: '0', fontSize: '13px', color: '#666'}}>Interview Rate (%)</p>
-                    <p style={{margin: '3px 0 0 0', fontSize: '22px', fontWeight: 'bold', color: '#5cb85c'}}>{successRate}%</p>
-                </div>
-                <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingLeft: '10px'}}>
-                    <p style={{margin: '0', fontSize: '13px', color: '#666'}}>Total Rejections Ever</p>
-                    <p style={{margin: '3px 0 0 0', fontSize: '22px', fontWeight: 'bold', color: '#d9534f'}}>{totalRejectionsEver}</p>
-                </div>
-                <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingLeft: '10px'}}>
-                    <p style={{margin: '0', fontSize: '13px', color: '#666'}}>Total Time Looking For Job</p>
-                    <p style={{margin: '3px 0 0 0', fontSize: '22px', fontWeight: 'bold', color: '#333'}}>{totalTimeLookingForJob}</p>
-                </div>
+            <p className='modernStatsInfoTitle'> Stats </p>
+            <div className='modernStatsInfoGrid'>
+                {stats.map((stat) => (
+                    <div className='modernStatsInfoItem' key={stat.label}>
+                        <p className='modernStatsInfoLabel'>{stat.label}</p>
+                        <p className='modernStatsInfoValue' style={{ color: stat.color }}>{stat.value}</p>
+                    </div>
+                ))}
             </div>
         </div>
     );
