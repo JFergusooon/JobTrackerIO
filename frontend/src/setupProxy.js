@@ -77,11 +77,30 @@ module.exports = function setupProxy(app) {
     });
 
     app.get('/api/greenhouse-job', async (req, res) => {
-        const board = String(req.query.board || '');
+        let board = String(req.query.board || '');
         const jobId = String(req.query.jobId || '');
-        const region = req.query.region === 'eu' ? 'eu' : 'us';
+        let region = req.query.region === 'eu' ? 'eu' : 'us';
+        const pageUrl = String(req.query.pageUrl || '');
 
-        if (!GREENHOUSE_BOARD_PATTERN.test(board) || !GREENHOUSE_JOB_ID_PATTERN.test(jobId)) {
+        if (!GREENHOUSE_JOB_ID_PATTERN.test(jobId)) {
+            res.status(400).json({ error: 'Invalid board or jobId' });
+            return;
+        }
+
+        if (!board) {
+            const { resolveGreenhouseBoardFromPage } = await import('../functions/api/greenhousePageResolve.mjs');
+            const resolved = pageUrl
+                ? await resolveGreenhouseBoardFromPage(pageUrl, jobId)
+                : null;
+            if (!resolved) {
+                res.status(422).json({ error: 'Greenhouse board not found on page' });
+                return;
+            }
+            board = resolved.board;
+            region = resolved.region;
+        }
+
+        if (!GREENHOUSE_BOARD_PATTERN.test(board)) {
             res.status(400).json({ error: 'Invalid board or jobId' });
             return;
         }

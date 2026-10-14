@@ -43,6 +43,9 @@ const greenhouseImportErrorMessage = (err) => {
     if (msg === 'GREENHOUSE_UNREADABLE') {
         return 'Could not read job details from that Greenhouse listing.';
     }
+    if (msg === 'GREENHOUSE_BOARD_UNRESOLVED') {
+        return 'That careers page has a Greenhouse job id, but the company board could not be found.';
+    }
     if (err?.name === 'AbortError' || /aborted/i.test(msg)) {
         return 'Import timed out. Please try again.';
     }
@@ -90,7 +93,7 @@ const GREENHOUSE_IMPORT_SOURCE = {
     id: 'greenhouse',
     buttonLabel: 'Import Greenhouse Job Listing',
     heading: 'Import Greenhouse Job',
-    description: 'Paste a Greenhouse job listing URL to auto-fill the application fields',
+    description: 'Paste a Greenhouse job URL. Company career pages that include ?gh_jid= work too.',
     placeholder: 'https://boards.greenhouse.io/company/jobs/...',
 };
 
@@ -169,6 +172,20 @@ const extractGreenhouseJob = (rawUrl) => {
         }
 
         return { board, jobId, region };
+    } catch {
+        return null;
+    }
+};
+
+const extractEmbeddedGreenhouseJob = (rawUrl) => {
+    try {
+        const url = new URL(String(rawUrl || '').trim());
+        if (url.protocol !== 'https:' || isGreenhouseHost(url.hostname)) return null;
+
+        const jobId = url.searchParams.get('gh_jid') || '';
+        if (!GREENHOUSE_JOB_ID_PATTERN.test(jobId)) return null;
+
+        return { board: '', jobId, region: 'us', pageUrl: url.toString() };
     } catch {
         return null;
     }
@@ -852,8 +869,10 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
         return html;
     };
 
-    const fetchGreenhouseJobPayload = async ({ board, jobId, region }, signal) => {
-        const params = new URLSearchParams({ board, jobId, region });
+    const fetchGreenhouseJobPayload = async ({ board, jobId, region, pageUrl }, signal) => {
+        const params = new URLSearchParams({ jobId, region: region || 'us' });
+        if (board) params.set('board', board);
+        if (pageUrl) params.set('pageUrl', pageUrl);
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), 20000);
         const onExternalAbort = () => controller.abort();
@@ -866,6 +885,7 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
             const raw = await res.text();
             if (!res.ok) {
                 if (res.status === 404) throw new Error('GREENHOUSE_NOT_FOUND');
+                if (res.status === 422) throw new Error('GREENHOUSE_BOARD_UNRESOLVED');
                 throw new Error(`Greenhouse proxy failed (${res.status}) ${raw.slice(0, 120)}`);
             }
             if (!raw || raw.length < 10) {
@@ -1031,7 +1051,7 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
             return;
         }
 
-        const target = extractGreenhouseJob(trimmedUrl);
+        const target = extractGreenhouseJob(trimmedUrl) || extractEmbeddedGreenhouseJob(trimmedUrl);
         if (!target) {
             setImportError('That does not look like a valid Greenhouse job URL.');
             return;

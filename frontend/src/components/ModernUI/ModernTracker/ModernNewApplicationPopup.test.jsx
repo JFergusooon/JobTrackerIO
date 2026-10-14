@@ -184,6 +184,38 @@ describe('ModernNewApplicationPopup duplicate company notice', () => {
         expect(String(global.fetch.mock.calls[0][0])).toContain('region=us');
     });
 
+    test('imports a company careers page that embeds a Greenhouse job', async () => {
+        global.fetch.mockResolvedValue({
+            ok: true,
+            status: 200,
+            text: async () => JSON.stringify({
+                title: 'QA Engineer',
+                company_name: 'AppliedVR',
+                location: { name: 'Remote' },
+            }),
+        });
+
+        renderPopup();
+        await userEvent.click(screen.getByRole('button', { name: 'Choose job listing source' }));
+        await userEvent.click(screen.getByRole('menuitem', { name: 'Import Greenhouse Job Listing' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Import Greenhouse Job Listing' }));
+        await userEvent.type(
+            screen.getByPlaceholderText('https://boards.greenhouse.io/company/jobs/...'),
+            'https://www.appliedvr.io/careers/5430729008?gh_jid=5430729008'
+        );
+        await userEvent.click(screen.getByRole('button', { name: 'Import' }));
+
+        expect(await screen.findByPlaceholderText('Enter company name...')).toHaveValue('AppliedVR');
+        expect(screen.getByPlaceholderText('Enter position...')).toHaveValue('QA Engineer');
+        expect(screen.getByPlaceholderText('Remote, United States, or City, XX...')).toHaveValue('Remote');
+        const requestUrl = String(global.fetch.mock.calls[0][0]);
+        expect(requestUrl).toContain('/api/greenhouse-job?');
+        expect(requestUrl).toContain('jobId=5430729008');
+        expect(requestUrl).toContain('pageUrl=');
+        expect(requestUrl).toContain(encodeURIComponent('https://www.appliedvr.io/careers/5430729008?gh_jid=5430729008'));
+        expect(requestUrl).not.toContain('board=');
+    });
+
     test('does not offer Indeed in the import menu', async () => {
         renderPopup();
         await userEvent.click(screen.getByRole('button', { name: 'Choose job listing source' }));

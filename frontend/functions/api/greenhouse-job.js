@@ -3,10 +3,12 @@
  * No API key. Avoids CORS on the job board API.
  *
  * GET /api/greenhouse-job?board=acme&jobId=1234567&region=us|eu
+ * GET /api/greenhouse-job?pageUrl=https://company.com/careers?gh_jid=1234567&jobId=1234567
  *
  * Note: do not return HTTP 502 for handled failures — Cloudflare may replace
  * those with its branded Bad Gateway HTML page.
  */
+import { resolveGreenhouseBoardFromPage } from './greenhousePageResolve.mjs';
 const BOARD_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{0,80}$/;
 const JOB_ID_PATTERN = /^\d{3,20}$/;
 
@@ -68,11 +70,27 @@ export async function onRequest(context) {
         }
 
         const params = new URL(request.url).searchParams;
-        const board = params.get('board') || '';
+        let board = params.get('board') || '';
         const jobId = params.get('jobId') || '';
-        const region = params.get('region') === 'eu' ? 'eu' : 'us';
+        let region = params.get('region') === 'eu' ? 'eu' : 'us';
+        const pageUrl = params.get('pageUrl') || '';
 
-        if (!BOARD_PATTERN.test(board) || !JOB_ID_PATTERN.test(jobId)) {
+        if (!JOB_ID_PATTERN.test(jobId)) {
+            return json(400, { error: 'Invalid board or jobId' });
+        }
+
+        if (!board) {
+            const resolved = pageUrl
+                ? await resolveGreenhouseBoardFromPage(pageUrl, jobId)
+                : null;
+            if (!resolved) {
+                return json(422, { error: 'Greenhouse board not found on page' });
+            }
+            board = resolved.board;
+            region = resolved.region;
+        }
+
+        if (!BOARD_PATTERN.test(board)) {
             return json(400, { error: 'Invalid board or jobId' });
         }
 
