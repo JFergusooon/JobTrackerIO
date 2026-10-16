@@ -119,6 +119,10 @@ function ModernUIHome({ onOpenUpdates }) {
             setShowNewListPopup(!showNewListPopup);
         };
 
+        const handleListCreated = (name) => {
+            navigate(`/tracker?listName=${encodeURIComponent(name)}`);
+        };
+
         const onOpenFeedback = () => {
             setShowFeedbackPopup(!showFeedbackPopup);
         };
@@ -209,7 +213,7 @@ function ModernUIHome({ onOpenUpdates }) {
             <ModernStatsInfo allJobs={allJobs} />
           </div>
 
-                    {showNewListPopup ? <ModernNewListPopup text='NewList' closePopup={toggleNewListPopup} /> : null }
+                    {showNewListPopup ? <ModernNewListPopup closePopup={toggleNewListPopup} onListCreated={handleListCreated} /> : null }
                     {showFeedbackPopup ? <ModernFeedbackPopup closePopup={onOpenFeedback} /> : null }
                     {showProfileSetupPopup ? <ModernProfileSetupPopup closePopup={closeProfileSetupPopup} onGoToSettings={onGoToSettingsFromProfilePrompt} missingFields={missingProfileFields} /> : null }
         </div>

@@ -2,6 +2,7 @@ import React, {useEffect, useState, useRef} from 'react';
 import '../../../css/Modern_HomePageCSS.css';
 import '../../../css/Modern_TrackerPageCSS.css';
 import { FaStar } from "react-icons/fa";
+import { playSuccessDing, prepareSuccessDing } from '../../../successDing';
 
 const ModernImportantJobs = ({importantJobsList, importantJobsLoading = false, onFavoriteChanged, onStageChanged}) => {
     const [favoritedJobs, setFavoritedJobs] = useState([]);
@@ -74,6 +75,7 @@ const ModernImportantJobs = ({importantJobsList, importantJobsLoading = false, o
         if (!companyName || !newDate) {
             return;
         }
+        prepareSuccessDing();
 
         // Parse date (format: YYYY-MM-DD)
         const [year, month, day] = newDate.split('-');
@@ -102,6 +104,7 @@ const ModernImportantJobs = ({importantJobsList, importantJobsLoading = false, o
             );
 
             console.log(`Updated ${companyName} interview date to ${newDate}`);
+            playSuccessDing();
         } catch (err) {
             console.error("Failed to update interview date:", err);
         }
@@ -115,6 +118,7 @@ const ModernImportantJobs = ({importantJobsList, importantJobsLoading = false, o
         if (!companyName) {
             return;
         }
+        prepareSuccessDing();
 
         const url = `${stage}/Jobs/updateState?username=${encodeURIComponent(username)}&companyName=${encodeURIComponent(companyName)}&value=${encodeURIComponent(newStageName)}`;
 
@@ -145,6 +149,7 @@ const ModernImportantJobs = ({importantJobsList, importantJobsLoading = false, o
             }
 
             console.log(`Updated ${companyName} state to ${newStageName}`);
+            playSuccessDing();
         } catch (err) {
             console.error("Failed to update job state:", err);
         }
@@ -195,6 +200,7 @@ const ModernImportantJobs = ({importantJobsList, importantJobsLoading = false, o
         if (!companyName) {
             return;
         }
+        prepareSuccessDing();
 
         const url = `${stage}/Jobs/updateNotes?username=${encodeURIComponent(username)}&companyName=${encodeURIComponent(companyName)}&newNotes=${encodeURIComponent(newNotes)}`;
 
@@ -220,12 +226,14 @@ const ModernImportantJobs = ({importantJobsList, importantJobsLoading = false, o
             );
 
             console.log(`Updated ${companyName} notes`);
+            playSuccessDing();
         } catch (err) {
             console.error("Failed to update notes:", err);
         }
     };
 
     const handleNotesChange = (jobInfo, newNotes) => {
+        prepareSuccessDing();
         const companyName = jobInfo.companyName ?? jobInfo.company;
         const companyKey = normalizeCompanyKey(companyName);
 

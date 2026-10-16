@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { playSuccessDing, prepareSuccessDing } from '../../../successDing';
 
 const ModernEditApplicationPopup = ({job, listNames, closePopup, onApplicationUpdated}) => {
 
@@ -75,6 +76,7 @@ const ModernEditApplicationPopup = ({job, listNames, closePopup, onApplicationUp
 
         setIsSaving(true);
         setSaveStatus('Saving...');
+        prepareSuccessDing();
         const stage = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev";
         const url = `${stage}/Jobs/update?username=${encodeURIComponent(localStorage.getItem('username') || '')}&companyName=${encodeURIComponent(companyName)}`;
 
@@ -96,6 +98,7 @@ const ModernEditApplicationPopup = ({job, listNames, closePopup, onApplicationUp
             const data = await res.json().catch(() => ({}));
             console.log("SUCCESS:", data);
             setSaveStatus('Success!');
+            playSuccessDing();
             const updatedJob = { ...job, ...params };
             setTimeout(() => {
                 if (typeof onApplicationUpdated === 'function') {

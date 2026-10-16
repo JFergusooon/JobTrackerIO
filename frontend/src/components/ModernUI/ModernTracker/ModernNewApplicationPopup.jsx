@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
+import { playSuccessDing, prepareSuccessDing } from '../../../successDing';
 
 const inputStyle = {
     width: "100%",
@@ -1154,6 +1155,7 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
 
     async function addNewApplication() {
         if (isSaving) return;
+        prepareSuccessDing();
         const matches = findExactCompanyMatches(existingJobs, newCompanyName);
         setIsSaving(true);
         setSaveStatus(matches.length > 0 ? 'Removing existing application...' : 'Saving...');
@@ -1208,6 +1210,7 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
             const data = await res.json().catch(() => ({}));
             console.log("SUCCESS:", data);
             setSaveStatus('Success!');
+            playSuccessDing();
             setTimeout(() => {
                 if (typeof onApplicationCreated === 'function') {
                     onApplicationCreated(params, {

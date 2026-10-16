@@ -7,6 +7,7 @@ import ModernNewApplicationPopup from '../ModernTracker/ModernNewApplicationPopu
 import ModernListManagement from '../ModernTracker/ModernListManagement.jsx';
 import ModernApplicationCount from '../ModernTracker/ModernApplicationCount.jsx';
 import ModernDeletePopupV2 from '../ModernTracker/ModernDeletePopupv2.jsx';
+import { playSuccessDing, prepareSuccessDing } from '../../../successDing';
 
 function ModernUITracker() { 
 
@@ -211,6 +212,7 @@ function ModernUITracker() {
 
     const handleFavoriteToggled = async (companyName, currentFavoriteValue) => {
         const nextFavorited = !currentFavoriteValue;
+        prepareSuccessDing();
         const username = localStorage.getItem('username') || 'JFergusooon';
         const stage = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev";
         const url = `${stage}/Jobs/updateFavorited?username=${encodeURIComponent(username)}&companyName=${encodeURIComponent(companyName)}`;
@@ -259,6 +261,7 @@ function ModernUITracker() {
             if (!res.ok) {
                 throw new Error(`Failed with status ${res.status}`);
             }
+            if (nextFavorited) playSuccessDing();
         } catch (err) {
             console.error("Failed to update favorited status:", err);
             applyFavoriteState(currentFavoriteValue);
@@ -446,6 +449,14 @@ function ModernUITracker() {
 
     const toggleNewListPopup = () => {
         setShowNewListPopup(!showNewListPopup);
+    }
+
+    const handleListCreated = (name) => {
+        setCurUserListNames((prev) => {
+            const lists = Array.isArray(prev) ? prev.filter(Boolean) : [];
+            return lists.includes(name) ? lists : [...lists, name];
+        });
+        navigate(`?listName=${encodeURIComponent(name)}`);
     }
 
     const toggleNewApplicationPopup = () => {
@@ -770,7 +781,7 @@ function ModernUITracker() {
                         </div>
                 </div>
 
-                {showNewListPopup ? <ModernNewListPopup text='NewList' closePopup={toggleNewListPopup} /> : null }
+                {showNewListPopup ? <ModernNewListPopup closePopup={toggleNewListPopup} onListCreated={handleListCreated} /> : null }
                 {showNewApplicationPopup ? (
                     <ModernNewApplicationPopup
                         text='NewApplication'

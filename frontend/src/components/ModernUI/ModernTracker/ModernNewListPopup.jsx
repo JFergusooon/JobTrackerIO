@@ -1,8 +1,11 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { playSuccessDing, prepareSuccessDing } from '../../../successDing';
 
-const ModernNewListPopup = ({text, closePopup}) => {
-
+const ModernNewListPopup = ({ closePopup, onListCreated }) => {
+    const navigate = useNavigate();
     const [newListName, setNewListName] = useState("");
+    const [createError, setCreateError] = useState("");
     const canCreateList = newListName.trim() !== "";
 
     async function addNewList() {
@@ -12,28 +15,35 @@ const ModernNewListPopup = ({text, closePopup}) => {
             return;
         }
 
-        console.log('Adding new list with ' + normalizedListName)
-
+        setCreateError("");
+        await prepareSuccessDing();
 
         const stage = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev";
-        const url = stage + "/Users/updateListNames" 
+        const url = stage + "/Users/updateListNames"
                      + "?username=" + localStorage.getItem('username')
                      + "&newListName=" + encodeURIComponent(normalizedListName);
-
 
         try {
             const res = await fetch(url, {
                 method: "PATCH"
             });
-
-            const data = await res.json();
-            console.log("SUCCESS:", data);
+            if (!res.ok) {
+                throw new Error(`Create list failed (${res.status})`);
+            }
+            await res.json().catch(() => ({}));
         } catch (err) {
             console.error("ERROR:", err);
+            setCreateError("Could not create that list. Please try again.");
+            return;
         }
 
+        await playSuccessDing();
+        if (typeof onListCreated === 'function') {
+            onListCreated(normalizedListName);
+        } else {
+            navigate(`/tracker?listName=${encodeURIComponent(normalizedListName)}`);
+        }
         closePopup();
-        window.location.assign("/tracker?listName=" + encodeURIComponent(normalizedListName));
     }
 
 
@@ -95,6 +105,12 @@ const ModernNewListPopup = ({text, closePopup}) => {
                 />
 
                 <hr style={{ border: "none", borderTop: "1px solid #333", margin: "0 0 18px" }} />
+
+                {createError ? (
+                    <p style={{ margin: "0 0 14px", fontSize: "13px", color: "#ff8a8a" }}>
+                        {createError}
+                    </p>
+                ) : null}
 
                 <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
                     <button

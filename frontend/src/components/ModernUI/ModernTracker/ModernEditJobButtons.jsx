@@ -5,6 +5,7 @@ import '../../../css/Modern_TrackerPageCSS.css';
 
 import ModernDeletePopupV2 from './ModernDeletePopupv2';
 import ModernEditApplicationPopup from './ModernEditApplicationPopup';
+import { playSuccessDing, prepareSuccessDing } from '../../../successDing';
 
 
 const ModernEditJobButtons = ({text, job, listNames, goToListButton, onRejectedToggled, onApplicationUpdated, onApplicationDeleted}) => {
@@ -18,6 +19,7 @@ const ModernEditJobButtons = ({text, job, listNames, goToListButton, onRejectedT
     async function setRejected() {
     if (isUpdatingRejected) return;
     console.log('Updating Rejected: ' + text)
+    prepareSuccessDing();
     setIsUpdatingRejected(true);
 
     const stage = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev";
@@ -36,6 +38,7 @@ const ModernEditJobButtons = ({text, job, listNames, goToListButton, onRejectedT
 
         const data = await res.json();
         console.log("SUCCESS:", data);
+        playSuccessDing();
 
         if (typeof onRejectedToggled === 'function') {
             onRejectedToggled(text, !job.rejected);
