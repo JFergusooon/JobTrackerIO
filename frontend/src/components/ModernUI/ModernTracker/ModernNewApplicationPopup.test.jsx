@@ -103,6 +103,30 @@ describe('ModernNewApplicationPopup duplicate company notice', () => {
         expect(screen.getByRole('button', { name: 'Add Application' })).toBeEnabled();
     });
 
+    test('keeps "in" inside a LinkedIn job title instead of treating it as the location', async () => {
+        global.fetch.mockResolvedValue({
+            ok: true,
+            status: 200,
+            text: async () => `
+                <html><head><title>VForce Infotech hiring Software Engineer in Test in California, United States | LinkedIn</title></head>
+                <body>JobPosting top-card placeholder so the proxy response is long enough to be accepted.</body></html>
+            `,
+        });
+
+        renderPopup();
+        await userEvent.click(screen.getByRole('button', { name: 'Import LinkedIn Job Listing' }));
+        await userEvent.type(
+            screen.getByPlaceholderText('https://www.linkedin.com/jobs/view/...'),
+            'https://www.linkedin.com/jobs/view/4480355780'
+        );
+        await userEvent.click(screen.getByRole('button', { name: 'Import' }));
+
+        expect(await screen.findByPlaceholderText('Enter company name...')).toHaveValue('VForce Infotech');
+        expect(screen.getByPlaceholderText('Enter position...')).toHaveValue('Software Engineer in Test');
+        expect(screen.getByPlaceholderText('Remote, United States, or City, XX...')).toHaveValue('California, US');
+        expect(screen.queryByText(/Format: Remote, United States, or City, XX/)).not.toBeInTheDocument();
+    });
+
     test('retries an unavailable LinkedIn import and shows the attempt count', async () => {
         let calls = 0;
         const pending = [];

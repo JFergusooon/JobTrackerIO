@@ -324,7 +324,13 @@ const normalizeImportedLocation = (raw) => {
         return `${cityState[1].trim()}, ${cityState[2].toUpperCase()}`;
     }
 
-    // "City, State, United States" keep as-is unless we can simplify
+    // "California, United States" or "Austin, Texas, United States" -> "... US"
+    // A location that is only "United States" is handled above and stays unchanged.
+    const withUnitedStates = value.match(/^(.*?),\s*United States$/i);
+    if (withUnitedStates?.[1]?.trim()) {
+        return `${withUnitedStates[1].trim()}, US`;
+    }
+
     return value;
 };
 
@@ -339,8 +345,25 @@ const decodeHtmlEntities = (value) =>
 /**
  * LinkedIn page titles are almost always:
  *   "{Company} hiring {Position} in {Location} | LinkedIn"
+ * Job titles can contain "in" ("Software Engineer in Test"), so the location
+ * is the last "in ..." segment that actually looks like a place.
  * Never treat the part before "hiring" as the job title.
  */
+const splitOnLastLocation = (text) => {
+    const parts = String(text || '').split(/\s+in\s+/i);
+    if (parts.length < 2) return null;
+
+    for (let index = parts.length - 1; index >= 1; index -= 1) {
+        const location = parts.slice(index).join(' in ').trim();
+        const position = parts.slice(0, index).join(' in ').trim();
+        if (position && looksLikeLocation(location)) {
+            return { position, location };
+        }
+    }
+
+    return null;
+};
+
 const parseLinkedInDocumentTitle = (titleLine) => {
     if (!titleLine) return null;
 
@@ -352,25 +375,25 @@ const parseLinkedInDocumentTitle = (titleLine) => {
         return null;
     }
 
-    const hiringIn = title.match(/^(.+?)\s+hiring\s+(.+?)\s+in\s+(.+)$/i);
-    if (hiringIn) {
-        return {
-            company: hiringIn[1].trim(),
-            position: hiringIn[2].trim(),
-            location: hiringIn[3].trim(),
-        };
-    }
-
     const hiring = title.match(/^(.+?)\s+hiring\s+(.+)$/i);
-    if (hiring) {
+    if (!hiring) return null;
+
+    const company = hiring[1].trim();
+    const rest = hiring[2].trim();
+    const split = splitOnLastLocation(rest);
+    if (split) {
         return {
-            company: hiring[1].trim(),
-            position: hiring[2].trim(),
-            location: '',
+            company,
+            position: split.position,
+            location: split.location,
         };
     }
 
-    return null;
+    return {
+        company,
+        position: rest,
+        location: '',
+    };
 };
 
 const extractHiringTitleFromPayload = (payload) => {
@@ -621,10 +644,10 @@ const parseLinkedInJobMarkdown = (text) => {
         if (skipLine(line) || isViewerGeoChrome(line) || line.length < 2 || line.length > 160) continue;
 
         if (!position && !looksLikeLocation(line)) {
-            const positionInLoc = line.match(/^(.+?)\s+in\s+(.+)$/i);
-            if (positionInLoc && looksLikeLocation(positionInLoc[2])) {
-                position = positionInLoc[1].trim();
-                locationValue = locationValue || positionInLoc[2].trim();
+            const positionInLoc = splitOnLastLocation(line);
+            if (positionInLoc) {
+                position = positionInLoc.position;
+                locationValue = locationValue || positionInLoc.location;
             } else {
                 position = line;
             }
@@ -780,6 +803,7 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
         const normalized = loc.trim().toLowerCase();
         if (normalized === 'remote') return true;
         if (normalized === 'united states') return true;
+        if (looksLikeLocation(loc)) return true;
         const locationRegex = /^.+,\s*[a-z]{2}$/i;
         return locationRegex.test(loc);
     };
