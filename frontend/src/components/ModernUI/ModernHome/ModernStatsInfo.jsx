@@ -97,25 +97,29 @@ const ModernStatsInfo = ({allJobs}) => {
 
     const stats = [
         { label: 'Total Applied This Month', value: totalAppliedThisMonth, color: '#4a9eff' },
-        { label: 'Total Rejected This Month', value: totalRejectedThisMonth, color: '#ff6b6b' },
         { label: 'Jobs in Stage 2', value: totalJobsStageTwo, color: '#ffa500' },
+        { label: 'Total Rejected This Month', value: totalRejectedThisMonth, color: '#ff6b6b' },
         { label: 'Jobs in Stage 3', value: totalJobsStageThree, color: '#9DBF9E' },
         { label: 'Total Applications Ever', value: totalApplicationsEver, color: '#c9b6ff' },
         { label: 'Interviews Scheduled', value: totalInterviewsScheduled, color: '#5bc0de' },
         { label: 'Pending Responses', value: pendingResponses, color: '#f0ad4e' },
         { label: 'Interview Rate (%)', value: `${successRate}%`, color: '#5cb85c' },
         { label: 'Total Rejections Ever', value: totalRejectionsEver, color: '#d9534f' },
-        { label: 'Total Time Looking For Job', value: totalTimeLookingForJob, color: '#333' },
+        { label: 'Total Time Looking For Job', value: totalTimeLookingForJob, color: '#333', wide: true },
     ];
 
     return (
         <div className='modernStatsInfoContainer'>
-            <p className='modernStatsInfoTitle'> Stats </p>
+            <p className='modernStatsInfoTitle'>Stats</p>
             <div className='modernStatsInfoGrid'>
                 {stats.map((stat) => (
-                    <div className='modernStatsInfoItem' key={stat.label}>
-                        <p className='modernStatsInfoLabel'>{stat.label}</p>
+                    <div
+                        className={stat.wide ? 'modernStatsInfoItem modernStatsInfoItemWide' : 'modernStatsInfoItem'}
+                        key={stat.label}
+                        style={{ '--stat-color': stat.color }}
+                    >
                         <p className='modernStatsInfoValue' style={{ color: stat.color }}>{stat.value}</p>
+                        <p className='modernStatsInfoLabel'>{stat.label}</p>
                     </div>
                 ))}
             </div>

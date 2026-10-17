@@ -190,7 +190,7 @@ function ModernUIHome({ onOpenUpdates }) {
           }}>
             <ModernProfileBox userData={userInfo} />
             
-            <div style={{display: 'flex', flexDirection: 'row'}}>
+            <div className='modernQuickSideRow'>
               <div style={{width: '55%'}}>
               </div>
               <div style={{width: '45%', height: '100%'}}>
@@ -208,7 +208,7 @@ function ModernUIHome({ onOpenUpdates }) {
           </div>
 
           {/* Right Column */} 
-          <div style={{display: 'flex', flexDirection: 'column', width: '100%'}}>
+          <div style={{display: 'flex', flexDirection: 'column', width: '100%', minHeight: 0, height: '100%'}}>
             <ModernStatsChart allJobs={allJobs} />
             <ModernStatsInfo allJobs={allJobs} />
           </div>

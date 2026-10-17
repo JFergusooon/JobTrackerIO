@@ -1,8 +1,19 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import '../../../css/Modern_HomePageCSS.css';
 
-const ModernQuickNotes = ({userData}) => {
+const MIN_COLUMN_PERCENT = 45;
+const MAX_COLUMN_PERCENT = 100;
+const WIDTH_STORAGE_KEY = 'quickNotesWidthPercent';
 
+const readSavedWidth = () => {
+    const saved = Number(localStorage.getItem(WIDTH_STORAGE_KEY));
+    if (!Number.isFinite(saved)) return MIN_COLUMN_PERCENT;
+    return Math.min(MAX_COLUMN_PERCENT, Math.max(MIN_COLUMN_PERCENT, saved));
+};
+
+const ModernQuickNotes = ({userData}) => {
+const containerRef = useRef(null);
+const [columnPercent, setColumnPercent] = useState(readSavedWidth);
 const [quickNotes, setQuickNotes] = useState("");
 
     useEffect(() => {
@@ -33,8 +44,46 @@ const [quickNotes, setQuickNotes] = useState("");
     }
 };
 
+    const handleResizeStart = (event) => {
+        event.preventDefault();
+        const row = containerRef.current?.closest('.modernQuickSideRow');
+        if (!row) return;
+
+        const handle = event.currentTarget;
+        handle.setPointerCapture(event.pointerId);
+        const rowRect = row.getBoundingClientRect();
+        let nextPercent = columnPercent;
+
+        const move = (moveEvent) => {
+            const percent = ((rowRect.right - moveEvent.clientX) / rowRect.width) * 100;
+            nextPercent = Math.round(Math.min(MAX_COLUMN_PERCENT, Math.max(MIN_COLUMN_PERCENT, percent)));
+            setColumnPercent(nextPercent);
+        };
+        const stop = () => {
+            localStorage.setItem(WIDTH_STORAGE_KEY, String(nextPercent));
+            handle.removeEventListener('pointermove', move);
+            handle.removeEventListener('pointerup', stop);
+            handle.removeEventListener('pointercancel', stop);
+        };
+
+        handle.addEventListener('pointermove', move);
+        handle.addEventListener('pointerup', stop);
+        handle.addEventListener('pointercancel', stop);
+    };
+
+    const widthOfSlot = (columnPercent / MIN_COLUMN_PERCENT) * 100;
+
     return (
-        <div className='modernQuickNotesContainer'>
+        <div
+            ref={containerRef}
+            className='modernQuickNotesContainer'
+            style={{ width: `${widthOfSlot}%`, marginLeft: `${100 - widthOfSlot}%` }}
+        >
+            <div
+                className='modernQuickNotesResizeHandle'
+                onPointerDown={handleResizeStart}
+                title='Drag to resize'
+            />
             <p className='modernQuickNotesTitle'> Quick Notes </p>
             <textarea
     className='modernQuickNotesInput'
