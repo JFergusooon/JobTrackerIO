@@ -161,13 +161,14 @@ function ModernUITracker() {
         );
     };
 
-    const handleApplicationUpdated = (updatedJob) => {
+    const handleApplicationUpdated = (updatedJob, meta) => {
         if (!updatedJob?.companyName) return;
+        const previousCompanyName = meta?.previousCompanyName || updatedJob.companyName;
 
         const patchJobs = (jobs) =>
             Array.isArray(jobs)
                 ? jobs.map((job) =>
-                      job.companyName === updatedJob.companyName ? { ...job, ...updatedJob } : job
+                      job.companyName === previousCompanyName ? { ...job, ...updatedJob } : job
                   )
                 : jobs;
 
@@ -176,12 +177,12 @@ function ModernUITracker() {
         setCurJobsByListName((prevJobs) => {
             if (!Array.isArray(prevJobs)) return prevJobs;
             if (updatedJob.list !== listName) {
-                return prevJobs.filter((job) => job.companyName !== updatedJob.companyName);
+                return prevJobs.filter((job) => job.companyName !== previousCompanyName);
             }
-            const exists = prevJobs.some((job) => job.companyName === updatedJob.companyName);
+            const exists = prevJobs.some((job) => job.companyName === previousCompanyName);
             if (exists) {
                 return prevJobs.map((job) =>
-                    job.companyName === updatedJob.companyName ? { ...job, ...updatedJob } : job
+                    job.companyName === previousCompanyName ? { ...job, ...updatedJob } : job
                 );
             }
             return [...prevJobs, updatedJob];

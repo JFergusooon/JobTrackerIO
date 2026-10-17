@@ -3,7 +3,8 @@ import { playSuccessDing, prepareSuccessDing } from '../../../successDing';
 
 const ModernEditApplicationPopup = ({job, listNames, closePopup, onApplicationUpdated}) => {
 
-    const companyName = job.companyName;
+    const originalCompanyName = job.companyName;
+    const [companyName, setCompanyName] = useState(job.companyName || "");
     const [position, setPosition] = useState(job.position);
     const [location, setLocation] = useState(job.location);
     const [jobLink, setJobLink] = useState(job.jobLink);
@@ -32,13 +33,18 @@ const ModernEditApplicationPopup = ({job, listNames, closePopup, onApplicationUp
         }
     };
 
+    const trimmedCompanyName = companyName.trim();
+    const companyNameChanged = trimmedCompanyName !== originalCompanyName;
+    const companyNameOk = trimmedCompanyName.length > 0;
     const locationChanged = location !== job.location;
     const listChanged = list !== job.list;
     // Only enforce location format when the user edits Location — don't block List-only saves
     // for older/legacy location values that no longer match the current rules.
     const isLocationOk = !locationChanged || validateLocationFormat(location);
     const hasChanges =
-        (position !== job.position ||
+        companyNameOk &&
+        (companyNameChanged ||
+        position !== job.position ||
         locationChanged ||
         jobLink !== job.jobLink ||
         listChanged) && isLocationOk;
@@ -59,6 +65,7 @@ const ModernEditApplicationPopup = ({job, listNames, closePopup, onApplicationUp
     const buildPatchBody = () => {
         const body = {};
 
+        if (companyNameChanged) body.companyName = trimmedCompanyName;
         if (position !== job.position) body.position = position;
         if (locationChanged) body.location = location;
         if (jobLink !== job.jobLink) {
@@ -78,7 +85,7 @@ const ModernEditApplicationPopup = ({job, listNames, closePopup, onApplicationUp
         setSaveStatus('Saving...');
         prepareSuccessDing();
         const stage = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev";
-        const url = `${stage}/Jobs/update?username=${encodeURIComponent(localStorage.getItem('username') || '')}&companyName=${encodeURIComponent(companyName)}`;
+        const url = `${stage}/Jobs/update?username=${encodeURIComponent(localStorage.getItem('username') || '')}&companyName=${encodeURIComponent(originalCompanyName)}`;
 
         const params = buildPatchBody();
 
@@ -99,10 +106,10 @@ const ModernEditApplicationPopup = ({job, listNames, closePopup, onApplicationUp
             console.log("SUCCESS:", data);
             setSaveStatus('Success!');
             playSuccessDing();
-            const updatedJob = { ...job, ...params };
+            const updatedJob = { ...job, ...params, companyName: trimmedCompanyName };
             setTimeout(() => {
                 if (typeof onApplicationUpdated === 'function') {
-                    onApplicationUpdated(updatedJob);
+                    onApplicationUpdated(updatedJob, { previousCompanyName: originalCompanyName });
                 }
                 closePopup();
             }, 800);
@@ -144,7 +151,7 @@ const ModernEditApplicationPopup = ({job, listNames, closePopup, onApplicationUp
 
                 {/* Subtitle */}
                 <p style={{ margin: "0 0 20px", fontSize: "14px", color: "#a0a0a0" }}>
-                    Update the details for {companyName}
+                    Update the details for {originalCompanyName}
                 </p>
 
                 {/* Divider */}
@@ -152,25 +159,24 @@ const ModernEditApplicationPopup = ({job, listNames, closePopup, onApplicationUp
 
                 {/* Form Fields */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "20px", marginBottom: "20px" }}>
-                    {/* Company Name (Read-only) */}
                     <div>
                         <label style={{ fontSize: "14px", fontWeight: "600", color: "#f0f0f0", display: "block", marginBottom: "8px" }}>
                             Company Name
                         </label>
                         <input
+                            placeholder="Enter company name..."
                             value={companyName}
-                            readOnly
+                            onChange={(e) => setCompanyName(e.target.value)}
                             style={{
                                 width: "100%",
                                 padding: "12px 14px",
                                 borderRadius: "8px",
                                 border: "1px solid #3a3a3c",
                                 backgroundColor: "#2c2c2e",
-                                color: "#888",
+                                color: "#f0f0f0",
                                 fontSize: "14px",
                                 outline: "none",
                                 boxSizing: "border-box",
-                                cursor: "not-allowed",
                             }}
                         />
                     </div>
