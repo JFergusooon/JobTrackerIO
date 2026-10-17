@@ -1,8 +1,56 @@
-import React, {useEffect, useState, useRef} from 'react';
+import React, {useEffect, useLayoutEffect, useState, useRef} from 'react';
 import '../../../css/Modern_HomePageCSS.css';
 import '../../../css/Modern_TrackerPageCSS.css';
 import { FaStar } from "react-icons/fa";
 import { playSuccessDing, prepareSuccessDing } from '../../../successDing';
+
+const FitSingleLine = ({ text, maxFontSize = 20, minFontSize = 12, style }) => {
+    const ref = useRef(null);
+    const [fontSize, setFontSize] = useState(maxFontSize);
+
+    useLayoutEffect(() => {
+        const element = ref.current;
+        if (!element) return undefined;
+
+        const fit = () => {
+            const node = ref.current;
+            if (!node || node.clientWidth === 0) return;
+
+            let size = maxFontSize;
+            node.style.fontSize = `${size}px`;
+            while (size > minFontSize && node.scrollWidth > node.clientWidth + 1) {
+                size -= 0.5;
+                node.style.fontSize = `${size}px`;
+            }
+            setFontSize(size);
+        };
+
+        fit();
+        const observer = new ResizeObserver(fit);
+        observer.observe(element);
+        return () => observer.disconnect();
+    }, [text, maxFontSize, minFontSize]);
+
+    return (
+        <p
+            ref={ref}
+            style={{
+                margin: 0,
+                width: '100%',
+                minWidth: 0,
+                textAlign: 'left',
+                boxSizing: 'border-box',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                ...style,
+                fontSize,
+            }}
+        >
+            {text}
+        </p>
+    );
+};
 
 const ModernImportantJobs = ({importantJobsList, importantJobsLoading = false, onFavoriteChanged, onStageChanged}) => {
     const [favoritedJobs, setFavoritedJobs] = useState([]);
@@ -275,7 +323,12 @@ const ModernImportantJobs = ({importantJobsList, importantJobsLoading = false, o
                             <p style={{margin: '0px', fontSize: '28px', width: '100%', textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>{jobInfo.company}</p>
                             
                         </div>
-                        <p style={{margin: '0px', fontSize: '20px', textAlign: 'left', paddingLeft: '32px'}}>{jobInfo.position}</p>
+                        <FitSingleLine
+                            text={jobInfo.position}
+                            maxFontSize={20}
+                            minFontSize={12}
+                            style={{ paddingLeft: '32px' }}
+                        />
                     </div>
                     {/*<div style={{ marginLeft: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', width: '100%' }}>*/}
                         <div style={{display: 'flex', flexDirection: 'column', gap: '3px', margin: '5px', textAlign: 'right'}}>

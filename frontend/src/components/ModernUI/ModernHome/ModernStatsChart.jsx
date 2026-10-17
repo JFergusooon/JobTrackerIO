@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import '../../../css/Modern_HomePageCSS.css';
 import {
   LineChart,
@@ -10,62 +10,53 @@ import {
   ResponsiveContainer
 } from "recharts";
 
+const RANGE_OPTIONS = [3, 6, 12];
+
 const ModernStatsChart = ({allJobs}) => {
+    const [rangeMonths, setRangeMonths] = useState(6);
 
     function countJobsByMonth(jobs) {
-    const result = {};
+        const result = {};
 
-    jobs.forEach(job => {
-        if (!job.dateApplied) return;
+        jobs.forEach(job => {
+            if (!job.dateApplied) return;
 
-        const date = new Date(job.dateApplied);
+            const date = new Date(job.dateApplied);
+            const year = date.getFullYear();
+            const month = date.getMonth();
+            const key = `${year}-${month}`;
 
-        const year = date.getFullYear();
-        const month = date.getMonth(); // 0–11
+            result[key] = (result[key] || 0) + 1;
+        });
 
-        const key = `${year}-${month}`; // e.g. "2025-11"
-
-        result[key] = (result[key] || 0) + 1;
-    });
-
-    return result;
-}
+        return result;
+    }
 
     const jobsByMonth = countJobsByMonth(allJobs);
+    const now = new Date();
+    const months = Array.from({ length: rangeMonths }, (_, i) => {
+        const d = new Date(now.getFullYear(), now.getMonth() - (rangeMonths - 1 - i), 1);
 
+        return {
+            key: `${d.getFullYear()}-${d.getMonth()}`,
+            label: d.toLocaleString('default', { month: 'short' })
+        };
+    });
 
-const now = new Date();
-
-const last6Months = Array.from({ length: 6 }, (_, i) => {
-    const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
-
-    return {
-        key: `${d.getFullYear()}-${d.getMonth()}`,
-        label: d.toLocaleString('default', { month: 'short' }) // "Jan", etc.
-    };
-});
-
-
-const filteredData = last6Months.map(({ key, label }) => ({
-    month: label,
-    jobs: jobsByMonth[key] || 0
-}));
+    const filteredData = months.map(({ key, label }) => ({
+        month: label,
+        jobs: jobsByMonth[key] || 0
+    }));
 
     return (
         <div className='modernStatsChartContainer'>
-            <p className='modernStatsChartTitle'> Jobs Applied Over Last 6 Months </p>
+            <p className='modernStatsChartTitle'> Jobs Applied Over Last {rangeMonths} Months </p>
 
-            <div style={{
-    width: "90%",
-    height: 300,
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-  }}>
+            <div className='modernStatsChartPlot'>
                 <ResponsiveContainer width="95%" height="100%">
                     <LineChart data={filteredData}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" />
+                        <XAxis dataKey="month" interval={0} tick={{ fontSize: rangeMonths === 12 ? 11 : 12 }} />
                         <YAxis />
                         <Tooltip />
                         <Line
@@ -76,6 +67,19 @@ const filteredData = last6Months.map(({ key, label }) => ({
                         />
                     </LineChart>
                 </ResponsiveContainer>
+            </div>
+
+            <div className='modernStatsRangeButtons'>
+                {RANGE_OPTIONS.map((monthsOption) => (
+                    <button
+                        key={monthsOption}
+                        type="button"
+                        className={monthsOption === rangeMonths ? 'modernStatsRangeButton modernStatsRangeButtonActive' : 'modernStatsRangeButton'}
+                        onClick={() => setRangeMonths(monthsOption)}
+                    >
+                        {monthsOption}mo
+                    </button>
+                ))}
             </div>
         </div>
     );
