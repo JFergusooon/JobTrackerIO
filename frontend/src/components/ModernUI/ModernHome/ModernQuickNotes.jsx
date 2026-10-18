@@ -1,20 +1,41 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import '../../../css/Modern_HomePageCSS.css';
 
-const MIN_COLUMN_PERCENT = 45;
-const MAX_COLUMN_PERCENT = 100;
+const MIN_NOTES_WIDTH = 200;
 const WIDTH_STORAGE_KEY = 'quickNotesWidthPercent';
 
 const readSavedWidth = () => {
     const saved = Number(localStorage.getItem(WIDTH_STORAGE_KEY));
-    if (!Number.isFinite(saved)) return MIN_COLUMN_PERCENT;
-    return Math.min(MAX_COLUMN_PERCENT, Math.max(MIN_COLUMN_PERCENT, saved));
+    if (!Number.isFinite(saved)) return 0.45;
+    const fraction = saved > 1 ? saved / 100 : saved;
+    return Math.min(1, Math.max(0, fraction));
 };
 
 const ModernQuickNotes = ({userData}) => {
 const containerRef = useRef(null);
-const [columnPercent, setColumnPercent] = useState(readSavedWidth);
+const [rowFraction, setRowFraction] = useState(readSavedWidth);
+const [measures, setMeasures] = useState({ row: 0, slot: 0 });
 const [quickNotes, setQuickNotes] = useState("");
+
+    useLayoutEffect(() => {
+        const notes = containerRef.current;
+        const row = notes?.closest('.modernQuickSideRow');
+        const slot = notes?.parentElement;
+        if (!row || !slot) return undefined;
+
+        const update = () => {
+            setMeasures({
+                row: row.getBoundingClientRect().width,
+                slot: slot.getBoundingClientRect().width,
+            });
+        };
+
+        update();
+        const observer = new ResizeObserver(update);
+        observer.observe(row);
+        observer.observe(slot);
+        return () => observer.disconnect();
+    }, []);
 
     useEffect(() => {
     if (userData?.quickNotes !== undefined) {
@@ -46,21 +67,30 @@ const [quickNotes, setQuickNotes] = useState("");
 
     const handleResizeStart = (event) => {
         event.preventDefault();
-        const row = containerRef.current?.closest('.modernQuickSideRow');
-        if (!row) return;
+        const notes = containerRef.current;
+        const row = notes?.closest('.modernQuickSideRow');
+        const slot = notes?.parentElement;
+        if (!notes || !row || !slot) return;
 
         const handle = event.currentTarget;
         handle.setPointerCapture(event.pointerId);
-        const rowRect = row.getBoundingClientRect();
-        let nextPercent = columnPercent;
+        const startX = event.clientX;
+        const startWidth = notes.getBoundingClientRect().width;
+        let nextFraction = rowFraction;
 
         const move = (moveEvent) => {
-            const percent = ((rowRect.right - moveEvent.clientX) / rowRect.width) * 100;
-            nextPercent = Math.round(Math.min(MAX_COLUMN_PERCENT, Math.max(MIN_COLUMN_PERCENT, percent)));
-            setColumnPercent(nextPercent);
+            const rowWidth = row.getBoundingClientRect().width;
+            const slotWidth = slot.getBoundingClientRect().width;
+            if (rowWidth <= 0) return;
+
+            const nextWidth = startWidth + (startX - moveEvent.clientX);
+            const minWidth = Math.max(MIN_NOTES_WIDTH, slotWidth);
+            const clamped = Math.min(rowWidth, Math.max(minWidth, nextWidth));
+            nextFraction = clamped / rowWidth;
+            setRowFraction(nextFraction);
         };
         const stop = () => {
-            localStorage.setItem(WIDTH_STORAGE_KEY, String(nextPercent));
+            localStorage.setItem(WIDTH_STORAGE_KEY, String(nextFraction));
             handle.removeEventListener('pointermove', move);
             handle.removeEventListener('pointerup', stop);
             handle.removeEventListener('pointercancel', stop);
@@ -71,13 +101,22 @@ const [quickNotes, setQuickNotes] = useState("");
         handle.addEventListener('pointercancel', stop);
     };
 
-    const widthOfSlot = (columnPercent / MIN_COLUMN_PERCENT) * 100;
+    let widthOfSlot = 100;
+    let marginLeft = 0;
+    if (measures.row > 0 && measures.slot > 0) {
+        const desired = Math.min(
+            measures.row,
+            Math.max(measures.slot, Math.max(MIN_NOTES_WIDTH, rowFraction * measures.row))
+        );
+        widthOfSlot = (desired / measures.slot) * 100;
+        marginLeft = 100 - widthOfSlot;
+    }
 
     return (
         <div
             ref={containerRef}
             className='modernQuickNotesContainer'
-            style={{ width: `${widthOfSlot}%`, marginLeft: `${100 - widthOfSlot}%` }}
+            style={{ width: `${widthOfSlot}%`, marginLeft: `${marginLeft}%` }}
         >
             <div
                 className='modernQuickNotesResizeHandle'

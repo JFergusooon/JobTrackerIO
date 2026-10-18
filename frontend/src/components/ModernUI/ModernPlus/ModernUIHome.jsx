@@ -193,9 +193,9 @@ function ModernUIHome({ onOpenUpdates }) {
             <div className='modernQuickSideRow'>
               <div style={{width: '55%'}}>
               </div>
-              <div style={{width: '45%', height: '100%'}}>
-                  <ModernQuickSettings onOpenUpdates={onOpenUpdates} onOpenNewList={toggleNewListPopup} onOpenFeedback={onOpenFeedback} />
+              <div style={{width: '45%', minWidth: '200px', height: '100%'}}>
                   <ModernQuickNotes userData={userInfo} />
+                  <ModernQuickSettings onOpenUpdates={onOpenUpdates} onOpenNewList={toggleNewListPopup} onOpenFeedback={onOpenFeedback} />
               </div>
             </div>
             
