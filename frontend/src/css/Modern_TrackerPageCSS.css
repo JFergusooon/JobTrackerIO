@@ -4,7 +4,7 @@
     gap: 6px;
     padding: 5px;
     align-items: center;
-    border: 0.1px solid black;
+    border: none;
     border-radius: 10px;
     box-sizing: border-box;
     height: 100%;

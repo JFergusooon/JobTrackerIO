@@ -24,7 +24,8 @@ const ModernListManagement = ({
             gap: '6px',
             boxSizing: 'border-box',
             flexShrink: 0,
-            marginTop: 'auto'
+            marginTop: 'auto',
+            transform: 'translateY(4px)'
         }}>
             <p style={{ margin: '0px', fontSize: '20px', color: 'black', fontWeight: '600' }}>
                 List Management
