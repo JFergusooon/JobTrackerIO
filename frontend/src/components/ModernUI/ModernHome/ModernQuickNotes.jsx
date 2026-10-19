@@ -23,18 +23,30 @@ const [quickNotes, setQuickNotes] = useState("");
         const slot = notes?.parentElement;
         if (!row || !slot) return undefined;
 
+        let frame = 0;
         const update = () => {
-            setMeasures({
-                row: row.getBoundingClientRect().width,
-                slot: slot.getBoundingClientRect().width,
-            });
+            const nextRow = Math.round(row.getBoundingClientRect().width);
+            const nextSlot = Math.round(slot.getBoundingClientRect().width);
+            setMeasures((current) => (
+                current.row === nextRow && current.slot === nextSlot
+                    ? current
+                    : { row: nextRow, slot: nextSlot }
+            ));
         };
 
-        update();
-        const observer = new ResizeObserver(update);
+        const schedule = () => {
+            cancelAnimationFrame(frame);
+            frame = requestAnimationFrame(update);
+        };
+
+        schedule();
+        const observer = new ResizeObserver(schedule);
         observer.observe(row);
         observer.observe(slot);
-        return () => observer.disconnect();
+        return () => {
+            cancelAnimationFrame(frame);
+            observer.disconnect();
+        };
     }, []);
 
     useEffect(() => {

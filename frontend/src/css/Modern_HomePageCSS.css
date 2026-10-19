@@ -19,7 +19,7 @@
     border-radius: 20px;
     width: 100%;
     min-width: 200px;
-    height: 237.6px;
+    height: 240.1px;
     flex-shrink: 0;
     box-sizing: border-box;
     background: rgba(255, 255, 255, 0.4);
@@ -155,6 +155,7 @@
 
 .modernRecentListsContainer {
     width: 100%;
+    flex-shrink: 0;
     background: rgba(255, 255, 255, 0.4);
     border: solid 1px black;
     border-radius: 20px;
@@ -210,11 +211,61 @@
 
 .modernImportantJobsContainer {
     width: 100%;
-    height: 69.5%;
+    height: calc(69.5% + 2px);
+    flex: 0 0 calc(69.5% + 2px);
     background: rgba(255, 255, 255, 0.4);
     border: solid 1px black;
     border-radius: 20px;
     margin-bottom: 0px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.modernImportantJobsScroll {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    overflow-y: auto;
+    padding-right: 4px;
+    container-type: size;
+}
+
+.modernImportantJobCard {
+    flex: 0 0 calc((100cqh - 6px) / 3 - 5px);
+    height: calc((100cqh - 6px) / 3 - 5px);
+    max-height: calc((100cqh - 6px) / 3 - 5px);
+    min-height: 0;
+    box-sizing: border-box;
+}
+
+.modernImportantJobCard:last-child {
+    margin-bottom: 7px;
+}
+
+.modernInterviewDateTimeInput {
+    width: 18px;
+    height: 20px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: transparent;
+    cursor: pointer;
+}
+
+.modernInterviewDateTimeInput::-webkit-datetime-edit,
+.modernInterviewDateTimeInput::-webkit-datetime-edit-fields-wrapper {
+    display: none;
+}
+
+.modernInterviewDateTimeInput::-webkit-calendar-picker-indicator {
+    margin: 0;
+    padding: 0;
+    cursor: pointer;
 }
 
 .modernImportantJobsTitle {

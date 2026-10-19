@@ -5,6 +5,12 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { BrowserRouter } from 'react-router-dom';
 
+window.addEventListener('error', (event) => {
+  if (String(event.message || '').includes('ResizeObserver loop')) {
+    event.stopImmediatePropagation();
+  }
+}, true);
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>

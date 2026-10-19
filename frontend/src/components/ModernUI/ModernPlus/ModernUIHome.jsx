@@ -186,7 +186,7 @@ function ModernUIHome({ onOpenUpdates }) {
           {/* Left Column */}
           <div style={{display: 'flex', flexDirection: 'column', 
                     gap: '10px'
-                    , padding: '5px'
+                    , padding: '0 5px 5px'
           }}>
             <ModernProfileBox userData={userInfo} />
             
@@ -202,7 +202,7 @@ function ModernUIHome({ onOpenUpdates }) {
           </div>
           
           {/* Middle Column */}
-          <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
+          <div style={{display: 'flex', flexDirection: 'column', gap: '10px', height: '100%', minHeight: 0, overflow: 'hidden'}}>
                                                 <ModernImportantJobs importantJobsList={allJobs} importantJobsLoading={isJobsLoading} onFavoriteChanged={handleFavoriteChanged} onStageChanged={handleStageChanged} />
             <ModernRecentLists />
           </div>

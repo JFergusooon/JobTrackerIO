@@ -10,25 +10,36 @@ const FitSingleLine = ({ text, maxFontSize = 20, minFontSize = 12, style }) => {
 
     useLayoutEffect(() => {
         const element = ref.current;
-        if (!element) return undefined;
+        const parent = element?.parentElement;
+        if (!element || !parent) return undefined;
 
+        let frame = 0;
         const fit = () => {
             const node = ref.current;
             if (!node || node.clientWidth === 0) return;
 
+            const available = node.clientWidth;
             let size = maxFontSize;
             node.style.fontSize = `${size}px`;
-            while (size > minFontSize && node.scrollWidth > node.clientWidth + 1) {
+            while (size > minFontSize && node.scrollWidth > available + 1) {
                 size -= 0.5;
                 node.style.fontSize = `${size}px`;
             }
-            setFontSize(size);
+            setFontSize((current) => (current === size ? current : size));
         };
 
-        fit();
-        const observer = new ResizeObserver(fit);
-        observer.observe(element);
-        return () => observer.disconnect();
+        const schedule = () => {
+            cancelAnimationFrame(frame);
+            frame = requestAnimationFrame(fit);
+        };
+
+        schedule();
+        const observer = new ResizeObserver(schedule);
+        observer.observe(parent);
+        return () => {
+            cancelAnimationFrame(frame);
+            observer.disconnect();
+        };
     }, [text, maxFontSize, minFontSize]);
 
     return (
@@ -52,6 +63,54 @@ const FitSingleLine = ({ text, maxFontSize = 20, minFontSize = 12, style }) => {
     );
 };
 
+const userTimeZoneLabel = new Intl.DateTimeFormat(undefined, { timeZoneName: 'short' })
+    .formatToParts(new Date())
+    .find((part) => part.type === 'timeZoneName')?.value || '';
+
+const parseInterviewDateTime = (value) => {
+    const trimmed = String(value ?? '').trim();
+    if (!trimmed || trimmed === '00/00/0000') {
+        return { date: '', time: '' };
+    }
+
+    const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2}))?/);
+    if (isoMatch) {
+        return {
+            date: `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`,
+            time: isoMatch[4] ? `${isoMatch[4]}:${isoMatch[5]}` : '',
+        };
+    }
+
+    const slashMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[T\s](\d{1,2}):(\d{2}))?/);
+    if (slashMatch) {
+        return {
+            date: `${slashMatch[3]}-${slashMatch[1].padStart(2, '0')}-${slashMatch[2].padStart(2, '0')}`,
+            time: slashMatch[4] ? `${slashMatch[4].padStart(2, '0')}:${slashMatch[5]}` : '',
+        };
+    }
+
+    return { date: '', time: '' };
+};
+
+const formatInterviewDateLabel = (value) => {
+    const { date } = parseInterviewDateTime(value);
+    if (!date) return '';
+    const [year, month, day] = date.split('-');
+    return `${month}/${day}/${year.slice(-2)}`;
+};
+
+const formatInterviewTimeLabel = (value) => {
+    const { time } = parseInterviewDateTime(value);
+    if (!time) return '';
+
+    const [hourString, minute] = time.split(':');
+    let hour = Number(hourString);
+    const suffix = hour >= 12 ? 'PM' : 'AM';
+    hour = hour % 12 || 12;
+    const zone = userTimeZoneLabel ? ` ${userTimeZoneLabel}` : '';
+    return `${hour}:${minute} ${suffix}${zone}`;
+};
+
 const ModernImportantJobs = ({importantJobsList, importantJobsLoading = false, onFavoriteChanged, onStageChanged}) => {
     const [favoritedJobs, setFavoritedJobs] = useState([]);
     const [editedNotes, setEditedNotes] = useState({});
@@ -59,16 +118,6 @@ const ModernImportantJobs = ({importantJobsList, importantJobsLoading = false, o
 
     const stage = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev";
     const normalizeCompanyKey = (name) => (name ?? '').trim().toLowerCase();
-
-    // Format date from YYYY-MM-DD to MM/DD/YYYY for display
-    const formatDateForDisplay = (dateStr) => {
-        if (!dateStr || typeof dateStr !== 'string') return "";
-        const parts = dateStr.split('-');
-        if (parts.length !== 3) return dateStr;
-        const [year, month, day] = parts;
-        if (!year || !month || !day) return "";
-        return `${month}/${day}/${year}`;
-    };
 
     // Map numeric stage values to display names
     const STAGE_VALUE_MAP = {
@@ -106,6 +155,7 @@ const ModernImportantJobs = ({importantJobsList, importantJobsLoading = false, o
                 companyName,
                 position: Array.isArray(job.position) ? job.position.join(', ') : (job.position ?? "Unknown Position"),
                 interviewDate: job.nextInterviewDate ?? "",
+                location: job.location ?? "",
                 notes: job.notes ?? "",
                 favorited: true,
                 favorite: true,
@@ -115,23 +165,54 @@ const ModernImportantJobs = ({importantJobsList, importantJobsLoading = false, o
         setFavoritedJobs(nextFavoritedJobs);
     }, [importantJobsList]);
 
-    const updateDate = async (jobInfo, newDate) => {
+    const updateInterviewDateTime = async (jobInfo, nextDate, nextTime) => {
         const username = localStorage.getItem('username') || 'JFergusooon';
         const companyName = jobInfo.companyName ?? jobInfo.company;
         const companyKey = normalizeCompanyKey(companyName);
 
-        if (!companyName || !newDate) {
+        if (!companyName || !nextDate) {
             return;
         }
         prepareSuccessDing();
 
-        // Parse date (format: YYYY-MM-DD)
-        const [year, month, day] = newDate.split('-');
+        const [year, month, day] = nextDate.split('-');
+        const isClear = month === '00' && day === '00' && year === '0000';
+        const [hour, minute] = !isClear && nextTime ? nextTime.split(':') : [];
+        const params = new URLSearchParams({
+            username,
+            companyName,
+            nextInterviewDateMonth: month,
+            nextInterviewDateDay: day,
+            nextInterviewDateYear: year,
+        });
+        if (hour && minute) {
+            params.set('nextInterviewDateHour', hour);
+            params.set('nextInterviewDateMinute', minute);
+        }
 
-        const url = `${stage}/Jobs/updateNextInterviewDate?username=${encodeURIComponent(username)}&companyName=${encodeURIComponent(companyName)}&nextInterviewDateMonth=${month}&nextInterviewDateDay=${day}&nextInterviewDateYear=${year}`;
+        const storedValue = isClear
+            ? '00/00/0000'
+            : hour && minute
+                ? `${month}/${day}/${year} ${hour}:${minute}`
+                : `${month}/${day}/${year}`;
+        const previousValue = jobInfo.interviewDate ?? jobInfo.nextInterviewDate ?? '';
+
+        const applyStoredDate = (value) => {
+            setFavoritedJobs((prev) =>
+                prev.map((job) =>
+                    normalizeCompanyKey(job.companyName ?? job.company) === companyKey
+                        ? { ...job, interviewDate: value, nextInterviewDate: value }
+                        : job
+                )
+            );
+        };
+
+        if (isClear) {
+            applyStoredDate(storedValue);
+        }
 
         try {
-            const res = await fetch(url, {
+            const res = await fetch(`${stage}/Jobs/updateNextInterviewDate?${params.toString()}`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json"
@@ -142,18 +223,13 @@ const ModernImportantJobs = ({importantJobsList, importantJobsLoading = false, o
                 throw new Error(`Failed with status ${res.status}`);
             }
 
-            // Update local state with new date
-            setFavoritedJobs((prev) =>
-                prev.map((job) =>
-                    normalizeCompanyKey(job.companyName ?? job.company) === companyKey
-                        ? { ...job, interviewDate: newDate }
-                        : job
-                )
-            );
+            applyStoredDate(storedValue);
 
-            console.log(`Updated ${companyName} interview date to ${newDate}`);
             playSuccessDing();
         } catch (err) {
+            if (isClear) {
+                applyStoredDate(previousValue);
+            }
             console.error("Failed to update interview date:", err);
         }
     };
@@ -309,35 +385,62 @@ const ModernImportantJobs = ({importantJobsList, importantJobsLoading = false, o
         const currentNotes = editedNotes[companyKey] !== undefined ? editedNotes[companyKey] : jobInfo.notes;
 
 
+        const interviewParts = parseInterviewDateTime(jobInfo.interviewDate);
+        const locationLabel = String(jobInfo.location ?? '').trim();
+        const rawJobLink = String(jobInfo.jobLink ?? '').trim();
+        const jobLink = rawJobLink && !/^n\/?a$/i.test(rawJobLink) ? rawJobLink : '';
+        const jobLinkHref = jobLink
+            ? (/^https?:\/\//i.test(jobLink) ? jobLink : `https://${jobLink}`)
+            : '';
+
         return (
-        <div key={`${jobInfo.company}-${index}`} style={{ height: '150px', background: 'rgba(255, 255, 255, 0.4)', border: '1px solid black', borderRadius: '20px', margin: '3px 5px', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', flexDirection: 'row', height: '70px', width: '100%'}}>
-                <div style={{ display: 'flex', flexDirection: 'row', gap: '100px', margin: '5px', width: '100%' }}>
-                    <div style={{ minWidth: 0, width: '100%' }}>
-                        <div style={{display: 'flex', flexDirection: 'row'}}>
+        <div key={`${jobInfo.company}-${index}`} className='modernImportantJobCard' style={{ background: 'rgba(255, 255, 255, 0.4)', border: '1px solid black', borderRadius: '20px', marginLeft: '5px', marginRight: '5px', display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', flexDirection: 'row', width: '100%', minWidth: 0, flexShrink: 1, minHeight: 0}}>
+                <div style={{ display: 'flex', flexDirection: 'row', gap: '8px', margin: '4px 5px', width: '100%', minWidth: 0 }}>
+                    <div style={{ minWidth: 0, flex: '1 1 auto' }}>
+                        <div style={{display: 'flex', flexDirection: 'row', alignItems: 'baseline', minWidth: 0, width: '100%'}}>
                             <FaStar
                                 onClick={() => toggleFavorite(jobInfo, index)}
-                                style={{ color: (jobInfo.favorited ?? jobInfo.favorite) ? "orange" : "gray", marginTop: '10px', marginLeft: '10px', cursor: 'pointer', paddingRight: '10px' }}
+                                style={{ color: (jobInfo.favorited ?? jobInfo.favorite) ? "orange" : "gray", marginTop: '4px', marginLeft: '8px', cursor: 'pointer', paddingRight: '8px', flexShrink: 0 }}
                                 title={(jobInfo.favorited ?? jobInfo.favorite) ? 'Unfavorite' : 'Favorite'}
                             />
-                            <p style={{margin: '0px', fontSize: '28px', width: '100%', textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>{jobInfo.company}</p>
-                            
+                            <p style={{margin: '0px', fontSize: '28px', flex: '0 1 auto', minWidth: 0, textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>{jobInfo.company}</p>
+                            {locationLabel ? (
+                                <p style={{margin: '0 0 0 8px', fontSize: '14px', color: '#444', minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>- {locationLabel}</p>
+                            ) : null}
                         </div>
                         <FitSingleLine
                             text={jobInfo.position}
                             maxFontSize={20}
                             minFontSize={12}
-                            style={{ paddingLeft: '32px' }}
+                            style={{ paddingLeft: '33px' }}
                         />
                     </div>
                     {/*<div style={{ marginLeft: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', width: '100%' }}>*/}
-                        <div style={{display: 'flex', flexDirection: 'column', gap: '3px', margin: '5px', textAlign: 'right'}}>
-                            <div style={{display: 'flex', flexDirection: 'row', gap: '3px', textAlign: 'right'}}>
-                                <p style={{margin: '0px', fontSize: '15px', textAlign: 'right'}}> Interview Date: {formatDateForDisplay(jobInfo.interviewDate)} </p>
-                                <input type="date" value={jobInfo.interviewDate || ""} onChange={(e) => updateDate(jobInfo, e.target.value)}
-                                        style={{ width: '18px', height: '20px', padding: 0, border: 'none', color: 'transparent', cursor: 'pointer'}}/>
-                            </div>
-                            <div style={{display: 'flex', flexDirection: 'row', gap: '3px', margin: '5px', width: '100%', justifyContent: 'right'}}>
+                        <div style={{display: 'flex', flexDirection: 'column', gap: '2px', margin: '2px 0', textAlign: 'right', flexShrink: 1, minWidth: 0}}>
+                            <div style={{display: 'flex', flexDirection: 'row', gap: '4px', alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'nowrap'}}>
+                                    <p style={{margin: '0px', fontSize: '15px', whiteSpace: 'nowrap'}}>Interview Date:</p>
+                                    <input
+                                        type="datetime-local"
+                                        className="modernInterviewDateTimeInput"
+                                        value={interviewParts.date ? `${interviewParts.date}T${interviewParts.time || '00:00'}` : ''}
+                                        title={userTimeZoneLabel ? `Date and time in ${userTimeZoneLabel}` : 'Local date and time'}
+                                        onChange={(e) => {
+                                            const nextValue = e.target.value;
+                                            if (!nextValue) {
+                                                updateInterviewDateTime(jobInfo, '0000-00-00', '');
+                                                return;
+                                            }
+                                            const [nextDate, nextTime = ''] = nextValue.split('T');
+                                            updateInterviewDateTime(jobInfo, nextDate, nextTime.slice(0, 5));
+                                        }}
+                                    />
+                                    <p style={{margin: '0px', fontSize: '13px', whiteSpace: 'nowrap'}}>{formatInterviewDateLabel(jobInfo.interviewDate)}</p>
+                                    {formatInterviewTimeLabel(jobInfo.interviewDate) ? (
+                                        <p style={{margin: '0px', fontSize: '13px', whiteSpace: 'nowrap'}}>{formatInterviewTimeLabel(jobInfo.interviewDate)}</p>
+                                    ) : null}
+                                </div>
+                            <div style={{display: 'flex', flexDirection: 'row', gap: '3px', margin: '5px', paddingRight: '6px', boxSizing: 'border-box', width: '100%', justifyContent: 'right'}}>
                                 <p style={{margin: '0px', fontSize: '15px'}}>Stage:</p>
                                 <select 
                                     value={STAGE_VALUE_MAP[String(jobInfo.stage)] || "applied"}
@@ -355,9 +458,16 @@ const ModernImportantJobs = ({importantJobsList, importantJobsLoading = false, o
                     {/*</div>*/}
                 </div>
             </div>
-            <div style={{ height: '90px', display: 'flex', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '6px' }}>
-                <p style={{width: '10%', margin: '0 5px 0 5px', textAlign: 'right', paddingTop: '2px', color: 'gray'}}>Notes: </p>
-                <textarea value={currentNotes} onChange={(e) => handleNotesChange(jobInfo, e.target.value)} style={{height: '90%', width: '95%', borderRadius: '20px', marginRight: '5px', resize: 'none', padding: '4px 8px', boxSizing: 'border-box', verticalAlign: 'top', textAlign: 'left', overflow: 'auto', border: '1px solid var(--nav-background)'}} placeholder="Add notes..." />
+            <div style={{ flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '2px', paddingBottom: '4px' }}>
+                <div style={{ width: '10%', margin: '0 5px 0 5px', alignSelf: 'stretch', display: 'flex', justifyContent: 'flex-end' }}>
+                    <div style={{ position: 'relative', height: '100%' }}>
+                        <p style={{ margin: 0, paddingTop: '2px', color: 'gray', whiteSpace: 'nowrap' }}>Notes:</p>
+                        {jobLinkHref ? (
+                            <a href={jobLinkHref} target="_blank" rel="noreferrer" style={{ position: 'absolute', left: 0, bottom: '10px', color: '#1a4fbf', fontSize: '13px', whiteSpace: 'nowrap' }}>Job Link</a>
+                        ) : null}
+                    </div>
+                </div>
+                <textarea value={currentNotes} onChange={(e) => handleNotesChange(jobInfo, e.target.value)} style={{height: 'calc(100% - 10px)', width: '95%', borderRadius: '20px', marginRight: '5px', resize: 'none', padding: '4px 8px', boxSizing: 'border-box', verticalAlign: 'top', textAlign: 'left', overflow: 'auto', border: '1px solid var(--nav-background)'}} placeholder="Add notes..." />
             </div>
         </div>
     )};
@@ -367,7 +477,7 @@ const ModernImportantJobs = ({importantJobsList, importantJobsLoading = false, o
     return (
         <div className='modernImportantJobsContainer'>
             <p className='modernImportantJobsTitle'> Important Interviews </p>
-            <div className='modernImportantJobsScroll' style={{display: 'flex', flexDirection: 'column', gap: '3px', maxHeight: '480px', overflowY: 'auto', paddingRight: '4px'}}>
+            <div className='modernImportantJobsScroll'>
                 {importantJobsLoading ? (
                     <div className='modernSearchLoadingContainer' style={{marginTop: '20px'}}>
                         <div className='modernListLoadingBadge'>
