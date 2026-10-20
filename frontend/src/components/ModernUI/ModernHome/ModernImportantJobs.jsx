@@ -99,6 +99,32 @@ const formatInterviewDateLabel = (value) => {
     return `${month}/${day}/${year.slice(-2)}`;
 };
 
+const interviewSortKey = (job) => {
+    const { date, time } = parseInterviewDateTime(job?.interviewDate ?? job?.nextInterviewDate);
+    if (!date) return '';
+    return `${date}T${time || '00:00'}`;
+};
+
+const compareCompanyName = (a, b) => {
+    const aName = String(a?.companyName ?? a?.company ?? '').trim();
+    const bName = String(b?.companyName ?? b?.company ?? '').trim();
+    return aName.localeCompare(bName, undefined, { sensitivity: 'base' });
+};
+
+const sortImportantJobs = (jobs) => {
+    return [...jobs].sort((a, b) => {
+        const aKey = interviewSortKey(a);
+        const bKey = interviewSortKey(b);
+        if (aKey && bKey) {
+            const byDate = aKey.localeCompare(bKey);
+            return byDate !== 0 ? byDate : compareCompanyName(a, b);
+        }
+        if (aKey) return -1;
+        if (bKey) return 1;
+        return compareCompanyName(a, b);
+    });
+};
+
 const formatInterviewTimeLabel = (value) => {
     const { time } = parseInterviewDateTime(value);
     if (!time) return '';
@@ -162,7 +188,7 @@ const ModernImportantJobs = ({importantJobsList, importantJobsLoading = false, o
             };
         });
 
-        setFavoritedJobs(nextFavoritedJobs);
+        setFavoritedJobs(sortImportantJobs(nextFavoritedJobs));
     }, [importantJobsList]);
 
     const updateInterviewDateTime = async (jobInfo, nextDate, nextTime) => {
@@ -199,11 +225,11 @@ const ModernImportantJobs = ({importantJobsList, importantJobsLoading = false, o
 
         const applyStoredDate = (value) => {
             setFavoritedJobs((prev) =>
-                prev.map((job) =>
+                sortImportantJobs(prev.map((job) =>
                     normalizeCompanyKey(job.companyName ?? job.company) === companyKey
                         ? { ...job, interviewDate: value, nextInterviewDate: value }
                         : job
-                )
+                ))
             );
         };
 
