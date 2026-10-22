@@ -100,6 +100,11 @@ describe('ModernNewApplicationPopup duplicate company notice', () => {
             'An application for "Acme" in "Spring 2026" already exists.'
         );
         expect(screen.getByPlaceholderText('Enter company name...')).toHaveValue('Acme');
+        expect(screen.getByText('Unable to Import Workplace, please set it yourself')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Add Application' })).toBeDisabled();
+
+        await userEvent.selectOptions(screen.getAllByRole('combobox')[0], 'Remote');
+        expect(screen.queryByText('Unable to Import Workplace, please set it yourself')).not.toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Add Application' })).toBeEnabled();
     });
 

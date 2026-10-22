@@ -7,6 +7,7 @@ const ModernEditApplicationPopup = ({job, listNames, closePopup, onApplicationUp
     const [companyName, setCompanyName] = useState(job.companyName || "");
     const [position, setPosition] = useState(job.position);
     const [location, setLocation] = useState(job.location);
+    const [workplaceType, setWorkplaceType] = useState(job.workplaceType || "");
     const [jobLink, setJobLink] = useState(job.jobLink);
     const [list, setList] = useState(job.list);
     const [locationValidationError, setLocationValidationError] = useState("");
@@ -37,6 +38,7 @@ const ModernEditApplicationPopup = ({job, listNames, closePopup, onApplicationUp
     const companyNameChanged = trimmedCompanyName !== originalCompanyName;
     const companyNameOk = trimmedCompanyName.length > 0;
     const locationChanged = location !== job.location;
+    const workplaceChanged = workplaceType !== (job.workplaceType || "");
     const listChanged = list !== job.list;
     // Only enforce location format when the user edits Location — don't block List-only saves
     // for older/legacy location values that no longer match the current rules.
@@ -46,6 +48,7 @@ const ModernEditApplicationPopup = ({job, listNames, closePopup, onApplicationUp
         (companyNameChanged ||
         position !== job.position ||
         locationChanged ||
+        workplaceChanged ||
         jobLink !== job.jobLink ||
         listChanged) && isLocationOk;
 
@@ -68,6 +71,7 @@ const ModernEditApplicationPopup = ({job, listNames, closePopup, onApplicationUp
         if (companyNameChanged) body.companyName = trimmedCompanyName;
         if (position !== job.position) body.position = position;
         if (locationChanged) body.location = location;
+        if (workplaceChanged) body.workplaceType = workplaceType;
         if (jobLink !== job.jobLink) {
             body.jobLink = jobLink;
             // New job link means re-applied — refresh dateApplied
@@ -239,6 +243,33 @@ const ModernEditApplicationPopup = ({job, listNames, closePopup, onApplicationUp
                                 {locationValidationError}
                             </span>
                         )}
+                    </div>
+
+                    <div>
+                        <label style={{ fontSize: "14px", fontWeight: "600", color: "#f0f0f0", display: "block", marginBottom: "8px" }}>
+                            Workplace
+                        </label>
+                        <select
+                            value={workplaceType}
+                            onChange={(e) => setWorkplaceType(e.target.value)}
+                            style={{
+                                width: "100%",
+                                padding: "12px 14px",
+                                borderRadius: "8px",
+                                border: "1px solid #3a3a3c",
+                                backgroundColor: "#2c2c2e",
+                                color: "#f0f0f0",
+                                fontSize: "14px",
+                                outline: "none",
+                                boxSizing: "border-box",
+                                cursor: "pointer",
+                            }}
+                        >
+                            <option value="">Not set</option>
+                            <option value="Remote">Remote</option>
+                            <option value="Hybrid">Hybrid</option>
+                            <option value="On-Site">On-Site</option>
+                        </select>
                     </div>
 
                     {/* Job Link */}

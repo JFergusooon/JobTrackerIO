@@ -182,6 +182,7 @@ const ModernImportantJobs = ({importantJobsList, importantJobsLoading = false, o
                 position: Array.isArray(job.position) ? job.position.join(', ') : (job.position ?? "Unknown Position"),
                 interviewDate: job.nextInterviewDate ?? "",
                 location: job.location ?? "",
+                workplaceType: job.workplaceType ?? "",
                 notes: job.notes ?? "",
                 favorited: true,
                 favorite: true,
@@ -413,6 +414,7 @@ const ModernImportantJobs = ({importantJobsList, importantJobsLoading = false, o
 
         const interviewParts = parseInterviewDateTime(jobInfo.interviewDate);
         const locationLabel = String(jobInfo.location ?? '').trim();
+        const workplaceLabel = String(jobInfo.workplaceType ?? '').trim();
         const rawJobLink = String(jobInfo.jobLink ?? '').trim();
         const jobLink = rawJobLink && !/^n\/?a$/i.test(rawJobLink) ? rawJobLink : '';
         const jobLinkHref = jobLink
@@ -433,6 +435,9 @@ const ModernImportantJobs = ({importantJobsList, importantJobsLoading = false, o
                             <p style={{margin: '0px', fontSize: '28px', flex: '0 1 auto', minWidth: 0, textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>{jobInfo.company}</p>
                             {locationLabel ? (
                                 <p style={{margin: '0 0 0 8px', fontSize: '14px', color: '#444', minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>- {locationLabel}</p>
+                            ) : null}
+                            {workplaceLabel ? (
+                                <p style={{margin: '0 0 0 8px', fontSize: '14px', color: '#444', flexShrink: 0, whiteSpace: 'nowrap'}}>- {workplaceLabel}</p>
                             ) : null}
                         </div>
                         <FitSingleLine

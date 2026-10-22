@@ -463,10 +463,72 @@ const isLinkedInUiJunk = (value) =>
         (value || '').trim()
     );
 
-const finalizeParsedJob = ({ position, company, location }) => ({
+const normalizeWorkplaceType = (value) => {
+    const key = String(value ?? '').replace(/\s+/g, ' ').trim().toLowerCase().replace(/_/g, '-');
+    if (key === 'remote' || key === 'telecommute') return 'Remote';
+    if (key === 'hybrid') return 'Hybrid';
+    if (key === 'on-site' || key === 'onsite' || key === 'on site') return 'On-Site';
+    return '';
+};
+
+const WORKPLACE_PILL_SELECTOR = [
+    '[class*="pill"]',
+    '[class*="job-insight"]',
+    '[class*="preference"]',
+    '[class*="workplace"]',
+    '.ui-label',
+    '.ui-label__text',
+    'button',
+].join(', ');
+
+const extractLinkedInWorkplace = (payload) => {
+    const source = String(payload || '');
+    if (!source) return '';
+
+    if (source.includes('<') && typeof DOMParser !== 'undefined') {
+        const doc = new DOMParser().parseFromString(source, 'text/html');
+        const nodes = doc.querySelectorAll(WORKPLACE_PILL_SELECTOR);
+        for (const node of nodes) {
+            const text = node.textContent?.replace(/\s+/g, ' ').trim() || '';
+            if (!text || text.length > 24) continue;
+            const workplace = normalizeWorkplaceType(text);
+            if (workplace) return workplace;
+        }
+
+        const jsonLdNodes = [...doc.querySelectorAll('script[type="application/ld+json"]')];
+        for (const node of jsonLdNodes) {
+            try {
+                const parsed = JSON.parse(node.textContent);
+                const candidates = Array.isArray(parsed) ? parsed : [parsed];
+                const jobPosting = candidates.find((item) => item?.['@type'] === 'JobPosting');
+                if (jobPosting?.jobLocationType === 'TELECOMMUTE') return 'Remote';
+            } catch {
+                // ignore malformed JSON-LD
+            }
+        }
+    }
+
+    const localized = source.match(/"localizedName"\s*:\s*"(Remote|Hybrid|On-site|On-Site)"/i);
+    if (localized) return normalizeWorkplaceType(localized[1]);
+
+    const workplaceField = source.match(/"workplaceTypes?"\s*:\s*"?(REMOTE|HYBRID|ON_SITE|Remote|Hybrid|On-site|On-Site)"/i);
+    if (workplaceField) return normalizeWorkplaceType(workplaceField[1]);
+
+    if (/"jobLocationType"\s*:\s*"TELECOMMUTE"/.test(source)) return 'Remote';
+
+    const labeled = source.match(
+        /(?:workplace(?:\s*type)?|work\s*(?:setting|arrangement)|location)\s*:\s*(?:<\/[^>]+>\s*)?(remote|hybrid|on-site|on site|onsite)\b/i
+    );
+    if (labeled) return normalizeWorkplaceType(labeled[1]);
+
+    return '';
+};
+
+const finalizeParsedJob = ({ position, company, location, workplace }) => ({
     position: (position || '').replace(/\s+/g, ' ').trim(),
     company: (company || '').replace(/\s+/g, ' ').trim(),
     location: normalizeImportedLocation(location || ''),
+    workplace: normalizeWorkplaceType(workplace),
 });
 
 const isUsableImport = (parsed) => {
@@ -497,6 +559,7 @@ const parseLinkedInJobHtml = (html) => {
     let position = '';
     let company = '';
     let locationValue = '';
+    let workplace = '';
 
     const jsonLdNodes = [...doc.querySelectorAll('script[type="application/ld+json"]')];
     for (const node of jsonLdNodes) {
@@ -520,7 +583,7 @@ const parseLinkedInJobHtml = (html) => {
                 locationValue = [city, region].filter(Boolean).join(', ') || address.addressCountry || locationValue;
             }
             if (jobPosting.jobLocationType === 'TELECOMMUTE') {
-                locationValue = 'Remote';
+                workplace = 'Remote';
             }
         } catch {
             // ignore malformed JSON-LD
@@ -555,6 +618,11 @@ const parseLinkedInJobHtml = (html) => {
             const value = el.textContent?.replace(/\s+/g, ' ').trim() || '';
             if (!value || value === company || isLinkedInUiJunk(value)) continue;
             if (/employees|followers|applicants|ago|people/i.test(value)) continue;
+            const asWorkplace = normalizeWorkplaceType(value);
+            if (asWorkplace) {
+                workplace = workplace || asWorkplace;
+                continue;
+            }
             locationValue = value;
             break;
         }
@@ -564,6 +632,7 @@ const parseLinkedInJobHtml = (html) => {
         position,
         company,
         location: locationValue,
+        workplace,
     });
 };
 
@@ -680,15 +749,20 @@ const parseLinkedInJobMarkdown = (text) => {
     });
 };
 
+const withLinkedInWorkplace = (payload, parsed) => ({
+    ...parsed,
+    workplace: parsed?.workplace || extractLinkedInWorkplace(payload),
+});
+
 const parseLinkedInJobPayload = (payload) => {
     if (!payload || payload.length < 20) {
-        return { position: '', company: '', location: '' };
+        return { position: '', company: '', location: '', workplace: '' };
     }
 
     // Always prefer "{Company} hiring {Position} in {Location}" from Title / <title> / og:title
     const fromHiringTitle = extractHiringTitleFromPayload(payload);
     if (fromHiringTitle) {
-        return finalizeParsedJob(fromHiringTitle);
+        return withLinkedInWorkplace(payload, finalizeParsedJob(fromHiringTitle));
     }
 
     // Prefer structured HTML / JSON-LD when present (includes location from top card)
@@ -700,16 +774,16 @@ const parseLinkedInJobPayload = (payload) => {
             payload.includes('job-details-jobs-unified-top-card'))
     ) {
         const fromHtml = parseLinkedInJobHtml(payload);
-        if (isUsableImport(fromHtml)) return fromHtml;
+        if (isUsableImport(fromHtml)) return withLinkedInWorkplace(payload, fromHtml);
     }
 
     const fromJoinToApply = extractJoinToApply(payload);
     if (fromJoinToApply) {
         const finalized = finalizeParsedJob(fromJoinToApply);
-        if (isUsableImport(finalized)) return finalized;
+        if (isUsableImport(finalized)) return withLinkedInWorkplace(payload, finalized);
     }
 
-    return parseLinkedInJobMarkdown(payload);
+    return withLinkedInWorkplace(payload, parseLinkedInJobMarkdown(payload));
 };
 
 const parseGreenhouseJobPayload = (payload) => {
@@ -793,6 +867,8 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
     const [newJobLink, setNewJobLink] = useState("");
     const [newList, setNewList] = useState("");
     const [newLocation, setNewLocation] = useState("");
+    const [newWorkplaceType, setNewWorkplaceType] = useState("");
+    const [workplaceImportMissing, setWorkplaceImportMissing] = useState(false);
     const [newPosition, setNewPosition] = useState("");
     const [locationValidationError, setLocationValidationError] = useState("");
     const [isSaving, setIsSaving] = useState(false);
@@ -827,7 +903,14 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
     }, [location.search]);
 
     const isLocationValid = validateLocationFormat(newLocation);
-    const isFormValid = newCompanyName && newPosition && newJobLink && isLocationValid && newList;
+    const workplaceStillUnset = workplaceImportMissing && !newWorkplaceType;
+    const isFormValid = newCompanyName && newPosition && newJobLink && isLocationValid && newList && !workplaceStillUnset;
+
+    const applyImportedWorkplace = (workplace) => {
+        const value = workplace || '';
+        setNewWorkplaceType(value);
+        setWorkplaceImportMissing(value === '');
+    };
     const duplicateApplications = findExactCompanyMatches(existingJobs, newCompanyName);
     const duplicateApplication = duplicateApplications[0] || null;
 
@@ -1043,6 +1126,7 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
                     setNewCompanyName(parsed.company);
                     setNewPosition(parsed.position);
                     handleLocationChange(parsed.location || '');
+                    applyImportedWorkplace(parsed.workplace);
                     setNewJobLink(trimmedUrl);
                     setViewMode('form');
                     setImportError('');
@@ -1099,6 +1183,7 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
             setNewCompanyName(parsed.company);
             setNewPosition(parsed.position);
             handleLocationChange(parsed.location || '');
+            applyImportedWorkplace(parsed.workplace);
             setNewJobLink(trimmedUrl);
             setViewMode('form');
             setImportError('');
@@ -1153,6 +1238,7 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
                     setNewCompanyName(parsed.company);
                     setNewPosition(parsed.position);
                     handleLocationChange(parsed.location || '');
+                    applyImportedWorkplace(parsed.workplace);
                     setNewJobLink(trimmedUrl);
                     setViewMode('form');
                     setImportError('');
@@ -1178,7 +1264,7 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
     };
 
     async function addNewApplication() {
-        if (isSaving) return;
+        if (isSaving || !isFormValid) return;
         prepareSuccessDing();
         const matches = findExactCompanyMatches(existingJobs, newCompanyName);
         setIsSaving(true);
@@ -1210,6 +1296,7 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
             jobLink: newJobLink || "N/A",
             list: newList,
             location: newLocation || "N/A",
+            workplaceType: newWorkplaceType || "",
             position: newPosition || "N/A", 
             nextInterviewDate: "",
             notes: "No Notes...",
@@ -1447,6 +1534,33 @@ const ModernNewApplicationPopup = ({text, closePopup, listNames, onApplicationCr
                                         {locationValidationError}
                                     </span>
                                 )}
+                            </div>
+
+                            <div>
+                                <label style={{ fontSize: "14px", fontWeight: "600", color: "#f0f0f0", display: "block", marginBottom: "8px" }}>
+                                    Workplace
+                                </label>
+                                {workplaceStillUnset && (
+                                    <span style={{
+                                        fontSize: '12px',
+                                        color: '#ff4d4d',
+                                        display: 'block',
+                                        marginBottom: '6px',
+                                        lineHeight: '1.3',
+                                    }}>
+                                        Unable to Import Workplace, please set it yourself
+                                    </span>
+                                )}
+                                <select
+                                    value={newWorkplaceType}
+                                    onChange={(e) => setNewWorkplaceType(e.target.value)}
+                                    style={{ ...inputStyle, cursor: "pointer" }}
+                                >
+                                    <option value="">Not set</option>
+                                    <option value="Remote">Remote</option>
+                                    <option value="Hybrid">Hybrid</option>
+                                    <option value="On-Site">On-Site</option>
+                                </select>
                             </div>
 
                             <div>

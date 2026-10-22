@@ -45,7 +45,7 @@ function ModernUITracker() {
     const [sortField, setSortField] = useState(null);
     const [sortDirection, setSortDirection] = useState("asc");
     const hasValidCurrentList = Boolean(listName && curUserListNames.includes(listName));
-    const isHeaderSortActive = ['companyName', 'position', 'location', 'jobLink', 'rejected', 'favorite'].includes(sortField);
+    const isHeaderSortActive = ['companyName', 'position', 'location', 'workplaceType', 'jobLink', 'rejected', 'favorite'].includes(sortField);
 
     const fetchAllJobs = async () => {
         const stage = "https://ax00jgr5uf.execute-api.us-east-1.amazonaws.com/dev";
@@ -348,9 +348,13 @@ function ModernUITracker() {
                         return 0;
                     }
                     break;
+                case "workplaceType":
+                    aVal = String(a.workplaceType || '').toLowerCase();
+                    bVal = String(b.workplaceType || '').toLowerCase();
+                    break;
                 case "jobLink":
-                    aVal = a.jobLink.toLowerCase();
-                    bVal = b.jobLink.toLowerCase();
+                    aVal = String(a.jobLink || '').toLowerCase();
+                    bVal = String(b.jobLink || '').toLowerCase();
                     break;
                 case "rejected":
                     aVal = a.rejected ? 1 : 0;
@@ -483,7 +487,7 @@ function ModernUITracker() {
         return () => clearTimeout(timer);
     }, [actionStatusMessage]);
 
-    const rightColumnGridTemplate = '1.5fr 1.5fr 1.5fr 6.5rem 5.5rem 6.25rem';
+    const rightColumnGridTemplate = '1.4fr 1.4fr 1.2fr 5.4rem 6.2rem 5.2rem 5.8rem';
 
     return (<>
         <div style={{width: '100%', height: '100%', overflow: 'hidden', minHeight: 0}}>
@@ -544,7 +548,7 @@ function ModernUITracker() {
                                 <button
                                     key={index}
                                     type="button"
-                                    title={job.companyName}
+                                    title={job.workplaceType ? `${job.companyName} · ${job.workplaceType}` : job.companyName}
                                     style={{
                                         width: '100%',
                                         height: '32px',
@@ -580,7 +584,7 @@ function ModernUITracker() {
 
                                                         setSelectedFromSearch(true);
     }}>
-                                            {job.companyName}
+                                            {job.companyName}{job.workplaceType ? ` · ${job.workplaceType}` : ''}
                                         </button>
                                     );
                                     })}
@@ -704,6 +708,9 @@ function ModernUITracker() {
                                     <p className='modernRightColumnHeaders' onClick={() => handleSortChange("location")} style={{cursor: 'pointer', backgroundColor: sortField === 'location' ? 'rgba(0, 0, 0, 0.1)' : 'transparent', width: 'auto'}}>
                                         Location {sortField === 'location' && (sortDirection === 'asc' ? '▲' : '▼')}
                                     </p>
+                                    <p className='modernRightColumnHeaders' onClick={() => handleSortChange("workplaceType")} style={{cursor: 'pointer', backgroundColor: sortField === 'workplaceType' ? 'rgba(0, 0, 0, 0.1)' : 'transparent', width: '100%', whiteSpace: 'nowrap', justifyContent: 'center', paddingLeft: '2px', paddingRight: '2px', boxSizing: 'border-box'}}>
+                                        Workplace {sortField === 'workplaceType' && (sortDirection === 'asc' ? '▲' : '▼')}
+                                    </p>
                                     <p className='modernRightColumnHeaders' onClick={() => handleSortChange("jobLink")} style={{cursor: 'pointer', backgroundColor: sortField === 'jobLink' ? 'rgba(0, 0, 0, 0.1)' : 'transparent', width: '100%', whiteSpace: 'nowrap', justifyContent: 'center', paddingLeft: '2px', paddingRight: '2px', boxSizing: 'border-box'}}>
                                         Job Link {sortField === 'jobLink' && (sortDirection === 'asc' ? '▲' : '▼')}
                                     </p>
@@ -756,6 +763,10 @@ function ModernUITracker() {
 
                                     <p style={{padding: '0px 0px 0px 2px', margin: '0px', color: job.rejected ? 'red' : 'black', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', minWidth: 0}}>
                                         {job.location}
+                                    </p>
+
+                                    <p style={{padding: '0px 2px', margin: '0px', textAlign: 'center', color: job.rejected ? 'red' : 'black', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', minWidth: 0}}>
+                                        {job.workplaceType || ''}
                                     </p>
 
                                     <a href={job.jobLink} target="_blank" rel="noreferrer" style={{padding: '0px 0px 0px 2px', margin: '0px', textAlign: 'center', color: job.rejected ? 'red' : '', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', minWidth: 0}}>
