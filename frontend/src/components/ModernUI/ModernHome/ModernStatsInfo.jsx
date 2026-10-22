@@ -48,8 +48,10 @@ const ModernStatsInfo = ({allJobs}) => {
                         setTotalApplicationsEver(jobs.length);
 
                         const interviewsScheduled = jobs.filter((job) => {
-                            const stage = getStageString(job.stage);
-                            return stage === '1' || stage === '2' || stage === '3';
+                            const favorited = (job?.favorited ?? job?.favorite ?? false) === true;
+                            const interviewDate = String(job?.nextInterviewDate ?? '').trim();
+                            const hasInterviewDate = interviewDate !== '' && !interviewDate.startsWith('00/00/0000');
+                            return favorited && hasInterviewDate;
                         }).length;
                         setTotalInterviewsScheduled(interviewsScheduled);
                         
