@@ -231,15 +231,16 @@
     flex-direction: column;
     gap: 7px;
     overflow-y: auto;
+    overflow-anchor: none;
     padding-right: 4px;
     container-type: size;
 }
 
 .modernImportantJobCard {
-    flex: 0 0 calc((100cqh - 6px) / 3 - 5px);
-    height: calc((100cqh - 6px) / 3 - 5px);
-    max-height: calc((100cqh - 6px) / 3 - 5px);
-    min-height: 0;
+    flex: 0 0 auto;
+    height: auto;
+    max-height: none;
+    min-height: calc((100cqh - 6px) / 3 - 5px);
     box-sizing: border-box;
 }
 

@@ -63,6 +63,177 @@ const FitSingleLine = ({ text, maxFontSize = 20, minFontSize = 12, style }) => {
     );
 };
 
+const GrowingNotesInput = ({ value, onChange }) => {
+    const ref = useRef(null);
+    const mirrorRef = useRef(null);
+    const pinnedScroll = useRef(null);
+
+    useEffect(() => {
+        const scroller = ref.current?.closest('.modernImportantJobsScroll');
+        if (!scroller) return undefined;
+        const release = () => { pinnedScroll.current = null; };
+        const releaseUnlessTyping = (event) => {
+            if (event.target !== ref.current) release();
+        };
+        scroller.addEventListener('wheel', release, { passive: true });
+        scroller.addEventListener('touchmove', release, { passive: true });
+        scroller.addEventListener('pointerdown', releaseUnlessTyping);
+        return () => {
+            scroller.removeEventListener('wheel', release);
+            scroller.removeEventListener('touchmove', release);
+            scroller.removeEventListener('pointerdown', releaseUnlessTyping);
+        };
+    }, []);
+
+    useLayoutEffect(() => {
+        const textarea = ref.current;
+        if (!textarea) return undefined;
+
+        let frame = 0;
+        let removePin = () => {};
+
+        const pinScroll = (scroller, top) => {
+            removePin();
+            const apply = () => {
+                if (scroller.scrollTop !== top) scroller.scrollTop = top;
+            };
+            const onScroll = () => apply();
+            scroller.addEventListener('scroll', onScroll);
+            apply();
+            let inner = 0;
+            const outer = requestAnimationFrame(() => {
+                apply();
+                inner = requestAnimationFrame(() => {
+                    apply();
+                    scroller.removeEventListener('scroll', onScroll);
+                });
+            });
+            removePin = () => {
+                cancelAnimationFrame(outer);
+                cancelAnimationFrame(inner);
+                scroller.removeEventListener('scroll', onScroll);
+            };
+        };
+
+        const fit = () => {
+            const node = ref.current;
+            const mirror = mirrorRef.current;
+            if (!node || !mirror || node.offsetWidth === 0) return;
+
+            const computed = getComputedStyle(node);
+            mirror.style.width = `${node.clientWidth}px`;
+            mirror.style.padding = computed.padding;
+            mirror.style.font = computed.font;
+            mirror.style.lineHeight = computed.lineHeight;
+            mirror.style.letterSpacing = computed.letterSpacing;
+            const contentHeight = mirror.offsetHeight;
+
+            const card = node.closest('.modernImportantJobCard');
+            const header = card?.firstElementChild;
+            const notesRow = node.parentElement;
+            const cardStyle = card ? getComputedStyle(card) : null;
+            const rowStyle = notesRow ? getComputedStyle(notesRow) : null;
+            const cardMin = cardStyle ? parseFloat(cardStyle.minHeight) || 0 : 0;
+            const cardBorder = cardStyle
+                ? (parseFloat(cardStyle.borderTopWidth) || 0) + (parseFloat(cardStyle.borderBottomWidth) || 0)
+                : 0;
+            const headerHeight = header ? header.getBoundingClientRect().height : 0;
+            const rowPadding = rowStyle
+                ? (parseFloat(rowStyle.paddingTop) || 0) + (parseFloat(rowStyle.paddingBottom) || 0)
+                : 0;
+            const textareaBorder = (parseFloat(computed.borderTopWidth) || 0) + (parseFloat(computed.borderBottomWidth) || 0);
+            const fillHeight = Math.max(0, cardMin - cardBorder - headerHeight - rowPadding - textareaBorder);
+
+            if (contentHeight > fillHeight + 1) {
+                const nextHeight = `${Math.ceil(contentHeight + textareaBorder)}px`;
+                if (node.style.height !== nextHeight || node.style.alignSelf !== 'flex-start') {
+                    node.style.alignSelf = 'flex-start';
+                    node.style.height = nextHeight;
+                }
+                const clipped = node.scrollHeight - node.clientHeight;
+                if (clipped > 0) {
+                    node.style.height = `${Math.ceil(contentHeight + textareaBorder + clipped)}px`;
+                }
+            } else if (node.style.height !== 'auto' || node.style.alignSelf !== 'stretch') {
+                node.style.alignSelf = 'stretch';
+                node.style.height = 'auto';
+            }
+
+            const scroller = node.closest('.modernImportantJobsScroll');
+            if (scroller && document.activeElement === node && pinnedScroll.current != null) {
+                pinScroll(scroller, pinnedScroll.current);
+            }
+        };
+
+        fit();
+        const container = textarea.closest('.modernImportantJobsContainer');
+        const observer = new ResizeObserver(() => {
+            cancelAnimationFrame(frame);
+            frame = requestAnimationFrame(fit);
+        });
+        if (container) observer.observe(container);
+
+        return () => {
+            removePin();
+            cancelAnimationFrame(frame);
+            observer.disconnect();
+        };
+    }, [value]);
+
+    const rememberScroll = (event) => {
+        const scroller = event.currentTarget.closest('.modernImportantJobsScroll');
+        if (!scroller || pinnedScroll.current != null) return;
+        pinnedScroll.current = scroller.scrollTop;
+    };
+
+    return (
+        <>
+            <textarea
+                ref={ref}
+                value={value}
+                onKeyDown={rememberScroll}
+                onBlur={() => { pinnedScroll.current = null; }}
+                onChange={(e) => onChange(e.target.value)}
+                placeholder="Add notes..."
+                rows={2}
+                style={{
+                    width: '95%',
+                    minHeight: 0,
+                    height: 'auto',
+                    alignSelf: 'stretch',
+                    borderRadius: '20px',
+                    marginRight: '5px',
+                    resize: 'none',
+                    padding: '4px 8px',
+                    boxSizing: 'border-box',
+                    verticalAlign: 'top',
+                    textAlign: 'left',
+                    overflow: 'hidden',
+                    overflowAnchor: 'none',
+                    border: '1px solid var(--nav-background)',
+                }}
+            />
+            <div
+                ref={mirrorRef}
+                aria-hidden="true"
+                style={{
+                    position: 'absolute',
+                    visibility: 'hidden',
+                    pointerEvents: 'none',
+                    height: 'auto',
+                    overflow: 'hidden',
+                    whiteSpace: 'pre-wrap',
+                    overflowWrap: 'break-word',
+                    boxSizing: 'border-box',
+                    border: 0,
+                }}
+            >
+                {`${value || ''}\n`}
+            </div>
+        </>
+    );
+};
+
 const userTimeZoneLabel = new Intl.DateTimeFormat(undefined, { timeZoneName: 'short' })
     .formatToParts(new Date())
     .find((part) => part.type === 'timeZoneName')?.value || '';
@@ -422,8 +593,8 @@ const ModernImportantJobs = ({importantJobsList, importantJobsLoading = false, o
             : '';
 
         return (
-        <div key={`${jobInfo.company}-${index}`} className='modernImportantJobCard' style={{ background: 'rgba(255, 255, 255, 0.4)', border: '1px solid black', borderRadius: '20px', marginLeft: '5px', marginRight: '5px', display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
-            <div style={{ display: 'flex', flexDirection: 'row', width: '100%', minWidth: 0, flexShrink: 1, minHeight: 0}}>
+        <div key={`${jobInfo.company}-${index}`} className='modernImportantJobCard' style={{ background: 'rgba(255, 255, 255, 0.4)', border: '1px solid black', borderRadius: '20px', marginLeft: '5px', marginRight: '5px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div style={{ display: 'flex', flexDirection: 'row', width: '100%', minWidth: 0, flexShrink: 0 }}>
                 <div style={{ display: 'flex', flexDirection: 'row', gap: '8px', margin: '4px 5px', width: '100%', minWidth: 0 }}>
                     <div style={{ minWidth: 0, flex: '1 1 auto' }}>
                         <div style={{display: 'flex', flexDirection: 'row', alignItems: 'baseline', minWidth: 0, width: '100%'}}>
@@ -489,16 +660,16 @@ const ModernImportantJobs = ({importantJobsList, importantJobsLoading = false, o
                     {/*</div>*/}
                 </div>
             </div>
-            <div style={{ flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '2px', paddingBottom: '4px' }}>
+            <div style={{ position: 'relative', flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'row', alignItems: 'stretch', justifyContent: 'center', paddingTop: '2px', paddingBottom: '4px', overflowAnchor: 'none' }}>
                 <div style={{ width: '10%', margin: '0 5px 0 5px', alignSelf: 'stretch', display: 'flex', justifyContent: 'flex-end' }}>
                     <div style={{ position: 'relative', height: '100%' }}>
                         <p style={{ margin: 0, paddingTop: '2px', color: 'gray', whiteSpace: 'nowrap' }}>Notes:</p>
                         {jobLinkHref ? (
-                            <a href={jobLinkHref} target="_blank" rel="noreferrer" style={{ position: 'absolute', left: 0, bottom: '10px', color: '#1a4fbf', fontSize: '13px', whiteSpace: 'nowrap' }}>Job Link</a>
+                            <a href={jobLinkHref} target="_blank" rel="noreferrer" style={{ position: 'absolute', left: 0, bottom: 0, color: '#1a4fbf', fontSize: '13px', whiteSpace: 'nowrap' }}>Job Link</a>
                         ) : null}
                     </div>
                 </div>
-                <textarea value={currentNotes} onChange={(e) => handleNotesChange(jobInfo, e.target.value)} style={{height: 'calc(100% - 10px)', width: '95%', borderRadius: '20px', marginRight: '5px', resize: 'none', padding: '4px 8px', boxSizing: 'border-box', verticalAlign: 'top', textAlign: 'left', overflow: 'auto', border: '1px solid var(--nav-background)'}} placeholder="Add notes..." />
+                <GrowingNotesInput value={currentNotes} onChange={(nextNotes) => handleNotesChange(jobInfo, nextNotes)} />
             </div>
         </div>
     )};
