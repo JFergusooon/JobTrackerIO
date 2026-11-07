@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from "react-router-dom";
 import '../../../css/Modern_TrackerPageCSS.css'
 import ModernEditJobButtons from '../ModernTracker/ModernEditJobButtons.jsx';
@@ -41,6 +41,13 @@ function ModernUITracker() {
     const [searchTerm, setSearchTerm] = useState("");
     const [listLoading, setListLoading] = useState(false);
     const [actionStatusMessage, setActionStatusMessage] = useState("");
+    const [actionStatusIsError, setActionStatusIsError] = useState(false);
+    const rejectionUpdatesRef = useRef(new Map());
+
+    const setActionStatus = (message, isError = false) => {
+        setActionStatusMessage(message);
+        setActionStatusIsError(isError);
+    };
 
     const [sortField, setSortField] = useState(null);
     const [sortDirection, setSortDirection] = useState("asc");
@@ -113,9 +120,14 @@ function ModernUITracker() {
                 : prevJob
         );
 
-        setActionStatusMessage(
+        rejectionUpdatesRef.current.set(companyName, isRejected);
+        setActionStatus(
             `${companyName}: ${isRejected ? "set to rejected" : "set to not rejected"}`
         );
+    };
+
+    const handleRejectionFailed = (companyName) => {
+        setActionStatus(`Could not update rejection for ${companyName}. Try again.`, true);
     };
 
     const clearSearchSelection = () => {
@@ -156,7 +168,7 @@ function ModernUITracker() {
         setCurJobsByListName((prevJobs) => replaceJobs(prevJobs, job.list === listName));
 
         clearSearchSelection();
-        setActionStatusMessage(
+        setActionStatus(
             alreadyExists ? `Replaced ${job.companyName}` : `Added ${job.companyName}`
         );
     };
@@ -189,7 +201,7 @@ function ModernUITracker() {
         });
 
         clearSearchSelection();
-        setActionStatusMessage(`Updated ${updatedJob.companyName}`);
+        setActionStatus(`Updated ${updatedJob.companyName}`);
     };
 
     const handleApplicationDeleted = (companyName) => {
@@ -208,7 +220,8 @@ function ModernUITracker() {
             setShowEditJobButtons(false);
         }
 
-        setActionStatusMessage(`Deleted ${companyName}`);
+        rejectionUpdatesRef.current.delete(companyName);
+        setActionStatus(`Deleted ${companyName}`);
     };
 
     const handleFavoriteToggled = async (companyName, currentFavoriteValue) => {
@@ -249,7 +262,7 @@ function ModernUITracker() {
         };
 
         applyFavoriteState(nextFavorited);
-        setActionStatusMessage(`${companyName}: ${nextFavorited ? "set to favorited" : "set to not favorited"}`);
+            setActionStatus(`${companyName}: ${nextFavorited ? "set to favorited" : "set to not favorited"}`);
 
         try {
             const res = await fetch(url, {
@@ -266,7 +279,7 @@ function ModernUITracker() {
         } catch (err) {
             console.error("Failed to update favorited status:", err);
             applyFavoriteState(currentFavoriteValue);
-            setActionStatusMessage(`${companyName}: failed to update favorited status`);
+            setActionStatus(`${companyName}: failed to update favorited status`, true);
         }
     };
 
@@ -395,7 +408,24 @@ function ModernUITracker() {
         .then(res => res.json())
         .then((result) => {
             if (!isCurrentRequest) return;
-            setCurJobsByListName(Array.isArray(result) ? result : []);
+            const jobs = (Array.isArray(result) ? result : []).map((job) => (
+                rejectionUpdatesRef.current.has(job.companyName)
+                    ? { ...job, rejected: rejectionUpdatesRef.current.get(job.companyName) }
+                    : job
+            ));
+            setCurJobsByListName(jobs);
+            setCompanyItem((prevJob) => {
+                if (!prevJob?.companyName || rejectionUpdatesRef.current.has(prevJob.companyName)) return prevJob;
+                const match = jobs.find((job) => job.companyName === prevJob.companyName);
+                if (!match || match.rejected === prevJob.rejected) return prevJob;
+                return { ...prevJob, rejected: match.rejected };
+            });
+            setSelectedJob((prevJob) => {
+                if (!prevJob?.companyName || rejectionUpdatesRef.current.has(prevJob.companyName)) return prevJob;
+                const match = jobs.find((job) => job.companyName === prevJob.companyName);
+                if (!match || match.rejected === prevJob.rejected) return prevJob;
+                return { ...prevJob, rejected: match.rejected };
+            });
         })
         .catch((error) => {
             if (!isCurrentRequest) return;
@@ -482,6 +512,7 @@ function ModernUITracker() {
 
         const timer = setTimeout(() => {
             setActionStatusMessage("");
+            setActionStatusIsError(false);
         }, 2500);
 
         return () => clearTimeout(timer);
@@ -576,9 +607,13 @@ function ModernUITracker() {
                                                             setCompanyItem(null);
                                                             setShowEditJobButtons(false);
                                                         } else {
-                                                            setSelectedJob(job);
-                                                            setSelectedCompanyName(job.companyName);
-                                                            setCompanyItem(job);
+                                                            const listMatch = curJobsByListName.find((item) => item.companyName === job.companyName);
+                                                            const selected = listMatch && listMatch.rejected !== job.rejected
+                                                                ? { ...job, rejected: listMatch.rejected }
+                                                                : job;
+                                                            setSelectedJob(selected);
+                                                            setSelectedCompanyName(selected.companyName);
+                                                            setCompanyItem(selected);
                                                             setShowEditJobButtons(true);
                                                         }
 
@@ -615,9 +650,9 @@ function ModernUITracker() {
                             minHeight: '40px',
                             height: '40px',
                             borderRadius: '8px',
-                            backgroundColor: actionStatusMessage !== "" ? 'rgba(0, 153, 72, 0.18)' : 'transparent',
-                            border: actionStatusMessage !== "" ? '1px solid rgba(0, 153, 72, 0.45)' : '1px solid transparent',
-                            color: '#0f5f34',
+                            backgroundColor: actionStatusMessage !== "" ? (actionStatusIsError ? 'rgba(180, 40, 40, 0.16)' : 'rgba(0, 153, 72, 0.18)') : 'transparent',
+                            border: actionStatusMessage !== "" ? (actionStatusIsError ? '1px solid rgba(180, 40, 40, 0.45)' : '1px solid rgba(0, 153, 72, 0.45)') : '1px solid transparent',
+                            color: actionStatusIsError ? '#8d1d1d' : '#0f5f34',
                             fontWeight: '600',
                             fontSize: '12px',
                             textAlign: 'center',
@@ -644,6 +679,7 @@ function ModernUITracker() {
                             listNames={curUserListNames}
                             goToListButton={selectedFromSearch}
                             onRejectedToggled={handleRejectedToggled}
+                            onRejectionFailed={handleRejectionFailed}
                             onApplicationUpdated={handleApplicationUpdated}
                             onApplicationDeleted={handleApplicationDeleted}
                         /> : 
